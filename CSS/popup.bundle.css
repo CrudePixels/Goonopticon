@@ -1,0 +1,152 @@
+﻿/* === THEME-BASED POPUP STYLES (uses CSS variables from theme.css) === */
+
+body
+{
+    font-family: Arial, sans-serif;
+    background: var(--primary-bg);
+    color: var(--primary-fg);
+    margin: 0;
+    padding: 10px;
+    width: 300px;
+    min-height: 350px;
+}
+
+.popup-header
+{
+    text-align: center;
+    margin-bottom: 10px;
+    background: var(--primary-bg);
+    color: var(--accent);
+    padding: 18px 12px 12px 12px;
+    border-bottom: 2px solid var(--border);
+}
+
+    .popup-header h2,
+    #menuTitle
+    {
+        font-size: 22px;
+        color: var(--accent);
+        font-weight: bold;
+        margin: 0;
+        text-align: center;
+        width: 100%;
+    }
+
+.popup-logo
+{
+    width: 64px;
+    margin-bottom: 4px;
+}
+
+.podawful-btn,
+.popup-menu-btn
+{
+    display: block;
+    width: 100%;
+    margin: 8px 0;
+    padding: 10px;
+    background: var(--button-bg);
+    color: var(--button-fg);
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background 0.2s, color 0.2s;
+    box-sizing: border-box;
+}
+
+    .podawful-btn:hover,
+    .podawful-btn:focus,
+    .popup-menu-btn:hover
+    {
+        background: var(--button-hover-bg);
+        color: var(--button-hover-fg);
+        outline: none;
+    }
+
+input[type="text"],
+input[type="file"],
+select
+{
+    background: var(--input-bg);
+    color: var(--input-fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 15px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.popup-footer
+{
+    font-size: 11px;
+    text-align: center;
+    margin-top: 10px;
+    color: #888;
+}
+
+.popup-menu-content
+{
+    padding: 16px 0 0 0;
+    min-height: 120px;
+}
+
+#menuContent > button,
+#menuContent > input,
+#menuContent > label,
+#menuContent > div
+{
+    margin-bottom: 8px;
+}
+
+#menuContent label
+{
+    display: block;
+    margin-bottom: 6px;
+}
+
+#menuContent pre
+{
+    background: var(--secondary-bg);
+    color: var(--accent);
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 13px;
+}
+
+.status-message
+{
+    margin-top: 10px;
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.note-tag
+{
+    display: inline-block;
+    background: var(--accent);
+    color: var(--button-fg);
+    padding: 2px 6px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+    font-size: 12px;
+    border-radius: 3px;
+}
+
+.devlog-error
+{
+    color: #FF4444;
+    font-weight: bold;
+}
+
+/* Disabled state for buttons and inputs */
+.podawful-btn:disabled,
+.popup-menu-btn:disabled,
+input:disabled,
+select:disabled
+{
+    opacity: 0.5;
+    cursor: not-allowed;
+}

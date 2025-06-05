@@ -1,0 +1,291 @@
+﻿/* === THEME-BASED SIDEBAR STYLES (uses CSS variables from theme.css) === */
+
+#podawful-sidebar
+{
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 400px;
+    height: 100vh;
+    z-index: 999999;
+    background: var(--sidebar-bg, #222);
+    color: var(--sidebar-fg, #fff);
+    box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+    overflow-y: auto;
+    font-family: inherit;
+    font-size: 16px;
+    transition: opacity 0.2s ease;
+    opacity: 1;
+    border-left: 1px solid var(--sidebar-border, #444);
+}
+
+    #podawful-sidebar.sidebar-hide
+    {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+/* Example theme overrides (adjust as needed) */
+.default-theme #podawful-sidebar
+{
+    --sidebar-bg: #222;
+    --sidebar-fg: #fff;
+    --sidebar-border: #444;
+}
+
+.light-theme #podawful-sidebar
+{
+    --sidebar-bg: #fff;
+    --sidebar-fg: #222;
+    --sidebar-border: #ccc;
+}
+
+.dark-theme #podawful-sidebar
+{
+    --sidebar-bg: #181818;
+    --sidebar-fg: #fff;
+    --sidebar-border: #333;
+}
+
+
+.sidebar-container.compact
+{
+    font-size: 12px;
+    width: 180px;
+    min-width: 120px;
+}
+
+#podawful-sidebar .sidebar-header
+{
+    padding: 16px;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-fg);
+    border-bottom: 1px solid var(--sidebar-border);
+    text-align: center;
+}
+
+.sidebar-header h2
+{
+    margin: 0 0 4px 0;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.sidebar-logo
+{
+    width: 32px;
+    height: 32px;
+    margin-left: 8px;
+}
+
+.sidebar-url
+{
+    font-size: 12px;
+    color: var(--accent);
+    margin-top: 10px;
+    word-break: break-word;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+
+.sidebar-group-controls,
+.sidebar-tag-filter
+{
+    padding: 12px 16px;
+    background: var(--secondary-bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .sidebar-tag-filter label
+    {
+        margin-right: 8px;
+    }
+
+    .sidebar-tag-filter input[type="text"]
+    {
+        width: 100%;
+        padding: 6px 8px;
+        border-radius: 3px;
+        border: 1px solid var(--border);
+        background: var(--input-bg);
+        color: var(--input-fg);
+        margin-top: 6px;
+        margin-bottom: 6px;
+    }
+
+.group-title-row
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    background: var(--primary-bg);
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.group-title
+{
+    flex: 1;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--primary-fg);
+}
+
+.note-group
+{
+    margin: 0 0 16px 0;
+    padding: 0 16px 6px 16px;
+    background: var(--secondary-bg);
+    border-radius: 0 0 8px 8px;
+}
+
+.note-item
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: var(--secondary-bg);
+    color: var(--accent);
+    margin: 6px 12px;
+    padding: 8px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    transition: border 0.2s, background 0.2s;
+}
+
+    .note-item.dragging
+    {
+        opacity: 0.5;
+    }
+
+    .note-item.highlight
+    {
+        border: 2px solid var(--accent);
+        background: var(--button-hover-bg);
+    }
+
+    .note-item.drag-over,
+    .note-group.drag-over
+    {
+        outline: 2px dashed var(--accent);
+    }
+
+.note-time
+{
+    min-width: 60px;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--accent);
+    text-align: right;
+}
+
+.note-text
+{
+    flex: 1;
+    margin-right: 8px;
+    word-break: break-word;
+    font-size: 13px;
+    white-space: pre-wrap;
+    color: var(--secondary-fg);
+}
+
+.note-buttons
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.note-tags
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.note-tag
+{
+    background: var(--accent);
+    color: var(--button-fg);
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 11px;
+}
+
+#podawful-sidebar .sidebar-footer
+{
+    padding: 12px;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-fg);
+    border-top: 1px solid var(--sidebar-border);
+    text-align: center;
+}
+
+.empty-group-msg
+{
+    color: #888;
+    font-size: 13px;
+    margin: 8px 0;
+    text-align: center;
+}
+
+/* === Unified Button Styles === */
+.sidebar-action-btn,
+.sidebar-footer button,
+.sidebar-group-controls button,
+.group-title-row button,
+.note-buttons button
+{
+    background: var(--button-bg);
+    color: var(--button-fg);
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1em;
+    font-weight: bold;
+    padding: 8px 0;
+    margin: 6px 0 8px 0; /* Increased top margin for more space */
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+    .sidebar-action-btn:hover,
+    .sidebar-footer button:hover,
+    .sidebar-group-controls button:hover,
+    .group-title-row button:hover,
+    .note-buttons button:hover
+    {
+        background: var(--button-hover-bg);
+        color: var(--button-hover-fg);
+    }
+
+    .sidebar-action-btn:disabled,
+    .sidebar-footer button:disabled,
+    .sidebar-group-controls button:disabled,
+    .group-title-row button:disabled,
+    .note-buttons button:disabled
+    {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+/* === Unified Input Styles === */
+input[type="text"],
+input[type="file"],
+select
+{
+    background: var(--input-bg);
+    color: var(--input-fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 15px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}

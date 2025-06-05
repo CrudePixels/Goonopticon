@@ -1,0 +1,31 @@
+﻿Version 1.3.2
+- Improved performance
+- Fixed minor bugs
+- Updated documentation
+
+Version 1.3.1
+- Combined sidebar + menu into single scripts
+- Fixed all broken buttons
+- Added devlog, changelog, and hotkeys
+- Sidebar now loads reliably
+- Export to PNG working
+- Tooltips added
+
+Version 1.3.0
+- Pin notes and groups
+- Compact/Light/Dark modes
+- Undo and lock functionality
+
+Version 1.2.0
+- Auto-refresh sidebar
+- Persistent toggle state
+- Import/export formats
+
+Version 1.1.0
+- Full popup menu system
+- Submenus for hotkeys, logs, settings
+
+Version 1.0.0
+- Timestamp + note creation
+- Group management
+- Sidebar always visible

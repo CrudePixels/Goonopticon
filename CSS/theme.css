@@ -1,0 +1,86 @@
+:root
+{
+    --primary-bg: #222;
+    --primary-fg: #FFD600;
+    --secondary-bg: #181818;
+    --secondary-fg: #fff;
+    --accent: #FFD600;
+    --button-bg: #FFD600;
+    --button-fg: #111;
+    --button-hover-bg: #111;
+    --button-hover-fg: #FFD600;
+    --input-bg: #fff;
+    --input-fg: #111;
+    --border: #FFD600;
+}
+
+/* Default Theme */
+body.default-theme, .sidebar-container.default-theme, body.popup.default-theme
+{
+    --primary-bg: #222;
+    --primary-fg: #FFD600;
+    --secondary-bg: #292929;
+    --secondary-fg: #fff;
+    --accent: #FFD600;
+    --button-bg: #FFD600;
+    --button-fg: #111;
+    --button-hover-bg: #111;
+    --button-hover-fg: #FFD600;
+    --input-bg: #fff;
+    --input-fg: #111;
+    --border: #FFD600;
+}
+
+/* Dark Theme */
+body.dark-theme, .sidebar-container.dark-theme, body.popup.dark-theme
+{
+    --primary-bg: #111;
+    --primary-fg: #BBB;
+    --secondary-bg: #181818;
+    --secondary-fg: #FFD600;
+    --accent: #FFD600;
+    --button-bg: #FFD600;
+    --button-fg: #111;
+    --button-hover-bg: #FFD600;
+    --button-hover-fg: #222;
+    --input-bg: #222;
+    --input-fg: #FFD600;
+    --border: #444;
+}
+
+/* Light Theme */
+body.light-theme, .sidebar-container.light-theme, body.popup.light-theme
+{
+    --primary-bg: #fff;
+    --primary-fg: #222;
+    --secondary-bg: #f5f5f5;
+    --secondary-fg: #222;
+    --accent: #FFD600;
+    --button-bg: #FFD600;
+    --button-fg: #111;
+    --button-hover-bg: #111;
+    --button-hover-fg: #FFD600;
+    --input-bg: #fff;
+    --input-fg: #111;
+    --border: #FFD600;
+}
+
+body, .sidebar-container, body.popup
+{
+    background: var(--primary-bg);
+    color: var(--primary-fg);
+}
+
+.sidebar-action-btn, .popup-menu-btn, .podawful-btn
+{
+    background: var(--button-bg);
+    color: var(--button-fg);
+    border: 1px solid var(--border);
+    transition: background 0.2s, color 0.2s;
+}
+
+.sidebar-action-btn:hover, .popup-menu-btn:hover, .podawful-btn:hover
+{
+    background: var(--button-hover-bg);
+    color: var(--button-hover-fg);
+}

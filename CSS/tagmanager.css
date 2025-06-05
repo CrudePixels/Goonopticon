@@ -1,0 +1,74 @@
+﻿#podawful-tag-modal
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    #podawful-tag-modal > div
+    {
+        background: var(--primary-bg);
+        color: var(--primary-fg);
+        padding: 24px;
+        border-radius: 10px;
+        min-width: 320px;
+        max-width: 90vw;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    #podawful-tag-modal h3
+    {
+        margin-top: 0;
+        font-size: 1.2em;
+        margin-bottom: 12px;
+    }
+
+    #podawful-tag-modal .modal-section
+    {
+        margin-bottom: 10px;
+    }
+
+    #podawful-tag-modal button
+    {
+        background: var(--button-bg);
+        color: var(--button-fg);
+        border: none;
+        border-radius: 4px;
+        padding: 4px 10px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: background 0.2s, color 0.2s;
+    }
+
+        #podawful-tag-modal button:hover
+        {
+            background: var(--button-hover-bg);
+            color: var(--button-hover-fg);
+        }
+
+    #podawful-tag-modal select,
+    #podawful-tag-modal input[type="text"]
+    {
+        padding: 4px;
+        font-size: 13px;
+        margin-left: 6px;
+        background: var(--input-bg);
+        color: var(--input-fg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+    }
+
+    #podawful-tag-modal .tag-row
+    {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
