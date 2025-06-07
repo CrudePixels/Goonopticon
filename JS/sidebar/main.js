@@ -1,108 +1,48 @@
-// Version: 1.3.3
-
-import { RenderSidebar } from './render.js';
-import { LogDev } from '../log.js';
-import { GetSidebarVisible } from './storage.js';
-import { ApplyTheme } from '../theme.js';
-import { STORAGE_KEYS } from '../utils.js';
-
-// Helper to inject sidebar if visible
-function EnsureSidebarInjected()
+// Renders the sidebar UI and handles updates
+export function RenderSidebar(Container)
 {
-    GetSidebarVisible((Visible) =>
+    try
     {
-        let Container = document.getElementById('podawful-sidebar');
-        if (Container)
+        Promise.all([
+            new Promise(resolve => GetNotes(location.href, resolve)),
+            new Promise(resolve => GetPinnedGroups(resolve)),
+            new Promise(resolve => GetCompact(resolve)),
+            new Promise(resolve => GetTheme(resolve)),
+            new Promise(resolve => GetSidebarVisible(resolve)),
+            GetLockedPromise(),
+            new Promise(resolve => GetTagFilter(resolve)),
+            new Promise(resolve => GetNoteSearch(resolve))
+        ]).then(([Notes, PinnedGroups, Compact, Theme, SidebarVisible, Locked, SelectedTags, Search]) =>
         {
-            Container.remove(); // Remove the old sidebar and all its event listeners
-        }
-        if (Visible)
-        {
-            Container = document.createElement('div');
-            Container.id = 'podawful-sidebar';
-            document.body.appendChild(Container);
-            RenderSidebar(Container);
-        }
-    });
-}
+            LogDev("Sidebar data loaded", { Notes, PinnedGroups, Compact, Theme, SidebarVisible, Locked, SelectedTags, Search });
 
-// 1. Inject sidebar on load if visible
-document.addEventListener("DOMContentLoaded", () =>
-{
-    GetSidebarVisible((Visible) =>
-    {
-        if (Visible) EnsureSidebarInjected();
-    });
-});
-
-// 2. Listen for storage changes and update sidebar
-chrome.storage.onChanged.addListener((changes, area) =>
-{
-    if (area !== "local") return;
-    const relevantKeys = [
-        STORAGE_KEYS.NOTES(location.href),
-        STORAGE_KEYS.GROUPS(location.href),
-        STORAGE_KEYS.SIDEBAR_VISIBLE,
-        STORAGE_KEYS.THEME,
-        STORAGE_KEYS.COMPACT,
-        STORAGE_KEYS.TAG_FILTER,
-        STORAGE_KEYS.NOTE_SEARCH
-    ];
-    if (relevantKeys.some(key => key in changes))
-    {
-        EnsureSidebarInjected();
-        if (STORAGE_KEYS.THEME in changes)
-        {
-            ApplyTheme(changes[STORAGE_KEYS.THEME].newValue || "default");
-        }
-    }
-});
-
-// Listen for theme changes and apply them to the sidebar
-window.addEventListener("storage", function (e)
-{
-    if (e.key === STORAGE_KEYS.THEME)
-    {
-        ApplyTheme(e.newValue || "default");
-    }
-});
-
-// 3. Global error handler for dev log
-window.addEventListener("error", (E) =>
-{
-    LogDev("[ERROR] " + (E.error?.stack || E.message || E));
-});
-
-// 4. (Optional) Listen for messages for future features
-chrome.runtime.onMessage.addListener((Msg, Sender, SendResponse) =>
-{
-    if (Msg.Action === "refreshSidebar")
-    {
-        EnsureSidebarInjected();
-        SendResponse({ Status: "refreshed" });
-    }
-    else if (Msg.Action === "toggleSidebar")
-    {
-        // Immediately toggle sidebar visibility
-        const container = document.getElementById('podawful-sidebar');
-        const visible = !!container && !container.classList.contains('sidebar-hide');
-        if (visible)
-        {
-            if (container)
+            if (!SidebarVisible)
             {
-                container.classList.add('sidebar-hide');
-                container.addEventListener('transitionend', function handler(ev)
-                {
-                    container.style.display = 'none';
-                    container.removeEventListener('transitionend', handler);
-                });
+                Container.style.display = 'none';
+                Container.classList.add('sidebar-hide');
+                document.body.classList.remove('sidebar-visible');
+                updateShowSidebarButton();
+                return;
+            } else
+            {
+                Container.style.display = '';
+                Container.classList.remove('sidebar-hide');
+                document.body.classList.add('sidebar-visible');
             }
-            document.body.classList.remove('sidebar-visible');
-        }
-        else
-        {
-            EnsureSidebarInjected();
-        }
-        SendResponse({ Status: "toggled" });
+
+            Container.innerHTML = '';
+            const themeClass = (Theme || "default") + "-theme";
+            ApplyTheme(Theme || "default");
+            Container.classList.remove('default-theme', 'dark-theme', 'light-theme');
+            Container.classList.add(themeClass);
+            document.body.classList.remove('default-theme', 'dark-theme', 'light-theme');
+            document.body.classList.add(themeClass);
+
+            // ... (rest of your sidebar rendering logic, including header, groups, notes, etc.)
+        });
+    } catch (e)
+    {
+        LogDev("[ERROR] Sidebar Promise.all failed: " + (e && e.stack || e));
+        LogDev("[ERROR] RenderSidebar: " + (e.stack || e));
     }
-});
+}

@@ -34,7 +34,7 @@
     "content_scripts": [
         {
             "matches": [ "<all_urls>" ],
-            "js": [ "JS/sidebar/main.bundle.js" ],
+            "js": [ "JS/sidebar/bundle/main.bundle.js" ],
             "css": [
                 "CSS/sidebar.bundle.css",
                 "CSS/tagmanager.css",
