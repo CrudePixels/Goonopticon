@@ -1,16 +1,6 @@
-﻿// Version: 1.0.0
+// Version: 1.0.0
 
-export function SafeParse(Str, Fallback)
-{
-    try
-    {
-        return JSON.parse(Str) || Fallback;
-    }
-    catch
-    {
-        return Fallback;
-    }
-}
+import { SafeParse } from '../utils.js';
 
 export function GenerateNoteId()
 {
@@ -43,6 +33,7 @@ export function GetAllTags(Notes)
     return Array.from(Tags);
 }
 
-export function IsTimeClose(current, t) {
+export function IsTimeClose(current, t)
+{
     return Math.abs(current - t) < 5;
 }

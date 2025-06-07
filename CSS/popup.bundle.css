@@ -1,152 +1,166 @@
-﻿/* === THEME-BASED POPUP STYLES (uses CSS variables from theme.css) === */
-
-body
+﻿body.popup
 {
-    font-family: Arial, sans-serif;
+    min-width: 340px;
+    min-height: 420px; /* Ensure a minimum height for layout */
     background: var(--primary-bg);
     color: var(--primary-fg);
+    font-family: inherit;
+    font-size: 16px;
     margin: 0;
-    padding: 10px;
-    width: 300px;
-    min-height: 350px;
+    padding: 0;
 }
 
 .popup-header
 {
-    text-align: center;
-    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px 16px 20px;
     background: var(--primary-bg);
-    color: var(--accent);
-    padding: 18px 12px 12px 12px;
-    border-bottom: 2px solid var(--border);
+    color: var(--primary-fg);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
 }
 
-    .popup-header h2,
-    #menuTitle
+    .popup-header h2
     {
-        font-size: 22px;
-        color: var(--accent);
+        margin: 0 0 8px 0;
+        font-size: 1.5em;
         font-weight: bold;
-        margin: 0;
+        color: var(--accent);
         text-align: center;
-        width: 100%;
     }
 
 .popup-logo
 {
-    width: 64px;
-    margin-bottom: 4px;
+    width: 40px;
+    height: 40px;
+    margin: 8px 0;
 }
 
-.podawful-btn,
-.popup-menu-btn
+.popup-buttons
 {
-    display: block;
-    width: 100%;
-    margin: 8px 0;
-    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+}
+
+.podawful-btn
+{
     background: var(--button-bg);
     color: var(--button-fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 1.1em;
     font-weight: bold;
-    border: none;
-    border-radius: 6px;
+    padding: 10px 18px;
+    min-width: 120px;
+    max-width: 100%;
+    text-align: center;
     cursor: pointer;
-    font-size: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     transition: background 0.2s, color 0.2s;
-    box-sizing: border-box;
+    margin: 0;
+    white-space: nowrap;
+    display: inline-block;
 }
 
-    .podawful-btn:hover,
-    .podawful-btn:focus,
-    .popup-menu-btn:hover
+    .podawful-btn:hover
     {
         background: var(--button-hover-bg);
         color: var(--button-hover-fg);
-        outline: none;
     }
 
-input[type="text"],
-input[type="file"],
-select
-{
-    background: var(--input-bg);
-    color: var(--input-fg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 15px;
-    margin-bottom: 10px;
-    box-sizing: border-box;
+.podawful-btn:active,
+.podawful-btn:focus {
+    background: var(--button-hover-bg);
+    color: var(--button-hover-fg);
+    outline: none;
 }
 
 .popup-footer
 {
-    font-size: 11px;
+    padding: 20px;
+    background: var(--primary-bg);
+    color: var(--primary-fg);
+    border-top: 1px solid var(--border);
     text-align: center;
-    margin-top: 10px;
-    color: #888;
-}
-
-.popup-menu-content
-{
-    padding: 16px 0 0 0;
-    min-height: 120px;
-}
-
-#menuContent > button,
-#menuContent > input,
-#menuContent > label,
-#menuContent > div
-{
-    margin-bottom: 8px;
-}
-
-#menuContent label
-{
-    display: block;
-    margin-bottom: 6px;
-}
-
-#menuContent pre
-{
-    background: var(--secondary-bg);
-    color: var(--accent);
-    border-radius: 4px;
-    padding: 8px;
+    border-radius: 8px 8px 0 0;
     font-size: 13px;
 }
 
-.status-message
-{
-    margin-top: 10px;
-    color: var(--accent);
+/* Container for the buttons */
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Increased from 12px to 20px */
+    justify-content: center; /* Center horizontally */
+    margin-bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Style for each button */
+.popup-btn {
+    background: #ffd600;
+    color: #222;
     font-weight: bold;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 18px;
+    min-width: 140px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    transition: background 0.2s;
+    margin: 0;
+    white-space: nowrap;
 }
 
-.note-tag
-{
-    display: inline-block;
-    background: var(--accent);
-    color: var(--button-fg);
-    padding: 2px 6px;
-    margin-right: 4px;
-    margin-bottom: 2px;
-    font-size: 12px;
-    border-radius: 3px;
+.popup-btn:active,
+.popup-btn:focus {
+    background: #ffb300;
+    outline: none;
 }
 
-.devlog-error
-{
-    color: #FF4444;
-    font-weight: bold;
+/* Ensure popup content never overflows the popup window */
+.popup-menu-content {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 20px 18px;         /* More padding for breathing room */
+    display: block;
+    text-align: left;           /* Ensure left alignment */
 }
 
-/* Disabled state for buttons and inputs */
-.podawful-btn:disabled,
-.popup-menu-btn:disabled,
-input:disabled,
-select:disabled
-{
-    opacity: 0.5;
-    cursor: not-allowed;
+.popup-menu-content > div,
+.popup-menu-content > label,
+.popup-menu-content > .button-group {
+    margin-bottom: 18px;        /* More vertical spacing between rows/groups */
+}
+
+#changelogContent,
+#devlogContent,
+.popup-menu-content pre {
+    width: 100%;
+    max-width: 100%;
+    max-height: 140px; /* Adjust as needed for your popup size */
+    min-height: 60px;
+    overflow-x: auto;
+    overflow-y: auto;
+    background: transparent;
+    color: inherit;
+    font-size: 0.95em;
+    padding: 8px 0;
+    word-break: break-all;
+    margin-bottom: 16px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    flex: 1 1 auto;
+}
+
+#menuBack {
+    margin: 10px 0 0 0;
+    width: 100%;
 }

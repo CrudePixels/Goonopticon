@@ -38,11 +38,11 @@ body.dark-theme, .sidebar-container.dark-theme, body.popup.dark-theme
     --primary-fg: #BBB;
     --secondary-bg: #181818;
     --secondary-fg: #FFD600;
-    --accent: #FFD600;
+    --accent: #2196f3; /* New accent color */
     --button-bg: #FFD600;
     --button-fg: #111;
-    --button-hover-bg: #FFD600;
-    --button-hover-fg: #222;
+    --button-hover-bg: #2196f3;   /* New button highlight color */
+    --button-hover-fg: #fff;      /* Text color on highlight */
     --input-bg: #222;
     --input-fg: #FFD600;
     --border: #444;
@@ -79,8 +79,8 @@ body, .sidebar-container, body.popup
     transition: background 0.2s, color 0.2s;
 }
 
-.sidebar-action-btn:hover, .popup-menu-btn:hover, .podawful-btn:hover
-{
-    background: var(--button-hover-bg);
-    color: var(--button-hover-fg);
-}
+    .sidebar-action-btn:hover, .popup-menu-btn:hover, .podawful-btn:hover
+    {
+        background: var(--button-hover-bg);
+        color: var(--button-hover-fg);
+    }

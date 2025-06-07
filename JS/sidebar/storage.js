@@ -1,18 +1,7 @@
-﻿// Version: 1.0.1
+// Version: 1.0.1
 
 import { LogDev } from '../log.js';
-
-export function SafeParse(Value, Fallback)
-{
-    try
-    {
-        return JSON.parse(Value) || Fallback;
-    }
-    catch
-    {
-        return Fallback;
-    }
-}
+import { SafeParse, STORAGE_KEYS } from '../utils.js';
 
 // Generic storage getters/setters
 export function GetFromStorage(Key, Fallback = null, Cb)
@@ -32,7 +21,7 @@ export function SetInStorage(Key, Value, Cb)
     chrome.storage.local.set(Obj, Cb);
 }
 
-const groupsKey = "PodAwful::Groups::" + location.href;
+const groupsKey = STORAGE_KEYS.GROUPS(location.href);
 
 // Group management
 export function GetGroups(cb)
@@ -52,12 +41,12 @@ export function SetGroups(groups, cb)
 // Convenience wrappers
 export function GetNotes(Url, Cb)
 {
-    GetFromStorage(`PodAwful::Notes::${Url}`, [], Cb);
+    GetFromStorage(STORAGE_KEYS.NOTES(Url), [], Cb);
 }
 
 export function SetNotes(Url, Notes, Cb)
 {
-    SetInStorage(`PodAwful::Notes::${Url}`, Notes, Cb);
+    SetInStorage(STORAGE_KEYS.NOTES(Url), Notes, Cb);
 }
 
 export function SaveUndo(Url, Notes, Cb)
@@ -72,7 +61,7 @@ export function GetUndo(Url, Cb)
 
 export function GetLocked(Cb)
 {
-    GetFromStorage("PodAwful::Locked", false, Cb);
+    GetFromStorage(STORAGE_KEYS.LOCKED, false, Cb);
 }
 
 // Promise-based version for use in Promise.all
@@ -86,84 +75,71 @@ export function GetLockedPromise()
 
 export function SetLocked(Val, Cb)
 {
-    SetInStorage("PodAwful::Locked", !!Val, Cb);
+    SetInStorage(STORAGE_KEYS.LOCKED, !!Val, Cb);
 }
 
 export function GetPinnedGroups(Cb)
 {
-    GetFromStorage("PodAwful::PinnedGroups", [], Cb);
+    GetFromStorage(STORAGE_KEYS.PINNED_GROUPS, [], Cb);
 }
 
 export function SetPinnedGroups(Groups, Cb)
 {
-    SetInStorage("PodAwful::PinnedGroups", Groups, Cb);
+    SetInStorage(STORAGE_KEYS.PINNED_GROUPS, Groups, Cb);
 }
 
-export function GetSidebarVisible(callback)
+export function GetSidebarVisible(cb)
 {
-    // If using chrome.storage
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local)
+    chrome.storage.local.get([STORAGE_KEYS.SIDEBAR_VISIBLE], (result) =>
     {
-        chrome.storage.local.get(["PodAwful::SidebarVisible"], result =>
-        {
-            // Default to true if not set
-            const visible = result["PodAwful::SidebarVisible"];
-            callback(visible !== "false");
-        });
-    } else if (typeof localStorage !== "undefined")
-    {
-        // Fallback to localStorage
-        const visible = localStorage.getItem("PodAwful::SidebarVisible");
-        callback(visible !== "false");
-    } else
-    {
-        // Default fallback
-        callback(true);
-    }
+        // Default to true if not set
+        cb(result[STORAGE_KEYS.SIDEBAR_VISIBLE] !== "false");
+    });
 }
+
 export function SetSidebarVisible(Val, Cb)
 {
-    SetInStorage("PodAwful::SidebarVisible", !!Val, Cb);
+    SetInStorage(STORAGE_KEYS.SIDEBAR_VISIBLE, !!Val, Cb);
 }
 
 export function GetCompact(Cb)
 {
-    GetFromStorage("PodAwful::Compact", false, Cb);
+    GetFromStorage(STORAGE_KEYS.COMPACT, false, Cb);
 }
 
 export function GetTheme(Cb)
 {
-    GetFromStorage("PodAwful::Theme", "dark", Cb);
+    GetFromStorage(STORAGE_KEYS.THEME, "dark", Cb);
 }
 
 export function SetTheme(Theme, Cb)
 {
-    SetInStorage("PodAwful::Theme", Theme, Cb);
+    SetInStorage(STORAGE_KEYS.THEME, Theme, Cb);
 }
 
 export function GetTagFilter(Cb)
 {
-    GetFromStorage("PodAwful::TagFilterMulti", [], Cb);
+    GetFromStorage(STORAGE_KEYS.TAG_FILTER, [], Cb);
 }
 
 export function SetTagFilter(Tags, Cb)
 {
-    SetInStorage("PodAwful::TagFilterMulti", Tags, Cb);
+    SetInStorage(STORAGE_KEYS.TAG_FILTER, Tags, Cb);
 }
 
 export function GetNoteSearch(Cb)
 {
-    GetFromStorage("PodAwful::NoteSearch", "", Cb);
+    GetFromStorage(STORAGE_KEYS.NOTE_SEARCH, "", Cb);
 }
 
 export function SetNoteSearch(Val, Cb)
 {
-    SetInStorage("PodAwful::NoteSearch", Val, Cb);
+    SetInStorage(STORAGE_KEYS.NOTE_SEARCH, Val, Cb);
 }
 
 export function GetDevLog(Cb)
 {
-    GetFromStorage("PodAwful::DevLog", [], Cb);
+    GetFromStorage(STORAGE_KEYS.DEVLOG, [], Cb);
 }
 
 // When adding a note, ensure its group exists in the group list
@@ -174,20 +150,20 @@ export function AddNote(note, cb)
         if (note.group && !groups.includes(note.group))
         {
             groups.push(note.group);
-            SetGroups(groups, () =>
+            SetGroups(groups); // No callback!
+            GetNotes(location.href, (notes) =>
             {
-                GetNotes(location.href, (notes) =>
-                {
-                    notes.push(note);
-                    SetNotes(location.href, notes, cb);
-                });
+                notes.push(note);
+                SetNotes(location.href, notes); // No callback!
+                cb();
             });
         } else
         {
             GetNotes(location.href, (notes) =>
             {
                 notes.push(note);
-                SetNotes(location.href, notes, cb);
+                SetNotes(location.href, notes); // No callback!
+                cb();
             });
         }
     });

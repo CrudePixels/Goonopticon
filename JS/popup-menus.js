@@ -142,10 +142,12 @@ document.addEventListener("DOMContentLoaded", function ()
                         <label><input type="checkbox" id="hotkeyDevShift">Shift</label>
                     </label>
                 </div>
-                <button class="podawful-btn" id="saveHotkeys" title="Save your hotkey settings">Save Hotkeys</button>
-                <button class="podawful-btn" id="resetHotkeys" title="Reset hotkeys to default">Reset Hotkeys</button>
-                <button class="podawful-btn" id="toggleHotkeysBtn" title="Enable or disable hotkeys"></button>
-                <button class="podawful-btn" id="toggleYTKeys" title="Enable or disable YouTube's own hotkeys"></button>
+                <div class="button-group">
+                    <button class="podawful-btn" id="saveHotkeys" title="Save your hotkey settings">Save Hotkeys</button>
+                    <button class="podawful-btn" id="resetHotkeys" title="Reset hotkeys to default">Reset Hotkeys</button>
+                    <button class="podawful-btn" id="toggleHotkeysBtn" title="Enable or disable hotkeys"></button>
+                    <button class="podawful-btn" id="toggleYTKeys" title="Enable or disable YouTube's own hotkeys"></button>
+                </div>
                 <div id="hotkeyStatus" style="margin-top:10px;"></div>
             `);
 
@@ -358,6 +360,7 @@ document.addEventListener("DOMContentLoaded", function ()
                     const Theme = ThemeSelect?.value || "default";
                     localStorage.setItem("PodAwful::Compact", Compact);
                     localStorage.setItem("PodAwful::Theme", Theme);
+                    chrome.storage.local.set({ "PodAwful::Theme": Theme });
                     if (StatusDiv) StatusDiv.textContent = "Settings saved!";
                     document.body.classList.remove("default-theme", "dark-theme", "light-theme");
                     document.body.classList.add(Theme + "-theme");

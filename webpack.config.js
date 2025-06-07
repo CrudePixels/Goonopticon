@@ -1,10 +1,18 @@
 const path = require('path');
 
 module.exports = {
-  entry: './JS/sidebar/main.js',
+  entry: {
+    'main.bundle': './JS/sidebar/main.js'
+  },
   output: {
-    filename: 'main.bundle.js',
-    path: path.resolve(__dirname, 'JS/sidebar'),
+    filename: '[name].js',
+    path: 'C:/Users/wolf0/OneDrive/Desktop/PodAwfulTimestamps/JS/sidebar/bundle',
+    chunkFilename: '[name].js',
+    clean: true
   },
   mode: 'production',
+  optimization: {
+    splitChunks: false,
+    runtimeChunk: false
+  }
 };

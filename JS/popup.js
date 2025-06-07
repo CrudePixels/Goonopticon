@@ -2,6 +2,7 @@
 import { LogDev } from './log.js';
 import { OpenSubMenu } from './popup-shared.js';
 import { SetTheme, GetTheme } from './sidebar/storage.js';
+import { ApplyTheme } from './theme.js';
 
 document.addEventListener("DOMContentLoaded", () =>
 {
@@ -122,6 +123,9 @@ document.addEventListener("DOMContentLoaded", () =>
     const theme = (SelectedTheme || "default") + "-theme";
     document.body.className = `popup ${theme}`;
 
+    // For popup
+    document.body.classList.add(theme);
+
     // Set the logo based on theme
     const Theme = localStorage.getItem("PodAwful::Theme") || "default";
     let LogoFile = "logo-default.png";
@@ -141,6 +145,17 @@ document.addEventListener("DOMContentLoaded", () =>
             SetTheme(this.value, () =>
             {
                 document.body.className = `popup ${this.value}-theme`;
+                localStorage.setItem("PodAwful::Theme", this.value);
+                chrome.storage.local.set({ "PodAwful::Theme": this.value }, () =>
+                {
+                    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) =>
+                    {
+                        if (tabs[0])
+                        {
+                            chrome.tabs.sendMessage(tabs[0].id, { Action: "refreshSidebarTheme" });
+                        }
+                    });
+                });
             });
         });
     }
@@ -158,6 +173,18 @@ function onThemeChange(newTheme)
     SetTheme(newTheme, () =>
     {
         document.body.className = `popup ${newTheme}-theme`;
+        // When saving theme in popup (e.g., in popup-menus.js or popup.js)
+        localStorage.setItem("PodAwful::Theme", newTheme);
+        chrome.storage.local.set({ "PodAwful::Theme": newTheme }, () =>
+        {
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) =>
+            {
+                if (tabs[0])
+                {
+                    chrome.tabs.sendMessage(tabs[0].id, { Action: "refreshSidebarTheme" });
+                }
+            });
+        });
     });
 }
 

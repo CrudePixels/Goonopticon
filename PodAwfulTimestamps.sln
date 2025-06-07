@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		manifest.json = manifest.json
 		package-lock.json = package-lock.json
 		package.json = package.json
+		README.md = README.md
 		webpack.config.js = webpack.config.js
 	EndProjectSection
 EndProject
@@ -33,15 +34,23 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JS", "JS", "{FDCFF268-82D8-
 		JS\popup-menus.js = JS\popup-menus.js
 		JS\popup-shared.js = JS\popup-shared.js
 		JS\popup.js = JS\popup.js
+		JS\theme.js = JS\theme.js
+		JS\utils.js = JS\utils.js
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sidebar", "sidebar", "{1F8BBFC0-F86E-4A97-B38E-89A5E92EE597}"
 	ProjectSection(SolutionItems) = preProject
+		JS\sidebar\995.main.bundle.js = JS\sidebar\995.main.bundle.js
+		JS\sidebar\dragdrop.js = JS\sidebar\dragdrop.js
+		JS\sidebar\groupComponent.js = JS\sidebar\groupComponent.js
 		JS\sidebar\logic.js = JS\sidebar\logic.js
 		JS\sidebar\main.bundle.js = JS\sidebar\main.bundle.js
 		JS\sidebar\main.js = JS\sidebar\main.js
+		JS\sidebar\noteComponent.js = JS\sidebar\noteComponent.js
 		JS\sidebar\render.js = JS\sidebar\render.js
+		JS\sidebar\sidebarFooter.js = JS\sidebar\sidebarFooter.js
 		JS\sidebar\storage.js = JS\sidebar\storage.js
+		JS\sidebar\tagFilterComponent.js = JS\sidebar\tagFilterComponent.js
 		JS\sidebar\tagmanager.js = JS\sidebar\tagmanager.js
 	EndProjectSection
 EndProject
