@@ -1,35 +1,77 @@
+import { LogDev } from '../log.js';
+import { IsTimeClose } from './logic.js'; // <-- Add this import
+
 // Drag-and-drop helpers and improved UX
 
-export function highlightCurrentTimestamp()
+/**
+ * Highlights notes whose timestamp is close to the current video time.
+ * @param {Array} Notes - The array of note objects.
+ * @param {Function} ParseTime - Function to parse a time string to seconds.
+ * @param {number} [threshold=5] - Highlight threshold in seconds.
+ */
+export function highlightCurrentTimestamp(Notes = window.Notes, ParseTime = window.ParseTime, threshold = 5) // default threshold 5s
 {
-    const v = document.querySelector("video");
-    if (!v) return;
-    const current = v.currentTime;
-    document.querySelectorAll('.note-item').forEach(el =>
+    LogDev("highlightCurrentTimestamp called", "event");
+    // Notes and ParseTime are expected to be provided or available globally.
+    // If not, highlighting will be skipped.
+    try
     {
-        const noteId = el.dataset.noteId;
-        const note = window.Notes?.find(n => n.id === noteId);
-        if (note && note.time)
+        const v = document.querySelector("video");
+        if (!v || !Notes || typeof ParseTime !== "function")
         {
-            const t = window.ParseTime(note.time);
-            if (Math.abs(current - t) < 3)
+            LogDev("highlightCurrentTimestamp: prerequisites missing (video, Notes, or ParseTime)", "event");
+            return;
+        }
+        const current = v.currentTime;
+        document.querySelectorAll('.note-item').forEach(el =>
+        {
+            const noteId = el.dataset.noteId;
+            const note = Notes.find(n => n.id === noteId);
+            if (note && note.time)
             {
-                el.classList.add("highlight");
+                const t = ParseTime(note.time);
+                if (isNaN(t))
+                {
+                    el.classList.remove("highlight");
+                    LogDev(`Note ${note.id} has invalid time, not highlighted`, "event");
+                    return;
+                }
+                if (IsTimeClose(current, t, threshold)) // Use utility function
+                {
+                    el.classList.add("highlight");
+                    LogDev(`Note highlighted: ${note.id}`, "render");
+                } else
+                {
+                    el.classList.remove("highlight");
+                }
             } else
             {
-                el.classList.remove("highlight");
+                el.classList.remove('highlight');
             }
-        } else
-        {
-            el.classList.remove('highlight');
-        }
-    });
+        });
+        LogDev("highlightCurrentTimestamp completed", "event");
+    } catch (err)
+    {
+        LogDev("DragDrop highlightCurrentTimestamp error: " + err, "error");
+    }
 }
 
-// Optional: Setup drag-and-drop accessibility and feedback
+/**
+ * Placeholder for future drag-and-drop accessibility and feedback enhancements.
+ * Currently, drag-and-drop is handled in the component files.
+ * @param {HTMLElement} Container
+ * @param {Function} RenderSidebar
+ */
 export function setupSidebarDragAndDrop(Container, RenderSidebar)
 {
-    // Add keyboard support, ARIA, and improved feedback here if desired
-    // For now, all drag-and-drop is handled in the component files
-    // This is a placeholder for future enhancements
+    LogDev("setupSidebarDragAndDrop called", "event");
+    try
+    {
+        // TODO: Add keyboard support, ARIA, and improved feedback here.
+        // No-op for now.
+        LogDev("setupSidebarDragAndDrop completed (no-op)", "event");
+    } catch (err)
+    {
+        LogDev("DragDrop setupSidebarDragAndDrop error: " + err, "error");
+    }
 }

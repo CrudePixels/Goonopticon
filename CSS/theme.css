@@ -29,6 +29,9 @@ body.default-theme, .sidebar-container.default-theme, body.popup.default-theme
     --input-bg: #fff;
     --input-fg: #111;
     --border: #FFD600;
+    --highlight-bg: ffe082;
+    --highlight-fg: #222;
+    --highlight-border: #FFD600;
 }
 
 /* Dark Theme */
@@ -38,14 +41,17 @@ body.dark-theme, .sidebar-container.dark-theme, body.popup.dark-theme
     --primary-fg: #BBB;
     --secondary-bg: #181818;
     --secondary-fg: #FFD600;
-    --accent: #2196f3; /* New accent color */
+    --accent: #2196f3;
     --button-bg: #FFD600;
     --button-fg: #111;
-    --button-hover-bg: #2196f3;   /* New button highlight color */
-    --button-hover-fg: #fff;      /* Text color on highlight */
+    --button-hover-bg: #2196f3;
+    --button-hover-fg: #fff;
     --input-bg: #222;
     --input-fg: #FFD600;
-    --border: #444;
+    --border: #2196f3;
+    --highlight-bg: #333b1a;
+    --highlight-fg: #FFD600;
+    --highlight-border: #2196f3;
 }
 
 /* Light Theme */
@@ -63,20 +69,26 @@ body.light-theme, .sidebar-container.light-theme, body.popup.light-theme
     --input-bg: #fff;
     --input-fg: #111;
     --border: #FFD600;
+    --highlight-bg: #fffde7;
+    --highlight-fg: #222;
+    --highlight-border: #FFD600;
 }
 
+/* Apply theme variables to backgrounds and text */
 body, .sidebar-container, body.popup
 {
     background: var(--primary-bg);
     color: var(--primary-fg);
 }
 
+/* Button styles using theme variables */
 .sidebar-action-btn, .popup-menu-btn, .podawful-btn
 {
     background: var(--button-bg);
     color: var(--button-fg);
-    border: 1px solid var(--border);
-    transition: background 0.2s, color 0.2s;
+    border: 1.5px solid var(--accent);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    outline: none;
 }
 
     .sidebar-action-btn:hover, .popup-menu-btn:hover, .podawful-btn:hover
@@ -84,3 +96,61 @@ body, .sidebar-container, body.popup
         background: var(--button-hover-bg);
         color: var(--button-hover-fg);
     }
+
+    .sidebar-action-btn:focus, .popup-menu-btn:focus, .podawful-btn:focus
+    {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+.note-timestamp {
+    margin-right: 8px;
+}
+
+.note-text {
+    margin-left: 0;
+}
+
+.note-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.note-actions button,
+.sidebar-action-btn {
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 2px;
+    background: var(--button-bg, #222);
+    color: var(--button-fg, #FFD600);
+    transition: background 0.2s, color 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    cursor: pointer;
+}
+
+.default-theme .note-actions button,
+.default-theme .sidebar-action-btn {
+    background: #222;
+    color: #FFD600;
+}
+
+.dark-theme .note-actions button,
+.dark-theme .sidebar-action-btn {
+    background: #333;
+    color: #FFD600;
+}
+
+.light-theme .note-actions button,
+.light-theme .sidebar-action-btn {
+    background: #fff;
+    color: #222;
+    border: 1px solid #FFD600;
+}
+
+.note-actions button:disabled,
+.sidebar-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

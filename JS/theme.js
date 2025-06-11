@@ -1,15 +1,35 @@
-﻿// Theme logic shared across sidebar and popup
+﻿import { LogDev } from './log.js';
 
-export function ApplyTheme(selectedTheme = "default")
+// Theme logic shared across sidebar and popup
+
+const THEME_CLASSES = ["default-theme", "dark-theme", "light-theme"];
+
+/**
+ * Applies the selected theme to the body, sidebar, and any additional elements.
+ * @param {string} selectedTheme - The theme name (e.g., "default", "dark", "light").
+ * @param {HTMLElement[]} [extraElements=[]] - Additional elements to apply the theme to.
+ */
+export function ApplyTheme(selectedTheme = "default", extraElements = [])
 {
+    LogDev("ApplyTheme called with: " + selectedTheme, "render");
     const themeClass = `${selectedTheme}-theme`;
-    document.body.classList.remove("default-theme", "dark-theme", "light-theme");
-    document.body.classList.add(themeClass);
 
-    const sidebar = document.getElementById('podawful-sidebar');
-    if (sidebar)
+    function updateThemeClass(el)
     {
-        sidebar.classList.remove('default-theme', 'dark-theme', 'light-theme');
-        sidebar.classList.add(themeClass);
+        if (!el) return;
+        el.classList.remove(...THEME_CLASSES);
+        el.classList.add(themeClass);
+        LogDev("Theme class applied to element: " + (el.id || el.tagName), "render");
+    }
+
+    try
+    {
+        updateThemeClass(document.body);
+        updateThemeClass(document.getElementById('podawful-sidebar'));
+        extraElements.forEach(updateThemeClass);
+        LogDev("Theme applied successfully: " + selectedTheme, "render");
+    } catch (err)
+    {
+        LogDev("Theme error: " + err, "error");
     }
 }

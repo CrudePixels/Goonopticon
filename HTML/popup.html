@@ -1,27 +1,21 @@
-﻿<!-- Version: 1.3.1 -->
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <title>PodAwful's Timestamps</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="../CSS/popup.bundle.css" />
     <link rel="stylesheet" href="../CSS/theme.css">
 </head>
 <body class="popup">
     <div class="popup-header">
-        <img id="popupLogo" class="popup-logo" alt="PodAwful Logo" />
-        <h2>PodAwful's Timestamps</h2>
+        <img id="popupLogo" class="popup-logo" src="../Resources/logo-default.png" alt="PodAwful Logo" />
+        <h2 id="popupTitle">PodAwful's Timestamps</h2>
     </div>
 
-    <div class="popup-buttons">
-        <button id="toggleSidebar" class="podawful-btn">Show Sidebar</button>
-        <button id="importExport" class="podawful-btn">Import/Export</button>
-        <button id="hotkeys" class="podawful-btn">Hotkeys</button>
-        <button id="settings" class="podawful-btn">Settings</button>
-        <button id="changelog" class="podawful-btn">Changelog</button>
-        <button id="devlog" class="podawful-btn">Dev Log</button>
-        <button id="reportBug" class="podawful-btn">Report Bug</button>
-    </div>
+    <!-- Dynamic menu title and content go here -->
+    <div id="menuTitle" class="popup-menu-title"></div>
+    <div id="menuContent" class="popup-menu-content"></div>
 
     <div class="popup-footer">
         Created by: Henchman CrudePixels

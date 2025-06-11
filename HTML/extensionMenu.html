@@ -1,8 +1,11 @@
 ﻿<!DOCTYPE html>
-<html>
+
+
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <title>PodAwful's Timestamps</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="../CSS/popup.bundle.css" />
     <link rel="stylesheet" href="../CSS/sidebar.bundle.css" />
     <link rel="stylesheet" href="../CSS/tagmanager.css" />
@@ -10,12 +13,14 @@
 </head>
 <body class="popup">
     <div class="popup-header">
+        <!-- Optional logo for consistency -->
+        <img id="popupLogo" class="popup-logo" src="../Resources/logo-default.png" alt="PodAwful Logo" />
         <h2 id="menuTitle">PodAwful's Timestamps</h2>
     </div>
-    <div class="popup-menu-content">
+    <div class="popup-menu-content" role="main">
         <div id="menuContent"></div>
     </div>
-    <button id="menuBack" class="podawful-btn" style="margin: 10px 0 0 0; width: 100%;" title="Return to main menu">Back</button>
+    <button id="menuBack" class="podawful-btn" aria-label="Return to main menu" title="Return to main menu">Back</button>
     <div class="popup-footer">
         Created by: Henchman CrudePixels
     </div>

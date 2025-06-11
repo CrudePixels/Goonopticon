@@ -1,24 +1,44 @@
 ﻿/* === THEME-BASED SIDEBAR STYLES (uses CSS variables from theme.css) === */
 
+:root
+{
+    --sidebar-width: 350px;
+    --sidebar-bg: #181818;
+    --sidebar-fg: #fff;
+    --sidebar-border: #444;
+    --accent: #FFD600;
+    --button-bg: #333;
+    --button-fg: #fff;
+    --button-hover-bg: #444;
+    --button-hover-fg: #FFD600;
+    --secondary-bg: #222;
+    --secondary-fg: #ccc;
+    --primary-bg: #222;
+    --primary-fg: #fff;
+    --border: #444;
+    --input-bg: #222;
+    --input-fg: #fff;
+}
+
 #podawful-sidebar
 {
     position: fixed;
     top: 0;
     right: 0;
-    width: 400px;
+    width: var(--sidebar-width, 350px);
     height: 100vh;
-    z-index: 999999;
-    background: var(--sidebar-bg, #222);
+    z-index: 9999;
+    background: var(--sidebar-bg, #181818);
     color: var(--sidebar-fg, #fff);
-    box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+    box-shadow: -2px 0 8px rgba(0,0,0,0.3); /* shadow to the left */
     overflow-y: auto;
     font-family: inherit;
     font-size: 16px;
     transition: opacity 0.2s;
     opacity: 1;
-    border-left: 1px solid var(--sidebar-border, #444);
+    border-left: 1px solid var(--sidebar-border, #444); /* Use border-left instead of border-right */
     scrollbar-width: thin;
-    scrollbar-color: var(--accent) var(--sidebar-bg);
+    scrollbar-color: var(--accent, #FFD600) var(--sidebar-bg, #181818);
 }
 
     #podawful-sidebar.sidebar-hide
@@ -27,7 +47,7 @@
         pointer-events: none;
     }
 
-/* Example theme overrides (adjust as needed) */
+/* Theme overrides */
 .default-theme #podawful-sidebar
 {
     --sidebar-bg: #222;
@@ -49,6 +69,7 @@
     --sidebar-border: #333;
 }
 
+/* Custom Scrollbar */
 #podawful-sidebar::-webkit-scrollbar
 {
     width: 8px;
@@ -56,15 +77,16 @@
 
 #podawful-sidebar::-webkit-scrollbar-thumb
 {
-    background: var(--accent);
+    background: var(--accent, #FFD600);
     border-radius: 4px;
 }
 
 #podawful-sidebar::-webkit-scrollbar-track
 {
-    background: var(--sidebar-bg);
+    background: var(--sidebar-bg, #181818);
 }
 
+/* Sidebar Container Compact */
 .sidebar-container.compact
 {
     font-size: 12px;
@@ -72,15 +94,16 @@
     min-width: 120px;
 }
 
+/* Sidebar Header */
 #podawful-sidebar .sidebar-header
 {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 24px 20px 16px 20px;
-    background: var(--sidebar-bg);
-    color: var(--sidebar-fg);
-    border-bottom: 1px solid var(--sidebar-border);
+    background: var(--sidebar-bg, #181818);
+    color: var(--sidebar-fg, #fff);
+    border-bottom: 1px solid var(--sidebar-border, #444);
     border-radius: 0 0 8px 8px;
     position: relative;
 }
@@ -90,7 +113,7 @@
     margin: 0 0 8px 0;
     font-size: 1.5em;
     font-weight: bold;
-    color: var(--accent);
+    color: var(--accent, #FFD600);
     text-align: center;
 }
 
@@ -104,15 +127,16 @@
 .sidebar-url
 {
     font-size: 13px;
-    color: var(--accent);
+    color: var(--accent, #FFD600);
     margin-top: 10px;
     word-break: break-word;
     text-align: center;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border, #444);
     padding-bottom: 8px;
     width: 100%;
 }
 
+/* Sidebar Action Button */
 .sidebar-action-btn
 {
     width: 100%;
@@ -120,8 +144,27 @@
     padding: 10px 0;
     font-size: 1em;
     border-radius: 4px;
+    background: var(--button-bg, #333);
+    color: var(--button-fg, #fff);
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
 }
 
+    .sidebar-action-btn:focus
+    {
+        outline: 2px solid var(--accent, #FFD600);
+        outline-offset: 2px;
+    }
+
+    .sidebar-action-btn:hover
+    {
+        background: var(--button-hover-bg, #444);
+        color: var(--button-hover-fg, #FFD600);
+    }
+
+/* Tag Filter & Group Controls */
 .sidebar-tag-filter,
 .sidebar-group-controls
 {
@@ -130,15 +173,16 @@
     align-items: center;
     justify-content: center;
     padding: 16px 0 8px 0;
-    background: var(--secondary-bg);
-    border-bottom: 1px solid var(--border);
+    background: var(--secondary-bg, #222);
+    border-bottom: 1px solid var(--border, #444);
     width: 100%;
     gap: 12px;
 }
 
-    .sidebar-tag-filter label
+    .sidebar-tag-filter label,
+    .sidebar-tag-filter-label
     {
-        margin: 0 8px 0 0;
+        margin-right: 8px;
     }
 
     .sidebar-tag-filter input[type="text"],
@@ -150,6 +194,7 @@
         display: block;
     }
 
+/* Group Title Row */
 .group-title-row
 {
     display: flex;
@@ -158,9 +203,9 @@
     gap: 12px;
     margin-top: 24px;
     margin-bottom: 12px;
-    background: var(--primary-bg);
+    background: var(--primary-bg, #222);
     padding: 10px 20px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border, #444);
     border-radius: 6px 6px 0 0;
 }
 
@@ -169,7 +214,7 @@
     flex: 1;
     font-size: 18px;
     font-weight: bold;
-    color: var(--primary-fg);
+    color: var(--primary-fg, #fff);
     white-space: normal;
     word-break: break-word;
 }
@@ -190,6 +235,7 @@
         justify-content: center;
     }
 
+/* Note Group & Items */
 .note-group,
 .note-item,
 .group-title,
@@ -204,18 +250,20 @@
 {
     margin-bottom: 24px;
     padding: 0 20px 12px 20px;
-    background: var(--secondary-bg);
+    background: var(--secondary-bg, #222);
     border-radius: 0 0 8px 8px;
 }
 
-    .note-group.dragging
+    .note-group.dragging,
+    .note-item.dragging
     {
         opacity: 0.5;
     }
 
-    .note-group.drag-over
+    .note-group.drag-over,
+    .note-item.drag-over
     {
-        border: 2px dashed #FFD600;
+        border: 2px dashed var(--accent, #FFD600);
     }
 
 .note-item
@@ -223,29 +271,19 @@
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    background: var(--secondary-bg);
-    color: var(--accent);
+    background: var(--secondary-bg, #222);
+    color: var(--accent, #FFD600);
     margin: 10px 0;
     padding: 12px 10px;
     border-radius: 8px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border, #444);
 }
-
-    .note-item.dragging
-    {
-        opacity: 0.5;
-    }
-
-    .note-item.drag-over
-    {
-        border: 2px dashed #FFD600;
-    }
 
     .note-item.highlight
     {
-        border: 2px solid #fff9b1;
-        background: #fff9b1 !important;
-        color: #222 !important;
+        border: 2px solid var(--highlight-border, var(--accent, #FFD600));
+        background: var(--highlight-bg, #fff9b1) !important;
+        color: var(--highlight-fg, #222) !important;
     }
 
 .note-buttons
@@ -271,7 +309,7 @@
     min-width: 60px;
     font-weight: bold;
     cursor: pointer;
-    color: var(--accent);
+    color: var(--accent, #FFD600);
     text-align: right;
 }
 
@@ -282,7 +320,7 @@
     word-break: break-word;
     font-size: 13px;
     white-space: pre-wrap;
-    color: var(--secondary-fg);
+    color: var(--secondary-fg, #ccc);
 }
 
 .note-tags
@@ -294,22 +332,23 @@
 
 .note-tag
 {
-    background: var(--accent);
-    color: var(--button-fg);
+    background: var(--accent, #FFD600);
+    color: var(--button-fg, #fff);
     border-radius: 3px;
     padding: 2px 6px;
     font-size: 11px;
 }
 
+/* Sidebar Footer */
 #podawful-sidebar .sidebar-footer
 {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     padding: 20px 10px 10px 10px;
-    background: var(--sidebar-bg);
-    color: var(--sidebar-fg);
-    border-top: 1px solid var(--sidebar-border);
+    background: var(--sidebar-bg, #181818);
+    color: var(--sidebar-fg, #fff);
+    border-top: 1px solid var(--sidebar-border, #444);
     text-align: center;
     border-radius: 8px 8px 0 0;
     gap: 10px;
@@ -319,7 +358,7 @@
 {
     display: block;
     margin-top: 18px;
-    color: var(--accent);
+    color: var(--accent, #FFD600);
     text-decoration: underline;
     font-weight: bold;
     font-size: 1em;
@@ -328,7 +367,7 @@
 
     .sidebar-footer .sidebar-visit-link:hover
     {
-        color: var(--button-hover-fg);
+        color: var(--button-hover-fg, #FFD600);
     }
 
 .empty-group-msg
@@ -346,17 +385,27 @@
 .group-title-row button,
 .note-buttons button
 {
-    background: var(--button-bg);
-    color: var(--button-fg);
+    background: var(--button-bg, #333);
+    color: var(--button-fg, #fff);
     border: none;
     border-radius: 4px;
     font-size: 1.1em;
     font-weight: bold;
     padding: 8px 0;
-    margin: 6px 0 8px 0; /* Increased top margin for more space */
+    margin: 6px 0 8px 0;
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
 }
+
+    .sidebar-action-btn:focus,
+    .sidebar-footer button:focus,
+    .sidebar-group-controls button:focus,
+    .group-title-row button:focus,
+    .note-buttons button:focus
+    {
+        outline: 2px solid var(--accent, #FFD600);
+        outline-offset: 2px;
+    }
 
     .sidebar-action-btn:hover,
     .sidebar-footer button:hover,
@@ -364,8 +413,8 @@
     .group-title-row button:hover,
     .note-buttons button:hover
     {
-        background: var(--button-hover-bg);
-        color: var(--button-hover-fg);
+        background: var(--button-hover-bg, #444);
+        color: var(--button-hover-fg, #FFD600);
     }
 
     .sidebar-action-btn:disabled,
@@ -378,14 +427,22 @@
         cursor: not-allowed;
     }
 
+.sidebar-action-btn--floating
+{
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1000001;
+}
+
 /* === Unified Input Styles === */
 input[type="text"],
 input[type="file"],
 select
 {
-    background: var(--input-bg);
-    color: var(--input-fg);
-    border: 1px solid var(--border);
+    background: var(--input-bg, #222);
+    color: var(--input-fg, #fff);
+    border: 1px solid var(--border, #444);
     border-radius: 4px;
     padding: 4px 8px;
     font-size: 15px;
@@ -400,8 +457,8 @@ select
     right: 24px;
     bottom: 24px;
     z-index: 1000001;
-    background: var(--button-bg);
-    color: var(--button-fg);
+    background: var(--button-bg, #333);
+    color: var(--button-fg, #fff);
     border: none;
     border-radius: 6px;
     padding: 12px 24px;
@@ -418,46 +475,24 @@ select
 
     #podawful-show-sidebar-btn:hover
     {
-        background: var(--button-hover-bg);
-        color: var(--button-hover-fg);
+        background: var(--button-hover-bg, #444);
+        color: var(--button-hover-fg, #FFD600);
     }
 
-body
-{
-    margin-right: 400px; /* or the same width as your sidebar */
-}
-
-#main-content
-{
-    margin-right: 400px;
-}
-
-/* When showing the sidebar */
+/* Body Margin for Sidebar */
+body,
+#main-content,
 body.sidebar-visible
 {
-    margin-right: 400px;
+    margin-right: var(--sidebar-width, 350px);
 }
 
-/* When hiding the sidebar */
 body:not(.sidebar-visible)
 {
     margin-right: 0;
 }
 
-.note-dropzone
-{
-    height: 24px;
-    margin: 2px 0;
-    background: transparent;
-    transition: background 0.2s;
-}
-
-    .note-dropzone.drag-over
-    {
-        background: #d0eaff;
-        border: 2px solid #2196f3;
-    }
-
+/* Dropzones */
 .note-dropzone,
 .group-dropzone
 {
@@ -475,25 +510,6 @@ body:not(.sidebar-visible)
         border-color: #2196f3;
     }
 
-.note-item.dragging
-{
-    opacity: 0.5;
-}
-
-.note-dropzone.group-dropzone
-{
-    min-height: 24px;
-    background: #f0f0f0;
-    border: 2px dashed #bbb;
-    margin-bottom: 4px;
-    transition: background 0.2s;
-}
-
-.popup-menu-content > div
-{
-    margin-bottom: 10px;
-}
-
 .note-placeholder
 {
     height: 40px;
@@ -503,184 +519,34 @@ body:not(.sidebar-visible)
     transition: background 0.2s;
 }
 
-/* Sidebar container */
-.sidebar-container
-{
-    background: #18191c;
-    color: #f1f1f1;
-    font-family: 'Segoe UI', Arial, sans-serif;
-    padding: 0;
-    width: 350px;
-    min-height: 100vh;
+.group-dropzone-outer {
+    height: 12px;
+    background: transparent;
+    transition: background 0.2s;
+}
+.group-dropzone-outer.drag-over {
+    background: #FFD60055;
+}
+.note-group.dragging-group {
+    opacity: 0.5;
 }
 
-/* Header */
-.sidebar-header
-{
-    text-align: center;
-    padding: 24px 16px 12px 16px;
-    border-bottom: 1px solid #232428;
+/* Hide dropzones by default */
+.note-dropzone,
+.group-dropzone-outer,
+.group-dropzone {
+    display: none;
 }
 
-.sidebar-title
-{
-    color: #3ea6ff;
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-}
-
-.sidebar-subtitle
-{
-    color: #b0b0b0;
-    font-size: 1rem;
-    margin-bottom: 4px;
-}
-
-.sidebar-link
-{
-    color: #3ea6ff;
-    text-decoration: underline;
-    font-size: 0.95rem;
-    margin-bottom: 12px;
+/* Show dropzones when dragging */
+.body-dragging-notes .note-dropzone,
+.body-dragging-notes .group-dropzone-outer,
+.body-dragging-notes .group-dropzone {
     display: block;
 }
 
-/* Main button */
-.sidebar-main-btn
+/* Popup Menu */
+.popup-menu-content > div
 {
-    background: #ffd600;
-    color: #18191c;
-    border: none;
-    border-radius: 6px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 12px 0;
-    margin: 12px 0 0 0;
-    width: 100%;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-    .sidebar-main-btn:hover
-    {
-        background: #ffe066;
-    }
-
-/* Section titles */
-.sidebar-section-title
-{
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin: 18px 0 8px 0;
-    color: #fff;
-    text-align: left;
-}
-
-/* Search input */
-.sidebar-search
-{
-    width: 100%;
-    padding: 8px 12px;
-    border-radius: 5px;
-    border: 1px solid #232428;
-    background: #232428;
-    color: #f1f1f1;
-    margin-bottom: 14px;
-    font-size: 1rem;
-}
-
-/* Tag and group buttons */
-.sidebar-btn
-{
-    background: #232428;
-    color: #ffd600;
-    border: none;
-    border-radius: 5px;
-    padding: 7px 16px;
-    font-size: 1rem;
-    font-weight: 500;
-    margin: 0 6px 10px 0;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    display: inline-block;
-}
-
-    .sidebar-btn:hover
-    {
-        background: #ffd600;
-        color: #232428;
-    }
-
-/* Card styles */
-.sidebar-card
-{
-    background: #232428;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-    margin: 16px 0;
-    padding: 14px 16px;
-    border: 1px solid #232428;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.sidebar-card-title
-{
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 6px;
-}
-
-.sidebar-card-actions
-{
-    display: flex;
-    gap: 8px;
-    margin-top: 4px;
-}
-
-.sidebar-card-action-btn
-{
-    background: #232428;
-    color: #ffd600;
-    border: none;
-    border-radius: 4px;
-    padding: 5px 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background 0.2s, color 0.2s;
-}
-
-    .sidebar-card-action-btn:hover
-    {
-        background: #ffd600;
-        color: #232428;
-    }
-
-/* Timestamp styling */
-.sidebar-timestamp
-{
-    color: #3ea6ff;
-    font-weight: 600;
-    font-size: 1rem;
-    margin-right: 6px;
-}
-
-/* Remove excessive gaps */
-.sidebar-gap
-{
-    height: 8px;
-}
-
-/* Utility */
-.mt-1
-{
-    margin-top: 8px;
-}
-
-.mb-1
-{
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }

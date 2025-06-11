@@ -40,11 +40,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JS", "JS", "{FDCFF268-82D8-
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sidebar", "sidebar", "{1F8BBFC0-F86E-4A97-B38E-89A5E92EE597}"
 	ProjectSection(SolutionItems) = preProject
-		JS\sidebar\995.main.bundle.js = JS\sidebar\995.main.bundle.js
 		JS\sidebar\dragdrop.js = JS\sidebar\dragdrop.js
 		JS\sidebar\groupComponent.js = JS\sidebar\groupComponent.js
 		JS\sidebar\logic.js = JS\sidebar\logic.js
-		JS\sidebar\main.bundle.js = JS\sidebar\main.bundle.js
 		JS\sidebar\main.js = JS\sidebar\main.js
 		JS\sidebar\noteComponent.js = JS\sidebar\noteComponent.js
 		JS\sidebar\render.js = JS\sidebar\render.js
@@ -64,6 +62,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{
 		Resources\logo-light..png = Resources\logo-light..png
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bundle", "bundle", "{D0934238-9588-47BE-98BA-612D64F4C826}"
+	ProjectSection(SolutionItems) = preProject
+		JS\sidebar\bundle\main.bundle.js = JS\sidebar\bundle\main.bundle.js
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -74,6 +77,7 @@ Global
 		{FDCFF268-82D8-42E2-B1A0-8F4E00554B8A} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
 		{1F8BBFC0-F86E-4A97-B38E-89A5E92EE597} = {FDCFF268-82D8-42E2-B1A0-8F4E00554B8A}
 		{D3E1860F-3692-476F-A8E7-85C9D0845E73} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
+		{D0934238-9588-47BE-98BA-612D64F4C826} = {1F8BBFC0-F86E-4A97-B38E-89A5E92EE597}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {78969552-BD6B-4AA1-BAEB-C740C54F344A}

@@ -1,24 +1,25 @@
 ﻿body.popup
 {
     min-width: 340px;
-    min-height: 420px; /* Ensure a minimum height for layout */
-    background: var(--primary-bg);
-    color: var(--primary-fg);
+    min-height: 420px;
+    background: var(--primary-bg, #fff);
+    color: var(--primary-fg, #222);
     font-family: inherit;
     font-size: 16px;
     margin: 0;
     padding: 0;
 }
 
+/* === Popup Header === */
 .popup-header
 {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 24px 20px 16px 20px;
-    background: var(--primary-bg);
-    color: var(--primary-fg);
-    border-bottom: 1px solid var(--border);
+    background: var(--primary-bg, #fff);
+    color: var(--primary-fg, #222);
+    border-bottom: 1px solid var(--border, #ccc);
     border-radius: 0 0 8px 8px;
 }
 
@@ -27,7 +28,7 @@
         margin: 0 0 8px 0;
         font-size: 1.5em;
         font-weight: bold;
-        color: var(--accent);
+        color: var(--accent, #FFD600);
         text-align: center;
     }
 
@@ -38,6 +39,7 @@
     margin: 8px 0;
 }
 
+/* === Popup Buttons === */
 .popup-buttons
 {
     display: flex;
@@ -46,11 +48,12 @@
     padding: 20px;
 }
 
-.podawful-btn
+.podawful-btn,
+button
 {
-    background: var(--button-bg);
-    color: var(--button-fg);
-    border: 1px solid var(--border);
+    background: var(--button-bg, #333);
+    color: var(--button-fg, #fff);
+    border: 1px solid var(--border, #ccc);
     border-radius: 4px;
     font-size: 1.1em;
     font-weight: bold;
@@ -66,101 +69,89 @@
     display: inline-block;
 }
 
-    .podawful-btn:hover
+    .podawful-btn:hover,
+    button:hover,
+    .podawful-btn:active,
+    button:active,
+    .podawful-btn:focus,
+    button:focus
     {
-        background: var(--button-hover-bg);
-        color: var(--button-hover-fg);
+        background: var(--button-hover-bg, #444);
+        color: var(--button-hover-fg, #FFD600);
+        outline: 2px solid var(--accent, #FFD600);
+        outline-offset: 2px;
     }
 
-.podawful-btn:active,
-.podawful-btn:focus {
-    background: var(--button-hover-bg);
-    color: var(--button-hover-fg);
-    outline: none;
-}
-
+/* === Popup Footer === */
 .popup-footer
 {
     padding: 20px;
-    background: var(--primary-bg);
-    color: var(--primary-fg);
-    border-top: 1px solid var(--border);
+    background: var(--primary-bg, #fff);
+    color: var(--primary-fg, #222);
+    border-top: 1px solid var(--border, #ccc);
     text-align: center;
     border-radius: 8px 8px 0 0;
     font-size: 13px;
 }
 
-/* Container for the buttons */
-.button-group {
+/* === Button Group === */
+.button-group
+{
     display: flex;
     flex-wrap: wrap;
-    gap: 20px; /* Increased from 12px to 20px */
-    justify-content: center; /* Center horizontally */
+    gap: 12px;
+    justify-content: center;
     margin-bottom: 0;
     width: 100%;
     box-sizing: border-box;
 }
 
-/* Style for each button */
-.popup-btn {
-    background: #ffd600;
-    color: #222;
-    font-weight: bold;
-    border: none;
-    border-radius: 4px;
-    padding: 10px 18px;
-    min-width: 140px;
-    text-align: center;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    transition: background 0.2s;
-    margin: 0;
-    white-space: nowrap;
-}
-
-.popup-btn:active,
-.popup-btn:focus {
-    background: #ffb300;
-    outline: none;
-}
-
-/* Ensure popup content never overflows the popup window */
-.popup-menu-content {
+/* === Popup Content === */
+.popup-menu-content
+{
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    padding: 20px 18px;         /* More padding for breathing room */
+    padding: 20px 18px;
     display: block;
-    text-align: left;           /* Ensure left alignment */
+    text-align: left;
 }
 
-.popup-menu-content > div,
-.popup-menu-content > label,
-.popup-menu-content > .button-group {
-    margin-bottom: 18px;        /* More vertical spacing between rows/groups */
-}
+    .popup-menu-content > div,
+    .popup-menu-content > label,
+    .popup-menu-content > .button-group
+    {
+        margin-bottom: 18px;
+    }
 
-#changelogContent,
-#devlogContent,
-.popup-menu-content pre {
-    width: 100%;
-    max-width: 100%;
-    max-height: 140px; /* Adjust as needed for your popup size */
-    min-height: 60px;
-    overflow-x: auto;
-    overflow-y: auto;
-    background: transparent;
-    color: inherit;
-    font-size: 0.95em;
-    padding: 8px 0;
-    word-break: break-all;
-    margin-bottom: 16px;
-    border-radius: 4px;
-    box-sizing: border-box;
-    flex: 1 1 auto;
-}
+    #changelogContent,
+    #devlogContent,
+    .popup-menu-content pre
+    {
+        width: 100%;
+        max-width: 100%;
+        max-height: 180px;
+        min-height: 60px;
+        overflow-x: auto;
+        overflow-y: auto;
+        background: transparent;
+        color: inherit;
+        font-size: 0.95em;
+        padding: 8px 0;
+        word-break: break-all;
+        margin-bottom: 16px;
+        border-radius: 4px;
+        box-sizing: border-box;
+        flex: 1 1 auto;
+    }
 
-#menuBack {
+/* === Misc === */
+#menuBack
+{
     margin: 10px 0 0 0;
     width: 100%;
 }
+
+/* Accessibility: focus outline for all buttons (already included above) */
+
+/* Removed unused .popup-btn class */

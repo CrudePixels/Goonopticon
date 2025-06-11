@@ -5,157 +5,228 @@ import { ApplyTheme } from '../theme.js';
 import { renderTagFilter } from './tagFilterComponent.js';
 import { renderGroup } from './groupComponent.js';
 import { renderSidebarFooter } from './sidebarFooter.js';
+import { ParseTime } from './logic.js';
+
+function updateThemeClasses(theme, ...elements)
+{
+    const classes = ['default-theme', 'dark-theme', 'light-theme'];
+    elements.forEach(el =>
+    {
+        if (el)
+        {
+            el.classList.remove(...classes);
+            el.classList.add(`${theme}-theme`);
+        }
+    });
+}
+
+function showSidebar(sidebar)
+{
+    sidebar.classList.remove('sidebar-hide');
+    sidebar.style.display = '';
+    document.body.classList.add('sidebar-visible');
+    LogDev("Sidebar shown", "system");
+}
+
+function hideSidebar(sidebar)
+{
+    sidebar.classList.add('sidebar-hide');
+    sidebar.style.display = 'none';
+    document.body.classList.remove('sidebar-visible');
+    LogDev("Sidebar hidden", "system");
+}
 
 export function RenderSidebar(Container)
 {
+    LogDev("RenderSidebar called", "render");
+    if (!Container)
+    {
+        LogDev("[ERROR] RenderSidebar: Container is null/undefined", "error");
+        return;
+    }
     try
     {
         Promise.all([
-            new Promise(Resolve => GetNotes(location.href, Resolve)),
-            new Promise(Resolve => GetPinnedGroups(Resolve)),
-            new Promise(Resolve => GetCompact(Resolve)),
-            new Promise(Resolve => GetTheme(Resolve)),
-            new Promise(Resolve => GetSidebarVisible(Resolve)),
+            new Promise(Resolve => GetNotes(location.href, (data) => Resolve(Array.isArray(data) ? data : []))),
+            new Promise(Resolve => GetPinnedGroups((err, data) => Resolve(Array.isArray(data) ? data : []))),
+            new Promise(Resolve => GetCompact((err, data) => Resolve(data))),
+            new Promise(Resolve => GetTheme((err, data) => Resolve(data))),
+            new Promise(Resolve => GetSidebarVisible((err, data) => Resolve(data))),
             GetLockedPromise(),
-            new Promise(Resolve => GetTagFilter(Resolve)),
-            new Promise(Resolve => GetNoteSearch(Resolve))
-        ]).then(([Notes, PinnedGroups, Compact, Theme, SidebarVisible, Locked, SelectedTags, Search]) =>
-        {
-            LogDev("Sidebar data loaded", { Notes, PinnedGroups, Compact, Theme, SidebarVisible, Locked, SelectedTags, Search });
-
-            if (!SidebarVisible)
+            new Promise(Resolve => GetTagFilter((err, data) => Resolve(Array.isArray(data) ? data : []))),
+            new Promise(Resolve => GetNoteSearch((err, data) => Resolve(data)))
+        ])
+            .then(([Notes, PinnedGroups, Compact, Theme, SidebarVisible, Locked, SelectedTags, Search]) =>
             {
-                Container.style.display = 'none';
-                Container.classList.add('sidebar-hide');
-                document.body.classList.remove('sidebar-visible');
-                updateShowSidebarButton();
-                return;
-            } else
-            {
-                Container.style.display = '';
-                Container.classList.remove('sidebar-hide');
-                document.body.classList.add('sidebar-visible');
-            }
+                if (!SidebarVisible)
+                {
+                    hideSidebar(Container);
+                    updateShowSidebarButton();
+                    return;
+                } else
+                {
+                    showSidebar(Container);
+                }
 
-            Container.innerHTML = '';
-            const themeClass = (Theme || "default") + "-theme";
-            ApplyTheme(Theme || "default");
-            Container.classList.remove('default-theme', 'dark-theme', 'light-theme');
-            Container.classList.add(themeClass);
-            document.body.classList.remove('default-theme', 'dark-theme', 'light-theme');
-            document.body.classList.add(themeClass);
+                Container.innerHTML = '';
+                const themeClass = (Theme || "default");
+                ApplyTheme(themeClass);
+                updateThemeClasses(themeClass, Container, document.body);
 
-            // === HEADER ===
-            const Header = document.createElement('div');
-            Header.className = 'sidebar-header';
-            let LogoFile = "logo-default.png";
-            if (Theme === "light") LogoFile = "logo-light.png";
-            else if (Theme === "dark") LogoFile = "logo-dark.png";
-            Header.innerHTML = `
+                // === HEADER ===
+                const Header = document.createElement('div');
+                Header.className = 'sidebar-header';
+                let LogoFile = "logo-default.png";
+                if (Theme === "light") LogoFile = "logo-light.png";
+                else if (Theme === "dark") LogoFile = "logo-dark.png";
+                Header.innerHTML = `
                 <h2>PodAwful's Timestamps</h2>
                 <img class="sidebar-logo" src="${chrome.runtime.getURL("Resources/" + LogoFile)}" />
                 <div class="sidebar-url">${document.title}<br/><a href="${location.href}" target="_blank">${location.href}</a></div>
             `;
 
-            const ToggleBtn = document.createElement('button');
-            ToggleBtn.className = 'sidebar-action-btn';
-            ToggleBtn.style.float = 'right';
-            ToggleBtn.style.marginLeft = '12px';
-            ToggleBtn.textContent = 'Hide Sidebar';
-            ToggleBtn.onclick = () =>
-            {
-                chrome.storage.local.set({ "PodAwful::SidebarVisible": "false" }, () =>
+                const ToggleBtn = document.createElement('button');
+                ToggleBtn.className = 'sidebar-action-btn';
+                ToggleBtn.style.float = 'right';
+                ToggleBtn.style.marginLeft = '12px';
+                ToggleBtn.textContent = 'Hide Sidebar';
+                ToggleBtn.setAttribute('aria-label', 'Hide Sidebar');
+                ToggleBtn.onclick = () =>
                 {
-                    const sidebar = document.getElementById('podawful-sidebar');
-                    if (sidebar)
+                    LogDev("Hide Sidebar button clicked", "interaction");
+                    chrome.storage.local.set({ "PodAwful::SidebarVisible": "false" }, () =>
                     {
-                        sidebar.classList.add('sidebar-hide');
-                        sidebar.style.display = 'none';
+                        const sidebar = document.getElementById('podawful-sidebar');
+                        if (sidebar)
+                        {
+                            hideSidebar(sidebar);
+                        }
+                        RenderSidebar(sidebar);
+                        LogDev("Sidebar hidden and re-rendered", "event");
+                    });
+                };
+                Header.appendChild(ToggleBtn);
+
+                Container.appendChild(Header);
+
+                // === STATUS MESSAGE ===
+                let statusDiv = document.createElement('div');
+                statusDiv.id = 'sidebarStatus';
+                statusDiv.style.color = '#FFD600';
+                statusDiv.style.margin = '4px 0 8px 0';
+                Container.appendChild(statusDiv);
+
+                // === TAG FILTER ===
+                Container.appendChild(renderTagFilter(Notes, SelectedTags, Locked, Container));
+
+                // === SEARCH FIELD ===
+                const SearchInput = document.createElement("input");
+                SearchInput.type = "text";
+                SearchInput.placeholder = "Search notes...";
+                SearchInput.value = Search || "";
+                SearchInput.disabled = Locked;
+                SearchInput.setAttribute('aria-label', 'Search notes');
+                SearchInput.oninput = () =>
+                {
+                    SetNoteSearch(SearchInput.value, () =>
+                    {
+                        RenderSidebar(Container);
+                    });
+                };
+
+                Container.appendChild(SearchInput);
+
+                // === GROUP CONTROLS ===
+                const GroupControls = document.createElement("div");
+                GroupControls.className = "sidebar-group-controls";
+                const AddGroupBtn = document.createElement("button");
+                AddGroupBtn.textContent = "+ Group";
+                AddGroupBtn.title = "Add a new group";
+                AddGroupBtn.setAttribute('aria-label', 'Add a new group');
+                AddGroupBtn.disabled = Locked;
+                AddGroupBtn.onclick = () =>
+                {
+                    if (Locked) return;
+                    const Name = prompt("New group name:");
+                    if (!Name || !Name.trim())
+                    {
+                        statusDiv.textContent = "Group name cannot be empty.";
+                        setTimeout(() => { statusDiv.textContent = ""; }, 2000);
+                        return;
                     }
-                    document.body.classList.remove('sidebar-visible');
-                    RenderSidebar(sidebar);
-                });
-            };
-            Header.appendChild(ToggleBtn);
+                    AddGroup(Name.trim(), () =>
+                    {
+                        RenderSidebar(Container);
+                    });
+                };
+                GroupControls.appendChild(AddGroupBtn);
 
-            Container.appendChild(Header);
-
-            // === TAG FILTER ===
-            Container.appendChild(renderTagFilter(Notes, SelectedTags, Locked, Container));
-
-            // === SEARCH FIELD ===
-            const SearchInput = document.createElement("input");
-            SearchInput.type = "text";
-            SearchInput.placeholder = "Search notes...";
-            SearchInput.value = Search || "";
-            SearchInput.disabled = Locked;
-            SearchInput.oninput = () =>
-            {
-                SetNoteSearch(SearchInput.value, () => RenderSidebar(Container));
-            };
-            Container.appendChild(SearchInput);
-
-            // === GROUP CONTROLS ===
-            const GroupControls = document.createElement("div");
-            GroupControls.className = "sidebar-group-controls";
-            const AddGroupBtn = document.createElement("button");
-            AddGroupBtn.textContent = "+ Group";
-            AddGroupBtn.title = "Add a new group";
-            AddGroupBtn.disabled = Locked;
-            AddGroupBtn.onclick = () =>
-            {
-                if (Locked) return;
-                const Name = prompt("New group name:");
-                if (!Name || !Name.trim()) return;
-                AddGroup(Name.trim(), () => RenderSidebar(Container));
-            };
-            GroupControls.appendChild(AddGroupBtn);
-
-            const TagManagerBtn = document.createElement("button");
-            TagManagerBtn.textContent = "Tags";
-            TagManagerBtn.title = "Manage tags";
-            TagManagerBtn.onclick = () => ShowTagManager(Notes, () => RenderSidebar(Container));
-            GroupControls.appendChild(TagManagerBtn);
-
-            Container.appendChild(GroupControls);
-
-            // === GROUPS AND NOTES ===
-            GetGroups((AllGroups) =>
-            {
-                AllGroups.forEach(GroupName =>
+                const TagManagerBtn = document.createElement("button");
+                TagManagerBtn.textContent = "Tags";
+                TagManagerBtn.title = "Manage tags";
+                TagManagerBtn.setAttribute('aria-label', 'Manage tags');
+                TagManagerBtn.onclick = () =>
                 {
-                    Container.appendChild(renderGroup({
-                        GroupName,
-                        Notes,
-                        PinnedGroups,
-                        Locked,
-                        Container,
-                        RenderSidebar
-                    }));
+                    ShowTagManager(Notes, Container);
+                };
+                GroupControls.appendChild(TagManagerBtn);
+
+                Container.appendChild(GroupControls);
+
+                // === GROUPS AND NOTES ===
+                GetGroups((err, AllGroupsRaw) =>
+                {
+                    const AllGroups = Array.isArray(AllGroupsRaw) ? AllGroupsRaw : [];
+                    if (err)
+                    {
+                        return;
+                    }
+                    AllGroups.forEach(GroupName =>
+                    {
+                        Container.appendChild(renderGroup({
+                            GroupName,
+                            Notes,
+                            PinnedGroups,
+                            Locked,
+                            Container,
+                            RenderSidebar,
+                            AllGroups
+                        }));
+                    });
+                    Container.appendChild(renderSidebarFooter({ Locked, Container, RenderSidebar }));
                 });
 
-                // === FOOTER ===
-                Container.appendChild(renderSidebarFooter({ Locked, Container, RenderSidebar }));
-            });
-
-            // === TIMESTAMP HIGHLIGHTING ===
-            import('./dragdrop.js').then(({ highlightCurrentTimestamp, setupSidebarDragAndDrop }) =>
-            {
-                const v = document.querySelector("video");
-                if (v)
+                // === TIMESTAMP HIGHLIGHTING ===
+                import('./dragdrop.js').then(({ highlightCurrentTimestamp, setupSidebarDragAndDrop }) =>
                 {
-                    v.removeEventListener("timeupdate", highlightCurrentTimestamp);
-                    v.addEventListener("timeupdate", highlightCurrentTimestamp);
+                    const v = document.querySelector("video");
+                    if (v)
+                    {
+                        v.removeEventListener("timeupdate", window._podawfulHighlightHandler);
+                        window._podawfulHighlightHandler = () =>
+                        {
+                            highlightCurrentTimestamp(Notes, ParseTime, 5);
+                        };
+                        v.addEventListener("timeupdate", window._podawfulHighlightHandler);
+                    }
+                    setupSidebarDragAndDrop(Container, RenderSidebar);
+                });
+
+                updateShowSidebarButton();
+            })
+            .catch(Err =>
+            {
+                if (Container)
+                {
+                    Container.innerHTML = "<div style='color:#FFD600'>Failed to load sidebar. Please reload the page.</div>";
                 }
-                setupSidebarDragAndDrop(Container, RenderSidebar);
             });
-
-            updateShowSidebarButton();
-        });
     } catch (Err)
     {
-        LogDev("[ERROR] Sidebar Promise.all failed: " + (Err && Err.stack || Err));
-        LogDev("[ERROR] RenderSidebar: " + (Err.stack || Err));
+        if (Container)
+        {
+            Container.innerHTML = "<div style='color:#FFD600'>Failed to load sidebar. Please reload the page.</div>";
+        }
     }
 }
 
@@ -173,23 +244,22 @@ function updateShowSidebarButton()
             showBtn = document.createElement('button');
             showBtn.id = 'podawful-show-sidebar-btn';
             showBtn.textContent = 'Show Sidebar';
-            showBtn.className = 'sidebar-action-btn';
-            showBtn.style.position = 'fixed';
-            showBtn.style.right = '24px';
-            showBtn.style.bottom = '24px';
-            showBtn.style.zIndex = 1000001;
+            showBtn.className = 'sidebar-action-btn sidebar-action-btn--floating';
+            showBtn.setAttribute('aria-label', 'Show Sidebar');
             showBtn.onclick = () =>
             {
                 chrome.storage.local.set({ "PodAwful::SidebarVisible": "true" }, () =>
                 {
-                    const sidebar = document.getElementById('podawful-sidebar');
-                    if (sidebar)
+                    let sidebar = document.getElementById('podawful-sidebar');
+                    if (!sidebar)
                     {
-                        sidebar.classList.remove('sidebar-hide');
-                        sidebar.style.display = '';
-                        document.body.classList.add('sidebar-visible');
-                        RenderSidebar(sidebar);
+                        sidebar = document.createElement('div');
+                        sidebar.id = 'podawful-sidebar';
+                        sidebar.className = 'podawful-sidebar';
+                        document.body.appendChild(sidebar);
                     }
+                    showSidebar(sidebar);
+                    RenderSidebar(sidebar);
                     showBtn.remove();
                 });
             };
@@ -207,8 +277,32 @@ chrome.storage.onChanged.addListener((changes, area) =>
     {
         const theme = changes['PodAwful::Theme'].newValue || "default";
         ApplyTheme(theme);
-        // Optionally re-render sidebar if theme changes
+        updateThemeClasses(theme, document.body, document.getElementById('podawful-sidebar'));
         const sidebar = document.getElementById('podawful-sidebar');
         if (sidebar) RenderSidebar(sidebar);
     }
+
+    if (area === 'local' && changes['PodAwful::SidebarVisible'])
+    {
+        const sidebar = document.getElementById('podawful-sidebar');
+        if (sidebar)
+        {
+            RenderSidebar(sidebar);
+        }
+    }
 });
+
+export default function renderSidebar()
+{
+    if (document.getElementById('podawful-sidebar'))
+    {
+        return;
+    }
+
+    const sidebar = document.createElement('div');
+    sidebar.id = 'podawful-sidebar';
+    sidebar.className = 'podawful-sidebar';
+    document.body.appendChild(sidebar);
+    showSidebar(sidebar);
+    RenderSidebar(sidebar);
+}

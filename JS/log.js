@@ -1,45 +1,77 @@
-export function LogDev(Message, Type = "info")
+/**
+ * Logs a message to the console and to persistent storage (dev log), with color coding.
+ * All logs are sent to the background script for unified storage in chrome.storage.local.
+ * 
+ * Log Types:
+ * - error: red, for all errors
+ * - warning: orange, for non-critical issues
+ * - system: brown, for system functions like updating, installing, etc.
+ * - interaction: white, for all interactable things (buttons, confirmations, moving, renaming, deleting, etc.)
+ * - event: grey, for dispatched events, listener callbacks, etc.
+ * - render: green, for anything that shows on screen
+ * - data: blue, for information that is populated, loaded, or written
+ * - performance: yellow, for tracking render speed or execution time
+ * - miscellaneous: purple, for anything else
+ * 
+ * @param {string|object} Message - The message or object to log.
+ * @param {string} [Type="miscellaneous"] - The log type.
+ * @param {function} [Cb] - Optional callback for completion or error.
+ */
+export function LogDev(Message, Type = "miscellaneous", Cb)
 {
-    // Always log to the console
+    const colorMap = {
+        error: "red",
+        warning: "orange",
+        system: "brown",
+        interaction: "white",
+        event: "grey",
+        render: "green",
+        data: "blue",
+        performance: "yellow",
+        miscellaneous: "purple"
+    };
+    const color = colorMap[Type] || colorMap.miscellaneous;
+    const msgStr = typeof Message === "string" ? Message : JSON.stringify(Message);
+
+    // Console log for dev
     if (Type === "error")
     {
-        console.error("[DevLog]", Message);
+        console.error("%c[DevLog] " + msgStr, `color:${color}`);
+    } else if (Type === "warning")
+    {
+        console.warn("%c[DevLog] " + msgStr, `color:${color}`);
+    } else if (Type === "system")
+    {
+        console.info("%c[DevLog] " + msgStr, `color:${color}`);
     } else
     {
-        console.log("[DevLog]", Message);
+        console.log("%c[DevLog] " + msgStr, `color:${color}`);
     }
 
-    // Always log to storage (dev log)
-    try
+    // Always send to background for unified logging
+    if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage)
     {
-        // Prefer chrome.storage.local if available
-        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local)
+        const entry = {
+            time: new Date().toISOString(),
+            action: msgStr,
+            type: typeof Type === "string" ? Type : "miscellaneous",
+            color: color
+        };
+        chrome.runtime.sendMessage({ type: "devlog", entry }, (response) =>
         {
-            chrome.storage.local.get(["PodAwful::DevLog"], (Result) =>
+            if (chrome.runtime.lastError)
             {
-                let DevLog = Array.isArray(Result["PodAwful::DevLog"]) ? Result["PodAwful::DevLog"] : [];
-                DevLog.push({
-                    time: new Date().toISOString(),
-                    action: Message,
-                    type: Type
-                });
-                if (DevLog.length > 100) DevLog.shift();
-                chrome.storage.local.set({ "PodAwful::DevLog": DevLog });
-            });
-        } else
-        {
-            let DevLog = JSON.parse(localStorage.getItem("PodAwful::DevLog") || "[]");
-            DevLog.push({
-                time: new Date().toISOString(),
-                action: Message,
-                type: Type
-            });
-            if (DevLog.length > 100) DevLog.shift();
-            localStorage.setItem("PodAwful::DevLog", JSON.stringify(DevLog));
-        }
-    } catch (Err)
-    {
-        // Log storage errors to the console
-        console.error("[DevLog] Logging to storage failed:", Err, Message);
+                // Only log if it's not the common "Receiving end does not exist" error
+                if (!/Receiving end does not exist/.test(chrome.runtime.lastError.message))
+                {
+                    console.error("SendMessage failed:", chrome.runtime.lastError.message);
+                }
+                if (Cb) Cb(chrome.runtime.lastError);
+            } else
+            {
+                if (Cb) Cb(null);
+            }
+        });
+        return;
     }
 }

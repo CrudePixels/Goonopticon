@@ -34,7 +34,8 @@
     "content_scripts": [
         {
             "matches": [ "<all_urls>" ],
-            "js": [ "JS/sidebar/bundle/main.bundle.js" ],
+            "js": [
+                "JS/sidebar/bundle/main.bundle.js"],
             "css": [
                 "CSS/sidebar.bundle.css",
                 "CSS/tagmanager.css",
@@ -49,7 +50,7 @@
                 "Resources/*",
                 "CSS/theme.css"
             ],
-            "matches": [ "<all_urls>" ]
+            "matches": ["<all_urls>"]
         }
     ],
     "content_security_policy": {
