@@ -49,6 +49,11 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
         NoteDiv.tabIndex = 0;
         NoteDiv.setAttribute('aria-label', `Note: ${Note.text}`);
 
+        if (!Note.time)
+        {
+            NoteDiv.classList.add('no-timestamp');
+        }
+
         // Drag and drop handlers
         NoteDiv.addEventListener('dragstart', (e) =>
         {
@@ -61,38 +66,48 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
             document.body.classList.remove('body-dragging-notes');
         });
 
-        // --- Note content: timestamp, text, tags, and actions ---
-        const contentDiv = document.createElement("div");
-        contentDiv.className = "note-content";
+        // --- Note title row: timestamp + text ---
+        const titleRow = document.createElement("div");
+        titleRow.className = "note-title-row";
+        titleRow.draggable = !Locked;
+
+        // Drag and drop handlers for title row
+        titleRow.addEventListener('dragstart', (e) =>
+        {
+            if (Locked) return e.preventDefault();
+            e.dataTransfer.setData('note-id', Note.id);
+            document.body.classList.add('body-dragging-notes');
+        });
+        titleRow.addEventListener('dragend', () =>
+        {
+            document.body.classList.remove('body-dragging-notes');
+        });
 
         // Timestamp
-        if (Note.time)
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "note-timestamp";
+        timeSpan.textContent = Note.time || "";
+        timeSpan.title = "Jump to timestamp";
+        timeSpan.style.cursor = "pointer";
+        timeSpan.setAttribute('aria-label', 'Jump to timestamp');
+        timeSpan.onclick = () =>
         {
-            const timeSpan = document.createElement("span");
-            timeSpan.className = "note-timestamp";
-            timeSpan.textContent = Note.time;
-            timeSpan.title = "Jump to timestamp";
-            timeSpan.style.cursor = "pointer";
-            timeSpan.setAttribute('aria-label', 'Jump to timestamp');
-            timeSpan.onclick = () =>
+            const v = document.querySelector("video");
+            if (v)
             {
-                const v = document.querySelector("video");
-                if (v)
-                {
-                    v.currentTime = ParseTime(Note.time);
-                    v.play();
-                }
-            };
-            contentDiv.appendChild(timeSpan);
-        }
+                v.currentTime = ParseTime(Note.time);
+                v.play();
+            }
+        };
+        titleRow.appendChild(timeSpan);
 
         // Note text
         const textSpan = document.createElement("span");
         textSpan.className = "note-text";
         textSpan.textContent = Note.text;
-        contentDiv.appendChild(textSpan);
+        titleRow.appendChild(textSpan);
 
-        // Tags display
+        // (Optional) Tags
         const tagsArr = Array.isArray(Note.tags) ? Note.tags : [];
         if (tagsArr.length > 0)
         {
@@ -105,12 +120,23 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
                 tagSpan.textContent = tag;
                 tagsDiv.appendChild(tagSpan);
             });
-            contentDiv.appendChild(tagsDiv);
+            titleRow.appendChild(tagsDiv);
         }
 
-        // Actions
+        // --- Note actions row ---
         const actionsDiv = document.createElement("div");
         actionsDiv.className = "note-actions";
+
+        // Prevent drag from action buttons
+        actionsDiv.addEventListener('mousedown', (e) =>
+        {
+            e.stopPropagation();
+        });
+        actionsDiv.addEventListener('dragstart', (e) =>
+        {
+            e.stopPropagation();
+            e.preventDefault();
+        });
 
         // Helper for status feedback
         function showStatus(container, msg, duration = 2000)
@@ -135,6 +161,7 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
         editBtn.setAttribute('aria-label', 'Edit note');
         editBtn.textContent = "✎";
         editBtn.disabled = Locked;
+        if (Locked) editBtn.classList.add('locked-hide');
         editBtn.onclick = () =>
         {
             if (Locked) return;
@@ -179,6 +206,7 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
         tagBtn.setAttribute('aria-label', 'Edit tags');
         tagBtn.textContent = "🏷️";
         tagBtn.disabled = Locked;
+        if (Locked) tagBtn.classList.add('locked-hide');
         tagBtn.onclick = () =>
         {
             if (Locked) return;
@@ -210,6 +238,7 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
         deleteBtn.setAttribute('aria-label', 'Delete note');
         deleteBtn.textContent = "🗑";
         deleteBtn.disabled = Locked;
+        if (Locked) deleteBtn.classList.add('locked-hide');
         deleteBtn.onclick = () =>
         {
             if (Locked) return;
@@ -241,36 +270,45 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
         copyBtn.setAttribute('aria-label', 'Copy video URL and timestamp');
         copyBtn.textContent = "📋";
         copyBtn.disabled = Locked;
+        if (Locked) copyBtn.classList.add('locked-hide');
         copyBtn.onclick = () =>
         {
-            let url = location.href.split('#')[0];
-            const v = document.querySelector("video");
-            let seconds = v ? Math.floor(ParseTime(Note.time)) : Math.floor(ParseTime(Note.time));
-            url += (url.includes('?') ? '&' : '?') + 't=' + seconds;
-            navigator.clipboard.writeText(url).then(() =>
+            let url = location.href;
+            if (Note.time)
             {
-                showStatus(Container, "Copied!");
-            }, () =>
-            {
-                showStatus(Container, "Copy failed.");
-            });
+                // Try to add timestamp to URL (YouTube style)
+                if (url.includes("youtube.com") && !url.includes("t="))
+                {
+                    url += (url.includes("?") ? "&" : "?") + "t=" + encodeURIComponent(Note.time);
+                }
+            }
+            navigator.clipboard.writeText(url)
+                .then(() =>
+                {
+                    showStatus(Container, "Copied!");
+                })
+                .catch(() =>
+                {
+                    showStatus(Container, "Failed to copy.");
+                });
         };
         actionsDiv.appendChild(copyBtn);
 
-        contentDiv.appendChild(actionsDiv);
-        NoteDiv.appendChild(contentDiv);
+        // --- Compose the note DOM ---
+        NoteDiv.appendChild(titleRow);
+        NoteDiv.appendChild(actionsDiv);
 
-        // Return both drop zone and note
-        const wrapper = document.createElement("div");
-        wrapper.appendChild(dropZone);
-        wrapper.appendChild(NoteDiv);
-        return wrapper;
-    } catch (err)
+        // Return a fragment containing the drop zone and the note
+        const fragment = document.createDocumentFragment();
+        fragment.appendChild(dropZone);
+        fragment.appendChild(NoteDiv);
+        return fragment;
+    } catch (e)
     {
-        LogDev("renderNote error: " + err, "error");
-        const errorDiv = document.createElement("div");
+        console.error("renderNote error:", e);
+        const errorDiv = document.createElement('div');
+        errorDiv.textContent = "Note failed to render";
         errorDiv.style.color = "red";
-        errorDiv.textContent = "Error rendering note.";
         return errorDiv;
     }
 }

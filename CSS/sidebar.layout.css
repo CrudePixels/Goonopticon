@@ -1,0 +1,98 @@
+﻿:root
+{
+    --sidebar-width: 350px;
+    --sidebar-bg: #181818;
+    --sidebar-fg: #fff;
+    --sidebar-border: #444;
+    --accent: #FFD600;
+    --button-bg: #333;
+    --button-fg: #fff;
+    --button-hover-bg: #444;
+    --button-hover-fg: #FFD600;
+    --secondary-bg: #222;
+    --secondary-fg: #ccc;
+    --primary-bg: #222;
+    --primary-fg: #fff;
+    --border: #444;
+    --input-bg: #222;
+    --input-fg: #fff;
+}
+
+#podawful-sidebar
+{
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: var(--sidebar-width, 350px);
+    height: 100vh;
+    z-index: 9999;
+    background: var(--sidebar-bg, #181818);
+    color: var(--sidebar-fg, #fff);
+    box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+    overflow-y: auto;
+    font-family: inherit;
+    font-size: 16px;
+    transition: opacity 0.2s;
+    opacity: 1;
+    border-left: 1px solid var(--sidebar-border, #444);
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent, #FFD600) var(--sidebar-bg, #181818);
+}
+
+    #podawful-sidebar.sidebar-hide
+    {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+/* Theme overrides */
+.default-theme #podawful-sidebar
+{
+    --sidebar-bg: #222;
+    --sidebar-fg: #fff;
+    --sidebar-border: #444;
+}
+
+.light-theme #podawful-sidebar
+{
+    --sidebar-bg: #fff;
+    --sidebar-fg: #222;
+    --sidebar-border: #ccc;
+}
+
+.dark-theme #podawful-sidebar
+{
+    --sidebar-bg: #181818;
+    --sidebar-fg: #fff;
+    --sidebar-border: #333;
+}
+
+/* Custom Scrollbar */
+#podawful-sidebar::-webkit-scrollbar
+{
+    width: 8px;
+}
+
+#podawful-sidebar::-webkit-scrollbar-thumb
+{
+    background: var(--accent, #FFD600);
+    border-radius: 4px;
+}
+
+#podawful-sidebar::-webkit-scrollbar-track
+{
+    background: var(--sidebar-bg, #181818);
+}
+
+/* Body Margin for Sidebar */
+body,
+#main-content,
+body.sidebar-visible
+{
+    margin-right: var(--sidebar-width, 350px);
+}
+
+    body:not(.sidebar-visible)
+    {
+        margin-right: 0;
+    }

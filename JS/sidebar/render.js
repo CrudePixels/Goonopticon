@@ -6,6 +6,7 @@ import { renderTagFilter } from './tagFilterComponent.js';
 import { renderGroup } from './groupComponent.js';
 import { renderSidebarFooter } from './sidebarFooter.js';
 import { ParseTime } from './logic.js';
+import { renderNote } from './noteComponent.js';
 
 function updateThemeClasses(theme, ...elements)
 {
@@ -80,7 +81,7 @@ export function RenderSidebar(Container)
                 if (Theme === "light") LogoFile = "logo-light.png";
                 else if (Theme === "dark") LogoFile = "logo-dark.png";
                 Header.innerHTML = `
-                <h2>PodAwful's Timestamps</h2>
+                <h2>Goonopticon</h2>
                 <img class="sidebar-logo" src="${chrome.runtime.getURL("Resources/" + LogoFile)}" />
                 <div class="sidebar-url">${document.title}<br/><a href="${location.href}" target="_blank">${location.href}</a></div>
             `;
@@ -137,41 +138,42 @@ export function RenderSidebar(Container)
                 Container.appendChild(SearchInput);
 
                 // === GROUP CONTROLS ===
-                const GroupControls = document.createElement("div");
-                GroupControls.className = "sidebar-group-controls";
-                const AddGroupBtn = document.createElement("button");
-                AddGroupBtn.textContent = "+ Group";
-                AddGroupBtn.title = "Add a new group";
-                AddGroupBtn.setAttribute('aria-label', 'Add a new group');
-                AddGroupBtn.disabled = Locked;
-                AddGroupBtn.onclick = () =>
-                {
-                    if (Locked) return;
-                    const Name = prompt("New group name:");
-                    if (!Name || !Name.trim())
-                    {
-                        statusDiv.textContent = "Group name cannot be empty.";
-                        setTimeout(() => { statusDiv.textContent = ""; }, 2000);
-                        return;
-                    }
-                    AddGroup(Name.trim(), () =>
-                    {
-                        RenderSidebar(Container);
-                    });
-                };
-                GroupControls.appendChild(AddGroupBtn);
-
-                const TagManagerBtn = document.createElement("button");
-                TagManagerBtn.textContent = "Tags";
-                TagManagerBtn.title = "Manage tags";
-                TagManagerBtn.setAttribute('aria-label', 'Manage tags');
-                TagManagerBtn.onclick = () =>
-                {
-                    ShowTagManager(Notes, Container);
-                };
-                GroupControls.appendChild(TagManagerBtn);
-
-                Container.appendChild(GroupControls);
+                /*  const GroupControls = document.createElement("div");
+                  GroupControls.className = "sidebar-group-controls";
+                  const AddGroupBtn = document.createElement("button");
+                  AddGroupBtn.textContent = "+ Group";
+                  AddGroupBtn.title = "Add a new group";
+                  AddGroupBtn.setAttribute('aria-label', 'Add a new group');
+                  AddGroupBtn.disabled = Locked;
+                  AddGroupBtn.onclick = () =>
+                  {
+                      if (Locked) return;
+                      const Name = prompt("New group name:");
+                      if (!Name || !Name.trim())
+                      {
+                          statusDiv.textContent = "Group name cannot be empty.";
+                          setTimeout(() => { statusDiv.textContent = ""; }, 2000);
+                          return;
+                      }
+                      AddGroup(Name.trim(), () =>
+                      {
+                          RenderSidebar(Container);
+                      });
+                  };
+                  GroupControls.appendChild(AddGroupBtn);
+  
+                  const TagManagerBtn = document.createElement("button");
+                  TagManagerBtn.textContent = "Tags";
+                  TagManagerBtn.title = "Manage tags";
+                  TagManagerBtn.setAttribute('aria-label', 'Manage tags');
+                  TagManagerBtn.onclick = () =>
+                  {
+                      ShowTagManager(Notes, Container);
+                  };
+                  GroupControls.appendChild(TagManagerBtn);
+  
+                  Container.appendChild(GroupControls);
+                  */
 
                 // === GROUPS AND NOTES ===
                 GetGroups((err, AllGroupsRaw) =>
@@ -183,7 +185,7 @@ export function RenderSidebar(Container)
                     }
                     AllGroups.forEach(GroupName =>
                     {
-                        Container.appendChild(renderGroup({
+                        const groupNode = renderGroup({
                             GroupName,
                             Notes,
                             PinnedGroups,
@@ -191,8 +193,31 @@ export function RenderSidebar(Container)
                             Container,
                             RenderSidebar,
                             AllGroups
-                        }));
+                        });
+                        if (groupNode instanceof Node)
+                        {
+                            Container.appendChild(groupNode);
+                        }
                     });
+
+                    // --- Render ungrouped notes with drop zones ---
+                    const ungroupedNotes = Notes.filter(n => !n.group);
+                    ungroupedNotes.forEach((Note) =>
+                    {
+                        const noteNode = renderNote({
+                            Note,
+                            GroupName: null,
+                            Notes,
+                            Locked,
+                            Container,
+                            RenderSidebar
+                        });
+                        if (noteNode instanceof Node)
+                        {
+                            Container.appendChild(noteNode);
+                        }
+                    });
+
                     Container.appendChild(renderSidebarFooter({ Locked, Container, RenderSidebar }));
                 });
 
@@ -213,6 +238,15 @@ export function RenderSidebar(Container)
                 });
 
                 updateShowSidebarButton();
+
+                const sidebar = document.getElementById('podawful-sidebar');
+                if (Locked)
+                {
+                    sidebar.classList.add('locked');
+                } else
+                {
+                    sidebar.classList.remove('locked');
+                }
             })
             .catch(Err =>
             {

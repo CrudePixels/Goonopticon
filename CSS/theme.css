@@ -12,6 +12,7 @@
     --input-bg: #fff;
     --input-fg: #111;
     --border: #FFD600;
+    --sidebar-spacing: 16px;
 }
 
 /* Default Theme */
@@ -29,7 +30,7 @@ body.default-theme, .sidebar-container.default-theme, body.popup.default-theme
     --input-bg: #fff;
     --input-fg: #111;
     --border: #FFD600;
-    --highlight-bg: ffe082;
+    --highlight-bg: #D3D3D3;
     --highlight-fg: #222;
     --highlight-border: #FFD600;
 }
@@ -103,22 +104,26 @@ body, .sidebar-container, body.popup
         outline-offset: 2px;
     }
 
-.note-timestamp {
+.note-timestamp
+{
     margin-right: 8px;
 }
 
-.note-text {
+.note-text
+{
     margin-left: 0;
 }
 
-.note-content {
+.note-content
+{
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
 .note-actions button,
-.sidebar-action-btn {
+.sidebar-action-btn
+{
     border: none;
     border-radius: 6px;
     padding: 6px 10px;
@@ -131,26 +136,61 @@ body, .sidebar-container, body.popup
 }
 
 .default-theme .note-actions button,
-.default-theme .sidebar-action-btn {
+.default-theme .sidebar-action-btn
+{
     background: #222;
     color: #FFD600;
 }
 
 .dark-theme .note-actions button,
-.dark-theme .sidebar-action-btn {
+.dark-theme .sidebar-action-btn
+{
     background: #333;
     color: #FFD600;
 }
 
 .light-theme .note-actions button,
-.light-theme .sidebar-action-btn {
+.light-theme .sidebar-action-btn
+{
     background: #fff;
     color: #222;
     border: 1px solid #FFD600;
 }
 
 .note-actions button:disabled,
-.sidebar-action-btn:disabled {
+.sidebar-action-btn:disabled
+{
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* Shared action button style for both group and note buttons */
+.note-action-btn,
+.note-edit-btn,
+.note-delete-btn,
+.group-action-btn,
+.group-edit-btn,
+.group-delete-btn {
+    background: var(--button-bg, #222);
+    color: var(--button-fg, #FFD600);
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 0 2px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.note-action-btn:hover,
+.note-edit-btn:hover,
+.note-delete-btn:hover,
+.group-action-btn:hover,
+.group-edit-btn:hover,
+.group-delete-btn:hover {
+    background: var(--button-hover-bg, #FFD600);
+    color: var(--button-hover-fg, #222);
 }

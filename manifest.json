@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "PodAwful's Timestamps",
+    "name": "Goonopticon",
     "version": "1.0.1",
-    "description": "The BEST GUY allows you to timestamp videos.",
+    "description": "Henchmen get to work!",
     "permissions": [
         "tabs",
         "activeTab",
@@ -35,7 +35,8 @@
         {
             "matches": [ "<all_urls>" ],
             "js": [
-                "JS/sidebar/bundle/main.bundle.js"],
+                "JS/sidebar/bundle/main.bundle.js"
+            ],
             "css": [
                 "CSS/sidebar.bundle.css",
                 "CSS/tagmanager.css",
@@ -50,7 +51,7 @@
                 "Resources/*",
                 "CSS/theme.css"
             ],
-            "matches": ["<all_urls>"]
+            "matches": [ "<all_urls>" ]
         }
     ],
     "content_security_policy": {
