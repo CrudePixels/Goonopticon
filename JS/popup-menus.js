@@ -1,4 +1,5 @@
 import { LogDev } from './log.js';
+import { ApplyTheme } from './theme.js';
 
 // --- Storage Keys ---
 const DEVLOG_BTN_KEY = "PodAwful::ShowDevLogBtn";
@@ -454,14 +455,7 @@ function renderSettings()
     themeSelect.value = currentTheme;
     themeSelect.addEventListener('change', function (e) {
         const selectedTheme = e.target.value;
-        localStorage.setItem("PodAwful::Theme", selectedTheme);
-        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-            chrome.storage.local.set({ "PodAwful::Theme": selectedTheme }, () => {
-                LogDev("Theme changed via settings panel: " + selectedTheme, "interaction");
-            });
-        }
-        // Apply theme immediately in popup
-        import('./theme.js').then(({ ApplyTheme }) => {
+        chrome.storage.local.set({ "PodAwful::Theme": selectedTheme }, () => {
             ApplyTheme(selectedTheme);
         });
     });

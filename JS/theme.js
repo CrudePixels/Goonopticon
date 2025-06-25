@@ -1,7 +1,5 @@
 ﻿import { LogDev } from './log.js';
 
-// Theme logic shared across sidebar and popup
-
 const THEME_CLASSES = ["default-theme", "dark-theme", "light-theme"];
 
 /**

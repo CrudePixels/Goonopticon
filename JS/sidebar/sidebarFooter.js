@@ -1,11 +1,9 @@
 import { AddNote, AddGroup } from './storage.js';
 import { GenerateNoteId, GetTimecode } from './logic.js';
-import { RenderSidebar } from './render.js';
-import { LogDev } from '../log.js';
+import { showInputModal } from './modal.js';
 
-export function renderSidebarFooter({ Locked, Container, RenderSidebar, ShowTagManager }) {
-    LogDev("Sidebar footer rendered", "render");
-
+export function renderSidebarFooter({ Locked, Container, RenderSidebar })
+{
     const Footer = document.createElement("div");
     Footer.className = "sidebar-footer";
 
@@ -16,10 +14,10 @@ export function renderSidebarFooter({ Locked, Container, RenderSidebar, ShowTagM
     statusDiv.style.margin = "4px 0 8px 0";
     Footer.appendChild(statusDiv);
 
-    function showStatus(msg, duration = 2000) {
+    function showStatus(msg, duration = 2000)
+    {
         statusDiv.textContent = msg;
         if (duration > 0) setTimeout(() => { statusDiv.textContent = ""; }, duration);
-        LogDev("Sidebar footer status: " + msg, "event");
     }
 
     // --- Action buttons container ---
@@ -30,42 +28,33 @@ export function renderSidebarFooter({ Locked, Container, RenderSidebar, ShowTagM
     actionsContainer.style.alignItems = "stretch";
     actionsContainer.style.gap = "10px";
 
-    // --- New: Group + Tags row ---
-    const groupTagsRow = document.createElement("div");
-    groupTagsRow.className = "sidebar-group-tags-row";
-
-    // + Group button
+    // + Group button (full width)
     const groupBtn = document.createElement("button");
     groupBtn.textContent = "+ Group";
     groupBtn.id = "sidebarAddGroup";
     groupBtn.className = "sidebar-action-btn";
     groupBtn.setAttribute('aria-label', 'Add group');
     groupBtn.disabled = Locked;
-    groupBtn.onclick = () => {
+    groupBtn.style.width = "100%";
+    groupBtn.onclick = async () =>
+    {
         if (Locked) return;
-        const Name = prompt("New group name:");
-        if (!Name || !Name.trim()) {
+        const Name = await showInputModal({
+            title: "Add Group",
+            label: "Group name:",
+            placeholder: "Enter group name"
+        });
+        if (!Name || !Name.trim())
+        {
             showStatus("Group name cannot be empty.");
             return;
         }
-        AddGroup(Name.trim(), () => {
-            RenderSidebar(Container);
+        AddGroup(Name.trim(), () =>
+        {
+            RenderSidebar(Container, undefined, true);
         });
     };
-    groupTagsRow.appendChild(groupBtn);
-
-    // Tags button
-    const tagsBtn = document.createElement("button");
-    tagsBtn.textContent = "Tags";
-    tagsBtn.id = "sidebarTags";
-    tagsBtn.className = "sidebar-action-btn";
-    tagsBtn.setAttribute('aria-label', 'Manage tags');
-    tagsBtn.onclick = () => {
-        ShowTagManager && ShowTagManager();
-    };
-    groupTagsRow.appendChild(tagsBtn);
-
-    actionsContainer.appendChild(groupTagsRow);
+    actionsContainer.appendChild(groupBtn);
 
     // + Timestamp button
     const timestampBtn = document.createElement("button");
@@ -74,20 +63,19 @@ export function renderSidebarFooter({ Locked, Container, RenderSidebar, ShowTagM
     timestampBtn.className = "sidebar-action-btn";
     timestampBtn.setAttribute('aria-label', 'Add timestamped note');
     timestampBtn.disabled = Locked;
-    timestampBtn.onclick = () => {
-        LogDev("Sidebar footer button clicked: Add Timestamp", "interaction");
+    timestampBtn.style.width = "100%";
+    timestampBtn.onclick = async () =>
+    {
         if (Locked) return;
         const v = document.querySelector("video");
         let defaultTime = v ? GetTimecode(v.currentTime) : "";
-        let inputTime = prompt("Timestamp? (leave blank for current)", defaultTime);
-        LogDev("Prompt for timestamp: " + (inputTime ? "User entered: " + inputTime : "User cancelled"), "interaction");
+        const inputTime = await showInputModal({ title: "Add Timestamp", label: "Timestamp (leave blank for current):", value: defaultTime });
         if (inputTime === null) return;
         let time = inputTime && inputTime.trim() !== "" ? inputTime.trim() : defaultTime;
-        const text = prompt("Note:");
-        LogDev("Prompt for note text: " + (text ? "User entered text" : "User cancelled"), "interaction");
-        if (text === null || !text.trim()) {
+        const text = await showInputModal({ title: "Add Timestamp", label: "Note text:" });
+        if (text === null || !text.trim())
+        {
             showStatus("Note text cannot be empty.");
-            LogDev("Add Timestamp cancelled: empty note", "event");
             return;
         }
         AddNote({
@@ -97,13 +85,14 @@ export function renderSidebarFooter({ Locked, Container, RenderSidebar, ShowTagM
             time: time,
             tags: [],
             created: Date.now()
-        }, (err) => {
-            if (err) {
-                LogDev("Sidebar footer error: " + err, "error");
+        }, (err) =>
+        {
+            if (err)
+            {
                 showStatus("Failed to add note.");
-            } else {
-                LogDev("Note with timestamp added", "event");
-                RenderSidebar(Container);
+            } else
+            {
+                RenderSidebar(Container, undefined, true);
             }
         });
     };
@@ -116,14 +105,14 @@ export function renderSidebarFooter({ Locked, Container, RenderSidebar, ShowTagM
     noteBtn.className = "sidebar-action-btn";
     noteBtn.setAttribute('aria-label', 'Add note');
     noteBtn.disabled = Locked;
-    noteBtn.onclick = () => {
-        LogDev("Sidebar footer button clicked: Add Note", "interaction");
+    noteBtn.style.width = "100%";
+    noteBtn.onclick = async () =>
+    {
         if (Locked) return;
-        const text = prompt("Enter note text:");
-        LogDev("Prompt for note text: " + (text ? "User entered text" : "User cancelled"), "interaction");
-        if (!text || !text.trim()) {
+        const text = await showInputModal({ title: "Add Note", label: "Note text:" });
+        if (!text || !text.trim())
+        {
             showStatus("Note text cannot be empty.");
-            LogDev("Add Note cancelled: empty note", "event");
             return;
         }
         AddNote({
@@ -133,13 +122,14 @@ export function renderSidebarFooter({ Locked, Container, RenderSidebar, ShowTagM
             time: "",
             tags: [],
             created: Date.now()
-        }, (err) => {
-            if (err) {
-                LogDev("Sidebar footer error: " + err, "error");
+        }, (err) =>
+        {
+            if (err)
+            {
                 showStatus("Failed to add note.");
-            } else {
-                LogDev("Note added", "event");
-                RenderSidebar(Container);
+            } else
+            {
+                RenderSidebar(Container, undefined, true);
             }
         });
     };
@@ -151,16 +141,19 @@ export function renderSidebarFooter({ Locked, Container, RenderSidebar, ShowTagM
     lockBtn.id = "sidebarLock";
     lockBtn.className = "sidebar-action-btn";
     lockBtn.setAttribute('aria-label', Locked ? "Unlock notes" : "Lock notes");
-    lockBtn.onclick = () => {
-        LogDev("Sidebar footer button clicked: Lock/Unlock", "interaction");
-        import('./storage.js').then(({ SetLocked }) => {
-            SetLocked(!Locked, (err) => {
-                if (err) {
-                    LogDev("Sidebar footer error: " + err, "error");
+    lockBtn.style.width = "100%";
+    lockBtn.onclick = () =>
+    {
+        import('./storage.js').then(({ SetLocked }) =>
+        {
+            SetLocked(!Locked, (err) =>
+            {
+                if (err)
+                {
                     showStatus("Failed to toggle lock.");
-                } else {
-                    LogDev("Sidebar lock toggled", "event");
-                    RenderSidebar(Container);
+                } else
+                {
+                    RenderSidebar(Container, undefined, true);
                 }
             });
         });
@@ -177,9 +170,6 @@ export function renderSidebarFooter({ Locked, Container, RenderSidebar, ShowTagM
     visitLink.textContent = "PodAwful's Watching YOU!";
     visitLink.className = "sidebar-visit-link";
     visitLink.setAttribute('aria-label', 'Visit PodAwful website');
-    visitLink.onclick = () => {
-        LogDev("Sidebar footer link clicked: Visit PodAwful", "interaction");
-    };
     Footer.appendChild(visitLink);
 
     return Footer;

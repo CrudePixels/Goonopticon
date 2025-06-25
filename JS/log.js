@@ -34,6 +34,7 @@ export function LogDev(Message, Type = "miscellaneous", Cb)
     const msgStr = typeof Message === "string" ? Message : JSON.stringify(Message);
 
     // Console log for dev
+    /*
     if (Type === "error")
     {
         console.error("%c[DevLog] " + msgStr, `color:${color}`);
@@ -47,6 +48,7 @@ export function LogDev(Message, Type = "miscellaneous", Cb)
     {
         console.log("%c[DevLog] " + msgStr, `color:${color}`);
     }
+    */
 
     // Always send to background for unified logging
     if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage)

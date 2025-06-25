@@ -1,8 +1,17 @@
 ﻿import { GetNotes, SetNotes } from './storage.js';
 import { ParseTime } from './logic.js';
 import { LogDev } from '../log.js';
+import { showInputModal, showConfirmModal } from './modal.js';
 
-export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSidebar })
+// Helper to highlight search matches
+function highlightText(text, search)
+{
+    if (!search) return text;
+    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<span class="highlight">$1</span>');
+}
+
+export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSidebar, highlight })
 {
     try
     {
@@ -83,45 +92,38 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
             document.body.classList.remove('body-dragging-notes');
         });
 
-        // Timestamp
-        const timeSpan = document.createElement("span");
-        timeSpan.className = "note-timestamp";
-        timeSpan.textContent = Note.time || "";
-        timeSpan.title = "Jump to timestamp";
-        timeSpan.style.cursor = "pointer";
-        timeSpan.setAttribute('aria-label', 'Jump to timestamp');
-        timeSpan.onclick = () =>
+        // Timestamp (only if present)
+        if (Note.time)
         {
-            const v = document.querySelector("video");
-            if (v)
+            const timeSpan = document.createElement("span");
+            timeSpan.className = "note-timestamp";
+            timeSpan.textContent = Note.time;
+            timeSpan.title = "Jump to timestamp";
+            timeSpan.style.cursor = "pointer";
+            timeSpan.setAttribute('aria-label', 'Jump to timestamp');
+            timeSpan.onclick = () =>
             {
-                v.currentTime = ParseTime(Note.time);
-                v.play();
-            }
-        };
-        titleRow.appendChild(timeSpan);
+                const v = document.querySelector("video");
+                if (v)
+                {
+                    v.currentTime = ParseTime(Note.time);
+                    v.play();
+                }
+            };
+            titleRow.appendChild(timeSpan);
+        }
 
         // Note text
         const textSpan = document.createElement("span");
         textSpan.className = "note-text";
-        textSpan.textContent = Note.text;
-        titleRow.appendChild(textSpan);
-
-        // (Optional) Tags
-        const tagsArr = Array.isArray(Note.tags) ? Note.tags : [];
-        if (tagsArr.length > 0)
+        if (highlight)
         {
-            const tagsDiv = document.createElement("span");
-            tagsDiv.className = "note-tags";
-            tagsArr.forEach(tag =>
-            {
-                const tagSpan = document.createElement("span");
-                tagSpan.className = "note-tag";
-                tagSpan.textContent = tag;
-                tagsDiv.appendChild(tagSpan);
-            });
-            titleRow.appendChild(tagsDiv);
+            textSpan.innerHTML = highlightText(Note.text, highlight);
+        } else
+        {
+            textSpan.textContent = Note.text;
         }
+        titleRow.appendChild(textSpan);
 
         // --- Note actions row ---
         const actionsDiv = document.createElement("div");
@@ -162,13 +164,32 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
         editBtn.textContent = "✎";
         editBtn.disabled = Locked;
         if (Locked) editBtn.classList.add('locked-hide');
-        editBtn.onclick = () =>
+        editBtn.onclick = async () =>
         {
             if (Locked) return;
-            const newText = prompt("Edit note text:", Note.text);
+            const newText = await showInputModal({
+                title: "Edit Note",
+                label: "Note text:",
+                value: Note.text,
+                validate: (val) => val.trim() ? true : "Note text cannot be empty."
+            });
             if (newText === null) return;
-            const newTime = prompt("Edit timestamp (e.g. 1:23:45):", Note.time || "");
-            if (newTime === null) return;
+
+            let newTime = Note.time;
+            if (Note.time)
+            {
+                newTime = await showInputModal({
+                    title: "Edit Timestamp",
+                    label: "Timestamp (e.g. 1:23:45):",
+                    value: Note.time,
+                    validate: (val) =>
+                        /^(\d+:)?[0-5]?\d:[0-5]\d$/.test(val.trim())
+                            ? true
+                            : "Please enter a valid timestamp (mm:ss or h:mm:ss)."
+                });
+                if (newTime === null) return;
+            }
+
             GetNotes(location.href, (notesRaw) =>
             {
                 const notes = Array.isArray(notesRaw) ? notesRaw : [];
@@ -181,7 +202,7 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
                         notes[idx].text = newText.trim();
                         changed = true;
                     }
-                    if (typeof newTime === "string" && newTime.trim() !== "" && notes[idx].time !== newTime.trim())
+                    if (Note.time && typeof newTime === "string" && newTime.trim() !== "" && notes[idx].time !== newTime.trim())
                     {
                         notes[idx].time = newTime.trim();
                         changed = true;
@@ -207,11 +228,19 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
         tagBtn.textContent = "🏷️";
         tagBtn.disabled = Locked;
         if (Locked) tagBtn.classList.add('locked-hide');
-        tagBtn.onclick = () =>
+        tagBtn.onclick = async () =>
         {
             if (Locked) return;
-            const currentTags = tagsArr.join(", ");
-            const tagInput = prompt("Edit tags (comma separated):", currentTags);
+            // Always treat tags as array of strings
+            const currentTags = Array.isArray(Note.tags)
+                ? Note.tags.join(", ")
+                : (typeof Note.tags === "string" ? Note.tags : "");
+            const tagInput = await showInputModal({
+                title: "Edit Tags",
+                label: "Tags (comma separated):",
+                value: currentTags,
+                validate: (val) => true // Optionally add validation for tags
+            });
             if (tagInput === null) return;
             const tags = tagInput.split(",").map(t => t.trim()).filter(Boolean);
             GetNotes(location.href, (notesRaw) =>
@@ -239,63 +268,88 @@ export function renderNote({ Note, GroupName, Notes, Locked, Container, RenderSi
         deleteBtn.textContent = "🗑";
         deleteBtn.disabled = Locked;
         if (Locked) deleteBtn.classList.add('locked-hide');
-        deleteBtn.onclick = () =>
+        deleteBtn.onclick = async () =>
         {
             if (Locked) return;
-            const confirmed = confirm("Delete this note?");
-            if (confirmed)
+            const confirmed = await showConfirmModal({
+                title: "Delete Note",
+                message: "Are you sure you want to delete this note?",
+                okText: "Delete",
+                cancelText: "Cancel"
+            });
+            if (!confirmed) return;
+            GetNotes(location.href, (notesRaw) =>
             {
-                GetNotes(location.href, (notesRaw) =>
+                const notes = Array.isArray(notesRaw) ? notesRaw : [];
+                const idx = notes.findIndex(n => n.id === Note.id);
+                if (idx !== -1)
                 {
-                    const notes = Array.isArray(notesRaw) ? notesRaw : [];
-                    const idx = notes.findIndex(n => n.id === Note.id);
-                    if (idx !== -1)
+                    notes.splice(idx, 1);
+                    SetNotes(location.href, notes, (err) =>
                     {
-                        notes.splice(idx, 1);
-                        SetNotes(location.href, notes, (err) =>
-                        {
-                            if (err) showStatus(Container, "Failed to delete note.");
-                            else RenderSidebar(Container);
-                        });
-                    }
-                });
-            }
+                        if (err) showStatus(Container, "Failed to delete note.");
+                        else RenderSidebar(Container);
+                    });
+                }
+            });
         };
         actionsDiv.appendChild(deleteBtn);
 
-        // Copy button
-        const copyBtn = document.createElement("button");
-        copyBtn.className = "note-copy-btn";
-        copyBtn.title = "Copy video URL & timestamp";
-        copyBtn.setAttribute('aria-label', 'Copy video URL and timestamp');
-        copyBtn.textContent = "📋";
-        copyBtn.disabled = Locked;
-        if (Locked) copyBtn.classList.add('locked-hide');
-        copyBtn.onclick = () =>
+        // Copy button (only if timestamp is present)
+        if (Note.time)
         {
-            let url = location.href;
-            if (Note.time)
+            const copyBtn = document.createElement("button");
+            copyBtn.className = "note-copy-btn";
+            copyBtn.title = "Copy video URL & timestamp";
+            copyBtn.setAttribute('aria-label', 'Copy video URL and timestamp');
+            copyBtn.textContent = "📋";
+            copyBtn.disabled = Locked;
+            if (Locked) copyBtn.classList.add('locked-hide');
+            copyBtn.onclick = () =>
             {
-                // Try to add timestamp to URL (YouTube style)
-                if (url.includes("youtube.com") && !url.includes("t="))
+                let url = location.href;
+                if (Note.time)
                 {
-                    url += (url.includes("?") ? "&" : "?") + "t=" + encodeURIComponent(Note.time);
+                    // Try to add timestamp to URL (YouTube style)
+                    if (url.includes("youtube.com") && !url.includes("t="))
+                    {
+                        url += (url.includes("?") ? "&" : "?") + "t=" + encodeURIComponent(Note.time);
+                    }
                 }
-            }
-            navigator.clipboard.writeText(url)
-                .then(() =>
-                {
-                    showStatus(Container, "Copied!");
-                })
-                .catch(() =>
-                {
-                    showStatus(Container, "Failed to copy.");
-                });
-        };
-        actionsDiv.appendChild(copyBtn);
+                navigator.clipboard.writeText(url)
+                    .then(() =>
+                    {
+                        showStatus(Container, "Copied!");
+                    })
+                    .catch(() =>
+                    {
+                        showStatus(Container, "Failed to copy.");
+                    });
+            };
+            actionsDiv.appendChild(copyBtn);
+        }
 
         // --- Compose the note DOM ---
         NoteDiv.appendChild(titleRow);
+
+        // (Optional) Tags - always as separate elements
+        const tagsArr = Array.isArray(Note.tags)
+            ? Note.tags
+            : (typeof Note.tags === "string" ? Note.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
+        if (tagsArr.length > 0)
+        {
+            const tagsDiv = document.createElement("span");
+            tagsDiv.className = "note-tags";
+            tagsArr.forEach(tag =>
+            {
+                const tagSpan = document.createElement("span");
+                tagSpan.className = "note-tag";
+                tagSpan.innerHTML = highlight ? highlightText(tag, highlight) : tag;
+                tagsDiv.appendChild(tagSpan);
+            });
+            NoteDiv.appendChild(tagsDiv);
+        }
+
         NoteDiv.appendChild(actionsDiv);
 
         // Return a fragment containing the drop zone and the note

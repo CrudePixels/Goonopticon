@@ -1,6 +1,7 @@
 ﻿import { renderNote } from './noteComponent.js';
 import { SetNotes, SetGroups, RenameGroup, DeleteGroup, GetNotes } from './storage.js';
 import { LogDev } from '../log.js';
+import { showInputModal, showConfirmModal } from './modal.js';
 
 export function renderGroup({ GroupName, Notes, PinnedGroups, Locked, Container, RenderSidebar, AllGroups })
 {
@@ -147,10 +148,15 @@ export function renderGroup({ GroupName, Notes, PinnedGroups, Locked, Container,
         RenameBtn.disabled = Locked;
         RenameBtn.className = "note-action-btn note-edit-btn";
         if (Locked) RenameBtn.classList.add('locked-hide');
-        RenameBtn.onclick = () =>
+        RenameBtn.onclick = async () =>
         {
             if (Locked) return;
-            const newName = prompt("Rename group:", GroupName);
+            const newName = await showInputModal({
+                title: "Rename Group",
+                label: "New group name:",
+                value: GroupName,
+                validate: (val) => val.trim() ? true : "Group name cannot be empty."
+            });
             if (!newName || newName.trim() === "" || newName === GroupName) return;
             if (Notes.some(n => n.group === newName))
             {
@@ -183,9 +189,6 @@ export function renderGroup({ GroupName, Notes, PinnedGroups, Locked, Container,
         };
         GroupActions.appendChild(RenameBtn);
 
-        // Pin/Unpin button
-        // (Pinning logic omitted for brevity, but should be similar to your original)
-
         // Delete button
         const DeleteBtn = document.createElement("button");
         DeleteBtn.textContent = "🗑";
@@ -194,33 +197,36 @@ export function renderGroup({ GroupName, Notes, PinnedGroups, Locked, Container,
         DeleteBtn.disabled = Locked;
         DeleteBtn.className = "note-action-btn note-delete-btn";
         if (Locked) DeleteBtn.classList.add('locked-hide');
-        DeleteBtn.onclick = () =>
+        DeleteBtn.onclick = async () =>
         {
             if (Locked) return;
-            const confirmed = confirm(`Delete group "${GroupName}" and all its notes?`);
-            if (confirmed)
+            const confirmed = await showConfirmModal({
+                title: "Delete Group",
+                message: `Delete group "${GroupName}" and all its notes?`,
+                okText: "Delete",
+                cancelText: "Cancel"
+            });
+            if (!confirmed) return;
+            const NewNotes = Array.isArray(Notes) ? Notes.filter(N => N.group !== GroupName) : [];
+            SetNotes(location.href, NewNotes, (err) =>
             {
-                const NewNotes = Array.isArray(Notes) ? Notes.filter(N => N.group !== GroupName) : [];
-                SetNotes(location.href, NewNotes, (err) =>
+                if (err)
                 {
-                    if (err)
+                    showStatus("Failed to delete group.");
+                    return;
+                }
+                DeleteGroup(GroupName, (err2) =>
+                {
+                    if (err2)
                     {
                         showStatus("Failed to delete group.");
-                        return;
-                    }
-                    DeleteGroup(GroupName, (err2) =>
+                    } else
                     {
-                        if (err2)
-                        {
-                            showStatus("Failed to delete group.");
-                        } else
-                        {
-                            showStatus("Group deleted.");
-                            RenderSidebar(Container);
-                        }
-                    });
+                        showStatus("Group deleted.");
+                        RenderSidebar(Container);
+                    }
                 });
-            }
+            });
         };
         GroupActions.appendChild(DeleteBtn);
 

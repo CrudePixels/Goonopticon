@@ -1,25 +1,25 @@
 import { LogDev } from '../log.js';
-import { IsTimeClose } from './logic.js'; // <-- Add this import
-
-// Drag-and-drop helpers and improved UX
+import { IsTimeClose } from './logic.js';
 
 /**
  * Highlights notes whose timestamp is close to the current video time.
- * @param {Array} Notes - The array of note objects.
- * @param {Function} ParseTime - Function to parse a time string to seconds.
  * @param {number} [threshold=5] - Highlight threshold in seconds.
  */
-export function highlightCurrentTimestamp(Notes = window.Notes, ParseTime = window.ParseTime, threshold = 5) // default threshold 5s
+export function highlightCurrentTimestamp(threshold = 5)
 {
-    LogDev("highlightCurrentTimestamp called", "event");
-    // Notes and ParseTime are expected to be provided or available globally.
-    // If not, highlighting will be skipped.
+    const Notes = window.Notes;
+    const ParseTime = window.ParseTime;
+    if (!Notes || typeof ParseTime !== "function")
+    {
+        LogDev("highlightCurrentTimestamp: Notes or ParseTime not available", "event");
+        return;
+    }
     try
     {
         const v = document.querySelector("video");
-        if (!v || !Notes || typeof ParseTime !== "function")
+        if (!v)
         {
-            LogDev("highlightCurrentTimestamp: prerequisites missing (video, Notes, or ParseTime)", "event");
+            LogDev("highlightCurrentTimestamp: video element not found", "event");
             return;
         }
         const current = v.currentTime;
@@ -30,16 +30,9 @@ export function highlightCurrentTimestamp(Notes = window.Notes, ParseTime = wind
             if (note && note.time)
             {
                 const t = ParseTime(note.time);
-                if (isNaN(t))
-                {
-                    el.classList.remove("highlight");
-                    LogDev(`Note ${note.id} has invalid time, not highlighted`, "event");
-                    return;
-                }
-                if (IsTimeClose(current, t, threshold)) // Use utility function
+                if (!isNaN(t) && IsTimeClose(current, t, threshold))
                 {
                     el.classList.add("highlight");
-                    LogDev(`Note highlighted: ${note.id}`, "render");
                 } else
                 {
                     el.classList.remove("highlight");
@@ -49,29 +42,64 @@ export function highlightCurrentTimestamp(Notes = window.Notes, ParseTime = wind
                 el.classList.remove('highlight');
             }
         });
-        LogDev("highlightCurrentTimestamp completed", "event");
     } catch (err)
     {
-        LogDev("DragDrop highlightCurrentTimestamp error: " + err, "error");
+        LogDev("highlightCurrentTimestamp error: " + err, "error");
     }
 }
 
 /**
- * Placeholder for future drag-and-drop accessibility and feedback enhancements.
- * Currently, drag-and-drop is handled in the component files.
- * @param {HTMLElement} Container
- * @param {Function} RenderSidebar
+ * Enables drag-and-drop for sidebar note items and shows visual drop zones.
+ * @param {HTMLElement} container - The sidebar container element.
+ * @param {Function} renderSidebar - Function to re-render the sidebar after reordering.
  */
-export function setupSidebarDragAndDrop(Container, RenderSidebar)
+export function setupSidebarDragAndDrop(container, renderSidebar)
 {
     LogDev("setupSidebarDragAndDrop called", "event");
     try
     {
-        // TODO: Add keyboard support, ARIA, and improved feedback here.
-        // No-op for now.
-        LogDev("setupSidebarDragAndDrop completed (no-op)", "event");
+        let isDragging = false;
+
+        // Add drag event listeners to all note items
+        container.querySelectorAll('.note-item').forEach(item =>
+        {
+            item.setAttribute('draggable', 'true');
+
+            item.addEventListener('dragstart', (e) =>
+            {
+                isDragging = true;
+                container.classList.add('dragging-notes');
+            });
+
+            item.addEventListener('dragend', () =>
+            {
+                isDragging = false;
+                container.classList.remove('dragging-notes');
+                // Remove drag-over from all dropzones
+                container.querySelectorAll('.note-dropzone').forEach(zone => zone.classList.remove('drag-over'));
+            });
+        });
+
+        // Add drag event listeners to all drop zones
+        container.querySelectorAll('.note-dropzone').forEach(dropZone =>
+        {
+            dropZone.addEventListener('dragover', (e) =>
+            {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+            dropZone.addEventListener('dragleave', () =>
+            {
+                dropZone.classList.remove('drag-over');
+            });
+            dropZone.addEventListener('drop', (e) =>
+            {
+                dropZone.classList.remove('drag-over');
+                // The actual drop logic is handled in noteComponent.js
+            });
+        });
     } catch (err)
     {
-        LogDev("DragDrop setupSidebarDragAndDrop error: " + err, "error");
+        LogDev("setupSidebarDragAndDrop error: " + err, "error");
     }
 }

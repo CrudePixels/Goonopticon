@@ -1,5 +1,4 @@
-﻿/* === SIDEBAR THEME VARIABLES (from theme.css) === */
-#podawful-sidebar,
+﻿#podawful-sidebar,
 .sidebar,
 .sidebar-container
 {
@@ -11,17 +10,17 @@
     max-width: 400px;
     height: 100vh;
     z-index: 999999;
-    background: var(--sidebar-bg, var(--secondary-bg, #232323));
-    color: var(--sidebar-fg, var(--secondary-fg, #fff));
+    background: var(--sidebar-bg, var(--secondary-bg));
+    color: var(--sidebar-fg, var(--secondary-fg));
     box-shadow: -2px 0 8px rgba(0,0,0,0.3);
     overflow-y: auto;
     font-family: 'Segoe UI', Arial, sans-serif;
     font-size: 16px;
     transition: opacity 0.2s;
     opacity: 1;
-    border-left: 1.5px solid var(--sidebar-border, var(--border, #FFD600));
+    border-left: 1.5px solid var(--sidebar-border, var(--border));
     scrollbar-width: thin;
-    scrollbar-color: var(--accent) var(--sidebar-bg, #232323);
+    scrollbar-color: var(--accent) var(--sidebar-bg, var(--secondary-bg));
     padding: 0 0 16px 0;
     box-sizing: border-box;
 }
@@ -43,22 +42,22 @@
     .sidebar::-webkit-scrollbar
     {
         width: 8px;
-        background: var(--sidebar-bg, var(--secondary-bg, #232323));
+        background: var(--sidebar-bg, var(--secondary-bg));
     }
 
     #podawful-sidebar::-webkit-scrollbar-thumb,
     .sidebar::-webkit-scrollbar-thumb
     {
-        background: var(--accent, #FFD600);
+        background: var(--accent);
         border-radius: 4px;
     }
 
 /* === HEADER === */
 .sidebar-header
 {
-    background: var(--sidebar-bg, var(--secondary-bg, #232323));
-    color: var(--sidebar-fg, var(--secondary-fg, #fff));
-    border-bottom: 1px solid var(--sidebar-border, var(--border, #FFD600));
+    background: var(--sidebar-bg, var(--secondary-bg));
+    color: var(--sidebar-fg, var(--secondary-fg));
+    border-bottom: 1px solid var(--sidebar-border, var(--border));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -74,7 +73,7 @@
         margin: 0 0 8px 0;
         font-size: 1.5em;
         font-weight: bold;
-        color: var(--accent, #FFD600);
+        color: var(--accent);
         text-align: center;
     }
 
@@ -88,11 +87,11 @@
 .sidebar-url
 {
     font-size: 13px;
-    color: var(--accent, #FFD600);
+    color: var(--accent);
     margin-top: 10px;
     word-break: break-word;
     text-align: center;
-    border-bottom: 1px solid var(--border, #FFD600);
+    border-bottom: 1px solid var(--border);
     padding-bottom: 8px;
     width: 100%;
 }
@@ -101,7 +100,7 @@
 .group-header
 {
     background: var(--sidebar-header-bg, var(--sidebar-bg, #f5f5f5));
-    color: var(--accent, #FFD600);
+    color: var(--accent);
     padding: 12px 12px 8px 12px;
     border-radius: 8px 8px 0 0;
     display: flex;
@@ -109,7 +108,7 @@
     justify-content: space-between;
     font-weight: bold;
     font-size: 1.1em;
-    border-bottom: 1px solid var(--sidebar-border, var(--border, #FFD600));
+    border-bottom: 1px solid var(--sidebar-border, var(--border));
 }
 
 /* === GROUP BUTTONS (edit/delete) === */
@@ -121,38 +120,13 @@
     margin-bottom: 8px;
 }
 
-    .group-actions button
-    {
-        background: var(--button-bg, var(--accent, #FFD600));
-        color: var(--button-fg, var(--sidebar-bg, #232323));
-        border: none;
-        border-radius: 6px;
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        min-height: 36px;
-        font-size: 1.1em;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s, color 0.2s;
-        box-shadow: none;
-        padding: 0;
-    }
-
-        .group-actions button:hover
-        {
-            background: var(--button-hover-bg, var(--sidebar-fg, #fff));
-            color: var(--button-hover-fg, var(--accent, #FFD600));
-        }
-
 /* === NOTE CONTAINER === */
 .note,
 .note-item
 {
     background: var(--note-bg, var(--secondary-bg, #fffde7));
-    color: var(--note-fg, var(--primary-fg, #222));
-    border: 2px solid var(--note-border, var(--accent, #FFD600));
+    color: var(--note-fg, var(--primary-fg));
+    border: 2px solid var(--note-border, var(--accent));
     border-radius: 10px;
     margin: 12px 0;
     padding: 12px;
@@ -175,83 +149,11 @@
     margin-top: 4px;
 }
 
-    .note-actions button
-    {
-        background: var(--button-bg, var(--accent, #FFD600));
-        color: var(--button-fg, var(--sidebar-bg, #232323));
-        border: none;
-        border-radius: 6px;
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        min-height: 36px;
-        font-size: 1.1em;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s, color 0.2s;
-        box-shadow: none;
-        padding: 0;
-    }
-
-        .note-actions button:hover
-        {
-            background: var(--button-hover-bg, var(--sidebar-fg, #fff));
-            color: var(--button-hover-fg, var(--accent, #FFD600));
-        }
-
-.note-action-btn,
-.note-edit-btn,
-.note-delete-btn {
-    background: var(--button-bg, #222);
-    color: var(--button-fg, #FFD600);
-    border: none;
-    border-radius: 6px;
-    padding: 6px 10px;
-    margin: 0 2px;
-    font-size: 1.1em;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.note-action-btn:hover,
-.note-edit-btn:hover,
-.note-delete-btn:hover {
-    background: var(--button-hover-bg, #FFD600);
-    color: var(--button-hover-fg, #222);
-}
-
-/* === +TIMESTAMP BUTTON (if present) === */
-.sidebar-action-btn,
-.add-timestamp-btn
-{
-    background: var(--accent, #FFD600);
-    color: var(--button-fg, var(--sidebar-bg, #232323));
-    border: 1.5px solid var(--accent, #FFD600);
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 1.1em;
-    padding: 8px 18px;
-    margin: 8px 0;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-}
-
-    .sidebar-action-btn:hover,
-    .add-timestamp-btn:hover
-    {
-        background: var(--button-hover-bg, var(--sidebar-fg, #fff));
-        color: var(--button-hover-fg, var (--accent, #FFD600));
-    }
-
 /* === GROUP CONTAINER === */
 .note-group
 {
-    background: var(--sidebar-bg, var(--secondary-bg, #232323));
-    border: 2px solid var(--accent, #FFD600);
+    background: var(--sidebar-bg, var(--secondary-bg));
+    border: 2px solid var(--accent);
     border-radius: 10px;
     margin: var(--sidebar-spacing, 16px) 0;
     padding: 0 0 12px 0;
@@ -260,23 +162,24 @@
     flex-direction: column;
     gap: 0;
     box-sizing: border-box;
-    margin-bottom: 22px; /* space between groups */
-    padding: 12px 0 0 0; /* space above notes inside group */
-    background: var(--primary-bg, #222);
+    margin-bottom: 22px;
+    padding: 12px 0 0 0;
+    background: var(--primary-bg);
     border-radius: 8px;
 }
 
-.note-group {
-    margin-bottom: 18px; /* Adjust as needed for spacing */
+.note-group
+{
+    margin-bottom: 18px;
     padding-bottom: 0;
-    background: var(--primary-bg, #222);
+    background: var(--primary-bg);
     border-radius: 8px;
 }
 
 /* === GROUP TITLE === */
 .group-title
 {
-    color: var(--accent, #FFD600);
+    color: var(--accent);
     font-size: 1.1em;
     font-weight: bold;
     max-width: 100%;
@@ -286,9 +189,9 @@
     padding: 12px 12px 0 12px;
 }
 
-/* Optional: Add space between group header and notes */
 .group-title-row,
-.group-actions {
+.group-actions
+{
     margin-bottom: 8px;
 }
 
@@ -298,30 +201,41 @@
 .note-time,
 .sidebar-timestamp
 {
-    background: var(--accent, #FFD600);
+    background: var(--accent);
     color: var(--button-fg, var(--sidebar-bg, #232323));
 }
 
 /* === HIGHLIGHTED NOTE === */
 .note-item.highlight
 {
-    border: 2px solid var(--highlight-border, #00e676);
-    background: var(--highlight-bg, #263238);
-    color: var(--highlight-fg, #fff);
+    background: var(--highlight-bg);
+    border-left: 4px solid var(--highlight-border);
+    color: var(--highlight-fg);
+    transition: background 0.2s, border 0.2s, color 0.2s;
+}
+
+.note-item.highlight .note-timestamp {
+    background: var(--highlight-border);
+    color: var(--highlight-fg);
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-right: 12px;
+    font-weight: bold;
+    transition: background 0.2s, color 0.2s;
 }
 
 /* === DIVIDER === */
 .sidebar-divider
 {
-    border-bottom: 1px solid var(--accent, #FFD600);
+    border-bottom: 1px solid var(--accent);
 }
 
 /* === FOOTER === */
 .sidebar-footer
 {
-    background: var(--sidebar-bg, var(--secondary-bg, #232323));
-    color: var(--accent, #FFD600);
-    border-top: 1px solid var(--sidebar-border, var(--border, #FFD600));
+    background: var(--sidebar-bg, var(--secondary-bg));
+    color: var(--accent);
+    border-top: 1px solid var(--sidebar-border, var(--border));
     margin-top: var(--sidebar-spacing, 16px);
     padding: 20px 10px 10px 10px;
     border-radius: 0 0 8px 8px;
@@ -337,8 +251,8 @@
 .sidebar input[type="search"]
 {
     background: var(--input-bg, #1a1a1a);
-    color: var(--input-fg, var(--sidebar-fg, #fff));
-    border: 1px solid var(--sidebar-border, var(--border, #FFD600));
+    color: var(--input-fg, var(--sidebar-fg));
+    border: 1px solid var(--sidebar-border, var(--border));
     width: 100%;
     padding: 8px;
     border-radius: 6px;
@@ -351,7 +265,7 @@
 .sidebar .placeholder,
 .empty-group-msg
 {
-    color: var(--group-placeholder-fg, var(--secondary-fg, #FFD600));
+    color: var(--group-placeholder-fg, var(--secondary-fg));
     background: transparent;
     font-style: italic;
     text-align: center;
@@ -446,18 +360,32 @@
     right: 24px;
     bottom: 24px;
     z-index: 1000001;
-    background: var(--button-bg, #FFD600);
-    color: var(--button-fg, #111);
-    border: none;
-    border-radius: 6px;
-    padding: 12px 24px;
-    font-size: 1.1em;
+    background: var(--button-bg);
+    color: var(--button-fg);
+    border: 3px solid var(--accent);
+    border-radius: 12px;
+    padding: 16px 32px;
+    font-size: 1.3em;
     font-weight: bold;
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
     min-width: 120px;
     max-width: 240px;
+}
+
+#podawful-show-sidebar-btn:hover {
+    background: var(--button-hover-bg);
+    color: var(--button-hover-fg);
+    border-color: var(--button-hover-bg);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+}
+
+#podawful-show-sidebar-btn:active {
+    background: var(--accent);
+    color: var(--primary-bg);
+    border-color: var(--primary-bg);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
 }
 
 /* === UTILITY CLASSES === */
@@ -477,9 +405,10 @@
 }
 
 /* === GROUP HEADER === */
-.group-header, .group-title {
+.group-header, .group-title
+{
     background: var(--group-header-bg, var(--secondary-bg, #FFD600));
-    color: var(--group-header-fg, var(--primary-fg, #222));
+    color: var(--group-header-fg, var(--primary-fg));
     font-size: 1.1em;
     font-weight: bold;
     max-width: 100%;
@@ -493,41 +422,46 @@
     justify-content: space-between;
 }
 
-.locked-hide {
+.locked-hide
+{
     display: none !important;
 }
 
 /* Show grab hand on draggable notes and groups */
 .note-item[draggable="true"],
-.note-group[draggable="true"] {
+.note-group[draggable="true"]
+{
     cursor: grab;
 }
-.note-item[draggable="true"]:active,
-.note-group[draggable="true"]:active {
-    cursor: grabbing;
-}
+
+    .note-item[draggable="true"]:active,
+    .note-group[draggable="true"]:active
+    {
+        cursor: grabbing;
+    }
 
 /* Hide drop zones by default */
 .note-dropzone,
-.group-dropzone-outer {
+.group-dropzone-outer
+{
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s;
 }
-
 /* Show drop zones when dragging */
 .body-dragging-notes .note-dropzone,
-.body-dragging-notes .group-dropzone-outer {
+.body-dragging-notes .group-dropzone-outer
+{
     opacity: 1;
     pointer-events: auto;
 }
-
 /* Optional: Highlight drop zone when hovered */
 .note-dropzone.drag-over,
-.group-dropzone-outer.drag-over {
-    background: var(--accent, #FFD600);
+.group-dropzone-outer.drag-over
+{
+    background: var(--accent);
     opacity: 1;
-    box-shadow: 0 0 0 2px var(--accent, #FFD600) inset;
+    box-shadow: 0 0 0 2px var(--accent) inset;
 }
 
 .note-dropzone,
@@ -538,8 +472,67 @@
     background: #FFD60022 !important;
 }
 
-.note-timestamp {
-    color: #FFD600; /* Example: bright yellow */
-    font-weight: bold;
-    /* Optionally, add background or other styles */
+.note-dropzone
+{
+    height: 16px;
+    margin: 0 0 2px 0;
+    background: transparent;
+    border: none;
+    transition: background 0.2s, border 0.2s;
 }
+
+.note-dropzone.drag-over
+{
+    background: #ffd60055;
+    border: 2px dashed #FFD600;
+    border-radius: 4px;
+}
+
+.note-timestamp
+{
+    margin-right: 12px; /* Increased spacing */
+    color: #FFD600;
+    font-weight: bold;
+    /* keep other styles as needed */
+}
+
+.note-tags
+{
+    display: block;
+    margin-top: 6px;
+}
+
+.highlight
+{
+    background: yellow;
+    color: black;
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
+.note-tag
+{
+    display: inline-block;
+    background: var(--accent);
+    color: var(--button-fg);
+    border-radius: 3px;
+    padding: 1px 6px;
+    margin-right: 3px;
+    margin-bottom: 1px;
+    font-size: 0.85em; /* Smaller font */
+    transition: background 0.2s, color 0.2s;
+}
+
+    .note-tag:hover
+    {
+        background: var(--button-hover-bg);
+        color: var(--button-hover-fg);
+    }
+
+.note-dropzone {
+    display: none;
+}
+.dragging-notes .note-dropzone {
+    display: block;
+}
+
