@@ -1,4 +1,4 @@
-# PodAwful's Timestamps
+# Goonopticon
 
 A browser extension for timestamping videos with group, tag, and note management.
 
