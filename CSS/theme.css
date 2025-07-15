@@ -1,0 +1,444 @@
+:root
+{
+    --primary-bg: #222;
+    --primary-fg: #FFD600;
+    --secondary-bg: #181818;
+    --secondary-fg: #fff;
+    --accent: #FFD600;
+    --button-bg: #FFD600;
+    --button-fg: #111;
+    --button-hover-bg: #111;
+    --button-hover-fg: #FFD600;
+    --input-bg: #fff;
+    --input-fg: #111;
+    --border: #FFD600;
+    --sidebar-spacing: 16px;
+    --highlight-bg: #D3D3D3;
+    --highlight-fg: #222;
+    --highlight-border: #FFD600;
+}
+
+/* === THEME MODIFIERS === */
+body.default-theme, .sidebar-container.default-theme, body.popup.default-theme
+{
+    --primary-bg: #222;
+    --primary-fg: #FFD600;
+    --secondary-bg: #292929;
+    --secondary-fg: #fff;
+    --accent: #FFD600;
+    --button-bg: #FFD600;
+    --button-fg: #111;
+    --button-hover-bg: #111;
+    --button-hover-fg: #FFD600;
+    --input-bg: #fff;
+    --input-fg: #111;
+    --border: #FFD600;
+    --highlight-bg: #D3D3D3;
+    --highlight-fg: #222;
+    --highlight-border: #FFD600;
+}
+
+body.dark-theme, .sidebar-container.dark-theme, body.popup.dark-theme
+{
+    --primary-bg: #111;
+    --primary-fg: #BBB;
+    --secondary-bg: #181818;
+    --secondary-fg: #FFD600;
+    --accent: #2196f3;
+    --button-bg: #222;
+    --button-fg: #FFD600;
+    --button-hover-bg: #2196f3;
+    --button-hover-fg: #fff;
+    --input-bg: #222;
+    --input-fg: #FFD600;
+    --border: #2196f3;
+    --highlight-bg: #333b1a;
+    --highlight-fg: #FFD600;
+    --highlight-border: #2196f3;
+}
+
+body.light-theme, .sidebar-container.light-theme, body.popup.light-theme
+{
+    --primary-bg: #fff;
+    --primary-fg: #222;
+    --secondary-bg: #f5f5f5;
+    --secondary-fg: #222;
+    --accent: #FFD600;
+    --button-bg: #FFD600;
+    --button-fg: #111;
+    --button-hover-bg: #111;
+    --button-hover-fg: #FFD600;
+    --input-bg: #fff;
+    --input-fg: #111;
+    --border: #FFD600;
+    --highlight-bg: #fffde7;
+    --highlight-fg: #222;
+    --highlight-border: #FFD600;
+}
+
+/* === BASE STYLES === */
+body, .sidebar-container, body.popup
+{
+    background: var(--primary-bg);
+    color: var(--primary-fg);
+}
+
+/* === THEMED BUTTONS === */
+.button,
+.sidebar-action-btn,
+.popup-menu-btn,
+.podawful-btn,
+.add-timestamp-btn,
+.note-action-btn,
+.note-edit-btn,
+.note-delete-btn,
+.note-tag-btn,
+.note-copy-btn,
+.group-action-btn,
+.group-edit-btn,
+.group-delete-btn
+{
+    background: var(--button-bg);
+    color: var(--button-fg);
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: 600;
+    padding: 8px 18px;
+    margin: 6px 4px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    outline: none;
+    box-shadow: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .button:hover,
+    .sidebar-action-btn:hover,
+    .popup-menu-btn:hover,
+    .podawful-btn:hover,
+    .add-timestamp-btn:hover,
+    .note-action-btn:hover,
+    .note-edit-btn:hover,
+    .note-delete-btn:hover,
+    .note-tag-btn:hover,
+    .note-copy-btn:hover,
+    .group-action-btn:hover,
+    .group-edit-btn:hover,
+    .group-delete-btn:hover
+    {
+        background: var(--button-hover-bg);
+        color: var(--button-hover-fg);
+        border-color: var(--button-hover-bg);
+    }
+
+    .button:focus,
+    .sidebar-action-btn:focus,
+    .popup-menu-btn:focus,
+    .podawful-btn:focus,
+    .add-timestamp-btn:focus,
+    .note-action-btn:focus,
+    .note-edit-btn:focus,
+    .note-delete-btn:focus,
+    .note-tag-btn:focus,
+    .note-copy-btn:focus,
+    .group-action-btn:focus,
+    .group-edit-btn:focus,
+    .group-delete-btn:focus
+    {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+    .button:disabled,
+    .sidebar-action-btn:disabled,
+    .popup-menu-btn:disabled,
+    .podawful-btn:disabled,
+    .add-timestamp-btn:disabled,
+    .note-action-btn:disabled,
+    .note-edit-btn:disabled,
+    .note-delete-btn:disabled,
+    .note-tag-btn:disabled,
+    .note-copy-btn:disabled,
+    .group-action-btn:disabled,
+    .group-edit-btn:disabled,
+    .group-delete-btn:disabled
+    {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+/* === HIDE SIDEBAR BUTTON (long, single-line, centered) === */
+#podawful-hide-sidebar-btn,
+.hide-sidebar-btn
+{
+    display: block;
+    width: 100%;
+    max-width: 420px;
+    min-width: 260px;
+    height: 56px;
+    font-size: 2em;
+    font-weight: bold;
+    padding: 0 0.5em;
+    margin: 24px auto 12px auto;
+    border-radius: 12px;
+    background: var(--button-bg);
+    color: var(--button-fg);
+    border: 2px solid var(--accent);
+    box-sizing: border-box;
+    cursor: pointer;
+    text-align: center;
+    line-height: 56px;
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+/* === SEARCH BAR & CLEAR BUTTON (aligned and same height) === */
+.search-bar-container
+{
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+    .search-bar-container input[type="text"],
+    .search-bar-container input[type="search"]
+    {
+        height: 48px;
+        font-size: 1.1em;
+        border-radius: 8px 0 0 8px;
+        margin: 0;
+    }
+
+.search-clear-btn,
+#search-clear-btn
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    font-size: 2em;
+    border-radius: 0 8px 8px 0;
+    background: var(--button-bg);
+    color: var(--button-fg);
+    border: 2px solid var(--accent);
+    border-left: none;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+/* === NOTE & GROUP ACTION BUTTONS (smaller) === */
+.note-action-btn,
+.note-edit-btn,
+.note-delete-btn,
+.note-tag-btn,
+.note-copy-btn,
+.group-action-btn,
+.group-edit-btn,
+.group-delete-btn
+{
+    font-size: 1.1em;
+    width: 38px;
+    height: 38px;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 8px;
+    padding: 0;
+    margin: 0 4px;
+}
+
+/* === NOTE TAGS (follow theme colors) === */
+.note-tag
+{
+    display: inline-block;
+    background: var(--accent);
+    color: var(--button-fg);
+    border-radius: 3px;
+    padding: 2px 8px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+    font-size: 0.95em;
+    transition: background 0.2s, color 0.2s;
+}
+
+    .note-tag:hover
+    {
+        background: var(--button-hover-bg);
+        color: var(--button-hover-fg);
+    }
+
+/* === HIGHLIGHTING === */
+.note-text mark,
+.highlight {
+    background: var(--highlight-bg);
+    color: var(--highlight-fg);
+    border-radius: 2px;
+    padding: 0 2px;
+    font-weight: bold;
+}
+
+.note-item.highlight {
+    background: var(--highlight-bg);
+    border: 1px solid var(--highlight-border);
+    border-radius: 6px;
+    }
+
+/* === POPUP MENU BUTTONS === */
+.popup-menu-content
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+    .popup-menu-content button,
+    .popup-menu-btn,
+    .popup .podawful-btn,
+    .popup .sidebar-action-btn
+    {
+        margin: 4px 0;
+        padding: 10px 0;
+        width: 90%;
+        max-width: 340px;
+        font-size: 1.1em;
+        border-radius: 10px;
+        background: var(--button-bg);
+        color: var(--button-fg);
+        border: 2px solid var(--accent);
+        font-weight: 600;
+        display: block;
+        text-align: center;
+        cursor: pointer;
+        transition: background 0.18s, color 0.18s, border-color 0.18s, box-shadow 0.18s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        outline: none;
+    }
+
+        .popup-menu-content button:hover,
+        .popup-menu-btn:hover,
+        .popup .podawful-btn:hover,
+        .popup .sidebar-action-btn:hover,
+        .popup-menu-content button:focus,
+        .popup-menu-btn:focus,
+        .popup .podawful-btn:focus,
+        .popup .sidebar-action-btn:focus
+        {
+            background: var(--button-hover-bg);
+            color: var(--button-hover-fg);
+            border-color: var(--button-hover-bg);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+/* === MODAL STYLES === */
+.podawful-modal
+{
+    position: fixed;
+    z-index: 10000;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s;
+}
+
+.podawful-modal-box
+{
+    background: var(--primary-bg);
+    color: var(--primary-fg);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    min-width: 320px;
+    max-width: 90vw;
+    padding: 28px 24px 20px 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 1.1em;
+}
+
+    .podawful-modal-box h3
+    {
+        margin: 0 0 8px 0;
+        color: var(--accent);
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+
+    .podawful-modal-box label
+    {
+        font-weight: 500;
+        margin-bottom: 4px;
+        color: var(--primary-fg);
+    }
+
+    .podawful-modal-box input[type="text"],
+    .podawful-modal-box input[type="number"],
+    .podawful-modal-box input[type="search"]
+    {
+        background: var(--input-bg);
+        color: var(--input-fg);
+        border: 1.5px solid var(--accent);
+        border-radius: 6px;
+        padding: 8px;
+        font-size: 1em;
+        margin-bottom: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .podawful-modal-box button.podawful-btn
+    {
+        background: var(--button-bg);
+        color: var(--button-fg);
+        border: 1.5px solid var(--accent);
+        border-radius: 6px;
+        padding: 8px 18px;
+        font-size: 1em;
+        margin-left: 8px;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+        .podawful-modal-box button.podawful-btn:hover
+        {
+            background: var(--button-hover-bg);
+            color: var(--button-hover-fg);
+            border-color: var(--button-hover-bg);
+        }
+
+@keyframes fadeIn
+{
+    from
+    {
+        opacity: 0;
+    }
+
+    to
+    {
+        opacity: 1;
+    }
+}
+
+/* === NOTE HIGHLIGHT === */
+.note-item.highlight {
+    background: var(--highlight-bg, #fffde7) !important;
+    color: var(--highlight-fg, #222) !important;
+    border: 2px solid var(--highlight-border, #FFD600) !important;
+    font-weight: bold;
+    box-shadow: 0 0 8px 2px var(--highlight-border, #FFD600);
+    transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}

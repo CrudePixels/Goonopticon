@@ -1,0 +1,67 @@
+﻿Version 1.4.0 (2025-01-27)
+- Enhanced accessibility with ARIA labels and keyboard navigation
+- Improved error handling with user-facing error banners
+- Added comprehensive bulk actions for notes and groups
+- Enhanced tag management with search and filtering
+- Improved import/export with support for JSON, CSV, and Markdown formats
+- Enhanced theme system with compact, light, and dark modes
+- Improved sidebar performance and reliability
+- Added undo/redo functionality for notes and groups
+- Enhanced hotkey system with customizable shortcuts
+- Improved dev logging with filtering and export capabilities
+- Added comprehensive help/about modal with usage instructions
+- Enhanced cross-browser compatibility (Chrome, Firefox, Edge)
+- Improved storage management with schema versioning
+- Added timestamp highlighting in video player
+- Enhanced search functionality with real-time filtering
+- Improved modal system for better user interaction
+- Added comprehensive error recovery mechanisms
+- Enhanced UI responsiveness and modern design
+- Improved code organization and modularity
+
+Version 1.3.2 (2025-06-08)
+- Improved performance
+- Fixed minor bugs
+- Updated documentation
+
+Version 1.3.1 (2025-05-30)
+- Combined sidebar and popup menu into unified scripts
+- Fixed all broken buttons and UI inconsistencies
+- Added Dev Log, Changelog, and Hotkeys panels to the popup
+- Sidebar now loads reliably on all supported browsers
+- Export to PNG working for notes
+- Tooltips and accessibility improvements (ARIA, keyboard navigation)
+
+Version 1.3.0 (2025-05-26)
+- Pin notes and groups for quick access
+- Added Compact, Light, and Dark modes (theme switching)
+- Undo and lock functionality for notes/groups
+- Bulk actions: multi-select, delete, move, and tag notes/groups
+- Tag manager modal for easier tag editing
+
+Version 1.2.0 (2025-05-23)
+- Auto-refresh sidebar on changes
+- Persistent sidebar toggle state
+- Import/export now supports JSON, CSV, and Markdown formats
+- Robust parsing and error handling for imports
+
+Version 1.1.0 (2025-05-20)
+- Full popup menu system with submenus for hotkeys, logs, settings, help/about
+- Tag manager modal for editing all tags
+- User-facing error banners for storage failures
+- Schema versioning and migration for notes/groups
+
+Version 1.0.0 (2025-05-17)
+- Timestamped note and group creation
+- Sidebar always visible on YouTube
+- Theme support (default, light, dark)
+- Hotkeys for note/group actions
+- Robust logging system (Dev Log)
+- Tag filtering and management
+- Responsive, accessible design
+- User-friendly error handling
+- Import/export notes
+- Multi-browser support (Chrome, Firefox, Edge)
+- Modular codebase with BEM CSS
+- CI/CD and automated builds (GitHub Actions)
+- Extensive documentation and contribution guidelines
