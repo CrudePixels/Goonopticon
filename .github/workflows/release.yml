@@ -39,6 +39,15 @@ jobs:
         cd dist
         zip -r ../goonopticon-extension.zip .
         cd ..
+        ls -la goonopticon-extension.zip
+        
+    - name: Verify package creation
+      run: |
+        if [ ! -f "goonopticon-extension.zip" ]; then
+          echo "Error: goonopticon-extension.zip was not created"
+          exit 1
+        fi
+        echo "Package created successfully"
         
     - name: Extract version from package.json
       id: version
@@ -48,7 +57,7 @@ jobs:
         echo "tag=v$VERSION" >> $GITHUB_OUTPUT
         
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.version.outputs.tag }}
         name: Goonopticon ${{ steps.version.outputs.tag }}
