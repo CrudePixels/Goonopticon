@@ -1,6 +1,6 @@
 # Goonopticon - Pod Awful Timestamps
 
-A powerful browser extension for timestamping YouTube videos with advanced group, tag, and note management capabilities. Built for the PodAwful and the cult.
+A powerful browser extension for timestamping YouTube videos with advanced group, tag, and note management capabilities. Built for PodAwful and the cult.
 
 ## Features
 
@@ -9,12 +9,7 @@ A powerful browser extension for timestamping YouTube videos with advanced group
 - **🏷️ Advanced Tagging**: Organize content with a comprehensive tag system
 - **📁 Group Management**: Organize notes into logical groups for better content management
 - **🔍 Search & Filter**: Find notes quickly with real-time search and tag filtering
-- **📊 Bulk Actions**: Efficiently manage multiple notes and groups with bulk operations
-
-### User Experience
-- **🎨 Multiple Themes**: Choose from Default, Light, Dark, and Compact themes
-- **⌨️ Customizable Hotkeys**: Set up keyboard shortcuts for quick actions
-- **↩️ Undo/Redo**: Safe editing with comprehensive undo/redo functionality
+- **🎨 Themes**: Choose from Default, Light, Dark, and User themes.
 - **♿ Accessibility**: Full ARIA support and keyboard navigation
 
 ### Data Management
