@@ -338,7 +338,20 @@ export function renderSidebar(Container, overrideSelectedTags, forceHeaderRerend
                 let noteTime = await window.showInputModal({
                     title: 'Timestamp',
                     label: currentTime ? `Timestamp (leave blank to use current video time: ${currentTime})` : 'Timestamp (e.g., 1:23 or 1:23:45):',
-                    placeholder: currentTime ? `e.g., 1:23 or 1:23:45 (current: ${currentTime})` : 'e.g., 1:23 or 1:23:45'
+                    placeholder: currentTime ? `e.g., 1:23 or 1:23:45 (current: ${currentTime})` : 'e.g., 1:23 or 1:23:45',
+                    validate: val => {
+                        if (!val || !val.trim()) return true; // Allow empty (will use current time)
+                        const trimmed = val.trim();
+                        // Allow only numbers and colons (e.g., 1:23, 1:23:45, or just 123)
+                        if (!/^[\d:]+$/.test(trimmed)) {
+                            return 'Timestamp can only contain numbers and colons (e.g., 1:23 or 1:23:45)';
+                        }
+                        // Basic format validation - should be like 1:23 or 1:23:45 or just numbers
+                        if (!/^(\d+|\d+:\d+|\d+:\d+:\d+)$/.test(trimmed)) {
+                            return 'Invalid timestamp format. Use format like 1:23 or 1:23:45';
+                        }
+                        return true;
+                    }
                 });
                 if (!noteTime || !noteTime.trim()) noteTime = currentTime;
                 if (!noteTime || !noteTime.trim()) return;
@@ -547,10 +560,10 @@ export function renderSidebar(Container, overrideSelectedTags, forceHeaderRerend
                 clearBulkSelection,
                 bulkActionsEnabled: BulkActionsEnabled
             });
-            // Make body scrollable
+            // Make body expandable with content
             body.style.overflowY = 'auto';
-            body.style.maxHeight = 'calc(100vh - 400px)'; // Adjust based on header/footer height
-            body.style.flex = '1';
+            body.style.maxHeight = 'calc(100vh - 200px)'; // Allow expansion up to viewport
+            body.style.flex = '1'; // Expand to fill available space
             Container.appendChild(body);
 
             const footer = renderSidebarFooter({ 

@@ -27,9 +27,9 @@ export function renderTagFilter(props) {
         const searchInput = document.createElement('input');
         searchInput.className = 'tag-filter__search';
         searchInput.type = 'text';
-        searchInput.placeholder = 'Search tags...';
+        searchInput.placeholder = 'Search...';
         if (highlight) searchInput.value = highlight;
-        searchInput.setAttribute('aria-label', 'Search tags');
+        searchInput.setAttribute('aria-label', 'Search');
         // Debounce search input (remove debounce, use Enter/blur instead)
         searchInput.oninput = null;
         searchInput.addEventListener('keydown', (e) => {
@@ -102,4 +102,4 @@ export function renderTagFilter(props) {
         errorDiv.style.color = 'var(--error, #c00)';
         return errorDiv;
     }
-} 
+}

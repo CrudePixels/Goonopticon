@@ -1,4 +1,5 @@
 ﻿import browser from 'webextension-polyfill';
+import { LogDev } from './log.js';
 export default browser;
 export { browser };
 

@@ -37,54 +37,9 @@ export function renderGroup(props) {
     // Only allow drag from the group header
     const groupHeader = document.createElement("div");
     groupHeader.className = "group-header";
-    groupHeader.draggable = !Locked;
-    let dragStartTimeout = null;
-    let dragAllowed = false;
-    groupHeader.addEventListener('mousedown', (e) => {
-        if (Locked) return;
-        dragAllowed = false;
-        dragStartTimeout = setTimeout(() => {
-            dragAllowed = true;
-            groupHeader.draggable = true;
-        }, 50); // Lowered from 150ms to 50ms for faster drag
-    });
-    groupHeader.addEventListener('mouseup', (e) => {
-        clearTimeout(dragStartTimeout);
-        groupHeader.draggable = false;
-    });
-    groupHeader.addEventListener('mouseleave', (e) => {
-        clearTimeout(dragStartTimeout);
-        groupHeader.draggable = false;
-    });
-    groupHeader.addEventListener('dragstart', (e) => {
-        if (Locked || !dragAllowed) {
-            e.preventDefault();
-            return;
-        }
-        e.dataTransfer.setData('group-name', GroupName);
-        GroupDiv.classList.add('dragging-group');
-        document.body.classList.add('body-dragging-notes');
-    });
-    groupHeader.addEventListener('dragend', () => {
-        GroupDiv.classList.remove('dragging-group');
-        document.body.classList.remove('body-dragging-notes');
-        document.querySelectorAll('.group-dropzone-outer.drag-over').forEach(el => el.classList.remove('drag-over'));
-    });
-    // Cursor style: only show grab/grabbing if not locked
-    if (!Locked) {
-        groupHeader.style.cursor = 'grab';
-        groupHeader.addEventListener('mousedown', () => {
-            groupHeader.style.cursor = 'grabbing';
-        });
-        groupHeader.addEventListener('mouseup', () => {
-            groupHeader.style.cursor = 'grab';
-        });
-        groupHeader.addEventListener('mouseleave', () => {
-            groupHeader.style.cursor = 'grab';
-        });
-    } else {
-        groupHeader.style.cursor = 'default';
-    }
+    groupHeader.style.position = 'relative';
+    // Drag functionality removed from group header - only drag handle can be used
+    groupHeader.style.cursor = 'default';
 
     // --- Group header with title and actions ---
     // Bulk select checkbox - only show if bulk actions are enabled
@@ -104,10 +59,13 @@ export function renderGroup(props) {
             }
         });
 
+    // --- Drag handle removed - using drag button instead ---
+
     // Group title
     const groupTitle = document.createElement("h3");
     groupTitle.className = "group-title";
     groupTitle.textContent = String(GroupName);
+    // No padding needed since drag handle removed
     groupHeader.appendChild(groupTitle);
 
     const GroupActions = document.createElement("div");
@@ -128,7 +86,9 @@ export function renderGroup(props) {
         setTimeout(() => { statusDiv.textContent = ""; }, duration);
     };
 
-    // Rename button
+    // Group actions button removed
+
+    // Edit button (rename)
     const RenameBtn = document.createElement("button");
     RenameBtn.textContent = "\u270e";
     RenameBtn.title = "Rename group";
@@ -208,6 +168,48 @@ export function renderGroup(props) {
     };
     GroupActions.appendChild(DeleteBtn);
 
+    // Drag button (functional drag handle)
+    const DragBtn = document.createElement("button");
+    DragBtn.textContent = "⋮⋮";
+    DragBtn.title = "Drag to move group";
+    DragBtn.setAttribute('aria-label', 'Drag to move group');
+    DragBtn.disabled = Locked;
+    DragBtn.className = "note-action-btn note-drag-btn";
+    if (Locked) DragBtn.classList.add('locked-hide');
+    DragBtn.style.cursor = 'grab';
+    DragBtn.draggable = true;
+    
+    // Drag event handlers
+    DragBtn.addEventListener('dragstart', (e) => {
+        if (Locked) {
+            e.preventDefault();
+            return;
+        }
+        e.dataTransfer.setData('group-name', GroupName);
+        GroupDiv.classList.add('dragging-group');
+        document.body.classList.add('body-dragging-groups');
+    });
+    
+    DragBtn.addEventListener('dragend', () => {
+        GroupDiv.classList.remove('dragging-group');
+        document.body.classList.remove('body-dragging-groups');
+        document.querySelectorAll('.group-dropzone-outer.drag-over').forEach(el => el.classList.remove('drag-over'));
+    });
+    
+    DragBtn.addEventListener('mousedown', () => {
+        if (!Locked) {
+            DragBtn.style.cursor = 'grabbing';
+        }
+    });
+    DragBtn.addEventListener('mouseup', () => {
+        DragBtn.style.cursor = 'grab';
+    });
+    DragBtn.addEventListener('mouseleave', () => {
+        DragBtn.style.cursor = 'grab';
+    });
+    
+    GroupActions.appendChild(DragBtn);
+
     groupHeader.appendChild(GroupActions);
     GroupDiv.appendChild(groupHeader);
 
@@ -226,7 +228,7 @@ export function renderGroup(props) {
     groupDropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         groupDropZone.classList.remove('drag-over');
-        document.body.classList.remove('body-dragging-notes');
+        document.body.classList.remove('body-dragging-groups');
         const draggedNoteId = e.dataTransfer.getData('note-id');
         if (!draggedNoteId) return;
         getNotes(location.href, (notesRaw) => {
@@ -286,7 +288,7 @@ export function renderGroup(props) {
     endDropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         endDropZone.classList.remove('drag-over');
-        document.body.classList.remove('body-dragging-notes');
+        document.body.classList.remove('body-dragging-groups');
         const draggedNoteId = e.dataTransfer.getData('note-id');
         if (!draggedNoteId) return;
         getNotes(location.href, (notesRaw) => {
@@ -343,7 +345,7 @@ export function renderGroup(props) {
             e.preventDefault();
             outerDropZone.classList.remove('drag-over');
             outerDropZone.style.background = 'rgba(255,255,0,0.15)';
-            document.body.classList.remove('body-dragging-notes');
+            document.body.classList.remove('body-dragging-groups');
             const draggedGroup = e.dataTransfer.getData('group-name');
             if (!draggedGroup || draggedGroup === GroupName) return;
             // Defensive: Ensure AllGroups is an array of strings
@@ -376,4 +378,4 @@ export function renderGroup(props) {
     }
     wrapper.appendChild(GroupDiv);
     return wrapper;
-} 
+}

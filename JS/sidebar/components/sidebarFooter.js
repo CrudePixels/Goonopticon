@@ -22,6 +22,10 @@ export function renderSidebarFooter(props) {
     try {
         const footer = document.createElement('div');
         footer.className = 'sidebar__footer';
+        footer.style.display = 'flex';
+        footer.style.flexDirection = 'column';
+        footer.style.height = '100%';
+        footer.style.position = 'relative';
 
         // --- Main Action Buttons ---
         const actionsContainer = document.createElement('div');
@@ -93,7 +97,7 @@ export function renderSidebarFooter(props) {
             footer.appendChild(statsDiv);
         }
 
-        // Podawful link with random quote as text
+        // Podawful link with random quote as text - ABSOLUTE POSITIONED AT BOTTOM
         const quotes = quotesRaw.split('\n').map(q => q.trim()).filter(Boolean);
         const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
         const podawfulLink = document.createElement('a');
@@ -103,9 +107,8 @@ export function renderSidebarFooter(props) {
         podawfulLink.className = 'sidebar__podawful-link';
         podawfulLink.textContent = randomQuote;
         podawfulLink.title = 'Visit Podawful.com';
-        podawfulLink.style.display = 'block';
+        // Let CSS handle positioning and styling
         podawfulLink.style.textAlign = 'center';
-        podawfulLink.style.marginTop = '12px';
         podawfulLink.style.padding = '10px 16px';
         podawfulLink.style.color = 'var(--accent, #FFD600)';
         podawfulLink.style.fontSize = '1.1em';
@@ -135,4 +138,4 @@ export function renderSidebarFooter(props) {
         errorDiv.style.color = 'var(--error, #c00)';
         return errorDiv;
     }
-} 
+}

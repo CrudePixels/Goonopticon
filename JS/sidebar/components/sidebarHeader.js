@@ -113,4 +113,4 @@ export function renderSidebarHeader(props) {
         errorDiv.style.color = 'var(--error, #c00)';
         return errorDiv;
     }
-} 
+}

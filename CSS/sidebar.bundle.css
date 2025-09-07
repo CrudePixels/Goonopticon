@@ -1,4 +1,172 @@
-﻿#podawful-sidebar, #podawful-sidebar * {
+﻿/* === CSS CUSTOM PROPERTIES FOR THEMING === */
+:root {
+    /* Default theme variables - only for extension elements */
+    --sidebar-bg: #1a1a1a;
+    --sidebar-fg: #e0e0e0;
+    --sidebar-border: #333;
+    --accent: #FFD600;
+    --button-bg: #333;
+    --button-fg: #e0e0e0;
+    --button-hover-bg: #444;
+    --button-hover-fg: #FFD600;
+    --note-bg: #222;
+    --note-fg: #e0e0e0;
+    --note-border: #333;
+    --error: #c00;
+    --success: #4CAF50;
+    --warning: #FF9800;
+    --info: #2196F3;
+}
+
+/* Custom theme variables - scoped to extension elements only */
+#podawful-sidebar,
+body.custom-theme,
+html.custom-theme {
+    --custom-primary: #FFD600;
+    --custom-background: #1a1a1a;
+    --custom-surface: #222222;
+    --custom-text: #e0e0e0;
+    --custom-textSecondary: #b0b0b0;
+    --custom-border: #333333;
+    --custom-success: #4CAF50;
+    --custom-warning: #FF9800;
+    --custom-error: #F44336;
+    --custom-info: #2196F3;
+    --custom-highlight: #FFD600;
+    
+    --custom-fontSize: 14px;
+    --custom-fontSizeSmall: 12px;
+    --custom-fontSizeLarge: 16px;
+    --custom-fontWeight: 400;
+    --custom-fontWeightBold: 600;
+    --custom-lineHeight: 1.4;
+    
+    --custom-padding: 12px;
+    --custom-margin: 8px;
+    --custom-borderRadius: 6px;
+    --custom-gap: 8px;
+    
+    --custom-buttonHeight: 40px;
+    --custom-buttonPadding: 8px 16px;
+    --custom-buttonFontSize: 14px;
+    --custom-buttonBorderRadius: 6px;
+    --custom-buttonBackgroundColor: #FFD600;
+    --custom-buttonTextColor: #000000;
+    --custom-buttonBorderColor: #FFD600;
+}
+
+/* Custom theme overrides - only apply to extension elements */
+#podawful-sidebar.custom-theme {
+    --sidebar-bg: var(--custom-background);
+    --note-bg: var(--custom-surface);
+    --sidebar-fg: var(--custom-text);
+    --sidebar-border: var(--custom-border);
+    --success: var(--custom-success);
+    --warning: var(--custom-warning);
+    --error: var(--custom-error);
+    --info: var(--custom-info);
+    --accent: var(--custom-highlight);
+    
+    /* Apply custom typography */
+    font-size: var(--custom-fontSize);
+    font-family: var(--custom-fontFamily);
+    line-height: var(--custom-lineHeight);
+    
+    /* Apply custom spacing */
+    --padding: var(--custom-padding);
+    --margin: var(--custom-margin);
+    --border-radius: var(--custom-borderRadius);
+    --gap: var(--custom-gap);
+    
+    /* Apply custom button styles */
+    --button-height: var(--custom-buttonHeight);
+    --button-padding: var(--custom-buttonPadding);
+    --button-font-size: var(--custom-buttonFontSize);
+    --button-border-radius: var(--custom-buttonBorderRadius);
+    --button-background-color: var(--custom-buttonBackgroundColor);
+    --button-text-color: var(--custom-buttonTextColor);
+    --button-border-color: var(--custom-buttonBorderColor);
+}
+
+/* For popup context, apply theme to body and html but only affect extension elements */
+body.custom-theme,
+html.custom-theme {
+    --custom-primary: #FFD600;
+    --custom-background: #1a1a1a;
+    --custom-surface: #222222;
+    --custom-text: #e0e0e0;
+    --custom-textSecondary: #b0b0b0;
+    --custom-border: #333333;
+    --custom-success: #4CAF50;
+    --custom-warning: #FF9800;
+    --custom-error: #F44336;
+    --custom-info: #2196F3;
+    --custom-highlight: #FFD600;
+    
+    --custom-fontSize: 14px;
+    --custom-fontSizeSmall: 12px;
+    --custom-fontSizeLarge: 16px;
+    --custom-fontWeight: 400;
+    --custom-fontWeightBold: 600;
+    --custom-lineHeight: 1.4;
+    
+    --custom-padding: 12px;
+    --custom-margin: 8px;
+    --custom-borderRadius: 6px;
+    --custom-gap: 8px;
+    
+    --custom-buttonHeight: 40px;
+    --custom-buttonPadding: 8px 16px;
+    --custom-buttonFontSize: 14px;
+    --custom-buttonBorderRadius: 6px;
+    --custom-buttonBackgroundColor: #FFD600;
+    --custom-buttonTextColor: #000000;
+    --custom-buttonBorderColor: #FFD600;
+    
+    --button-height: var(--custom-buttonHeight);
+    --button-padding: var(--custom-buttonPadding);
+    --button-font-size: var(--custom-buttonFontSize);
+    --button-border-radius: var(--custom-buttonBorderRadius);
+    --button-background-color: var(--custom-buttonBackgroundColor);
+    --button-text-color: var(--custom-buttonTextColor);
+    --button-border-color: var(--custom-buttonBorderColor);
+}
+
+/* Apply button colors to extension menus when enabled - only target extension elements */
+#podawful-sidebar.custom-theme.apply-to-menus .podawful-btn,
+body.apply-to-menus .podawful-btn,
+html.apply-to-menus .podawful-btn {
+    background-color: var(--button-background-color) !important;
+    color: var(--button-text-color) !important;
+    border-color: var(--button-border-color) !important;
+}
+
+#podawful-sidebar.custom-theme.apply-to-menus .podawful-btn:hover,
+body.apply-to-menus .podawful-btn:hover,
+html.apply-to-menus .podawful-btn:hover {
+    background-color: var(--button-background-color) !important;
+    opacity: 0.8;
+}
+
+/* Additional styling for popup buttons - only in popup context */
+body.apply-to-menus button.podawful-btn,
+html.apply-to-menus button.podawful-btn {
+    background-color: var(--button-background-color) !important;
+    color: var(--button-text-color) !important;
+    border-color: var(--button-border-color) !important;
+    height: var(--button-height) !important;
+    padding: var(--button-padding) !important;
+    font-size: var(--button-font-size) !important;
+    border-radius: var(--button-border-radius) !important;
+}
+
+body.apply-to-menus button.podawful-btn:hover,
+html.apply-to-menus button.podawful-btn:hover {
+    background-color: var(--button-background-color) !important;
+    opacity: 0.8;
+}
+
+#podawful-sidebar, #podawful-sidebar * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -26,11 +194,14 @@
     font-size: 14px;
     line-height: 1.5;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
     opacity: 1;
     border-left: 1px solid var(--sidebar-border, #333);
     scrollbar-width: thin;
     scrollbar-color: var(--accent, #FFD600) var(--sidebar-bg, #1a1a1a);
-    padding: 0;
+    padding: 0 12px;
+    margin: 0 8px;
     box-sizing: border-box;
 }
 
@@ -80,7 +251,7 @@
     padding: 20px 16px 16px 16px;
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 20;
     backdrop-filter: blur(10px);
 }
 
@@ -197,8 +368,8 @@
     .sidebar__action-btn--floating
     {
         position: fixed;
-        right: 24px;
-        bottom: 24px;
+        right: 20px;
+        bottom: 20px;
         z-index: 1000001;
         width: auto;
         min-width: 120px;
@@ -323,6 +494,40 @@
         border-color: var(--accent, #FFD600);
         box-shadow: 0 2px 8px rgba(255, 214, 0, 0.1);
         transform: translateY(-1px);
+}
+
+/* === NOTE DRAG HANDLE === */
+.note-drag-handle
+{
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--accent, #FFD600);
+    background: rgba(255, 214, 0, 0.1);
+    border-radius: 4px;
+    border: 1px solid var(--accent, #FFD600);
+    user-select: none;
+    cursor: grab;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.note-drag-handle:hover
+{
+    background: rgba(255, 214, 0, 0.2);
+    transform: scale(1.05);
+}
+
+.note-drag-handle:active
+{
+    cursor: grabbing;
+    transform: scale(0.95);
 }
 
 /* === NOTE ACTIONS === */
@@ -450,6 +655,86 @@
 .note-item.highlight .note-text {
     font-weight: 600;
     color: var(--highlight-fg, #ffffff);
+}
+
+/* === DRAG HANDLE STYLING === */
+.note-drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 20px;
+    cursor: grab;
+    user-select: none;
+    color: var(--text-secondary, #b0b0b0);
+    font-size: 10px;
+    font-weight: bold;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    z-index: 10;
+}
+
+.note-drag-handle:hover {
+    background: var(--button-hover-bg, #444);
+    color: var(--accent, #FFD600);
+}
+
+.note-drag-handle:active {
+    cursor: grabbing;
+    background: var(--accent, #FFD600);
+    color: var(--sidebar-bg, #1a1a1a);
+}
+
+.note-content-row {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+}
+
+/* Ensure note items have relative positioning for drag handle */
+.note-item {
+    position: relative;
+}
+
+/* === GROUP DRAG HANDLE STYLING === */
+.group-drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 20px;
+    cursor: grab;
+    user-select: none;
+    color: var(--text-secondary, #b0b0b0);
+    font-size: 10px;
+    font-weight: bold;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    z-index: 10;
+}
+
+.group-drag-handle:hover {
+    background: var(--button-hover-bg, #444);
+    color: var(--accent, #FFD600);
+}
+
+.group-drag-handle:active {
+    cursor: grabbing;
+    background: var(--accent, #FFD600);
+    color: var(--sidebar-bg, #1a1a1a);
+}
+
+/* Ensure group headers have relative positioning for drag handle */
+.group-header {
+    position: relative;
 }
 
 /* === FOOTER === */
@@ -789,8 +1074,12 @@
     opacity: 0;
 }
 
-.body-dragging-notes .note-dropzone,
-.body-dragging-notes .group-dropzone-outer
+.body-dragging-notes .note-dropzone
+{
+    opacity: 1;
+}
+
+.body-dragging-groups .group-dropzone-outer
 {
     opacity: 1;
 }
@@ -891,8 +1180,8 @@
 {
     display: block !important;
     position: fixed;
-    right: 24px;
-    bottom: 24px;
+    right: 20px;
+    bottom: 20px;
     z-index: 1000001;
     background: var(--button-bg, #1a1a1a);
     color: var(--button-fg, #e0e0e0);
@@ -1131,6 +1420,51 @@ body:not(.sidebar-visible) {
 .sidebar__header, .sidebar__body, .sidebar__footer {
     width: 100%;
     box-sizing: border-box;
+}
+
+.sidebar__body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* Ensure Podawful button is at absolute bottom of viewport */
+.sidebar__footer {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: var(--sidebar-bg, #1a1a1a) !important;
+    z-index: 1 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex-shrink: 0 !important;
+}
+
+.sidebar__podawful-link {
+    position: relative !important;
+    width: 100% !important;
+    z-index: 999 !important;
+    background: var(--sidebar-bg, #1a1a1a) !important;
+    border: 1px solid var(--sidebar-border, #333) !important;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.2) !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    transition: all 0.2s ease !important;
+    display: block !important;
+    visibility: visible !important;
+    order: 999 !important; /* Ensure it's last in flex container */
+}
+
+.sidebar__podawful-link:hover {
+    background: var(--accent, #FFD600) !important;
+    color: var(--sidebar-bg, #1a1a1a) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 -3px 12px rgba(255,214,0,0.3) !important;
 }
 
 .sidebar__header > button {

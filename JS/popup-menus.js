@@ -3,6 +3,310 @@ import { applyTheme } from './theme.js';
 import { getNotes, setNotes } from './sidebar/storage.js';
 import browser from 'webextension-polyfill';
 
+// Simple modal function for popup context
+function showModal(title, message, type = 'info') {
+    // Remove any existing modal
+    const existingModal = document.getElementById('popupModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'popupModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: var(--note-bg, #222);
+        border: 1px solid var(--sidebar-border, #333);
+        border-radius: 8px;
+        padding: 20px;
+        max-width: 300px;
+        width: 90%;
+        text-align: center;
+        color: var(--sidebar-fg, #e0e0e0);
+    `;
+    
+    const titleEl = document.createElement('h3');
+    titleEl.textContent = title;
+    titleEl.style.cssText = `
+        margin: 0 0 10px 0;
+        color: var(--accent, #FFD600);
+    `;
+    
+    const messageEl = document.createElement('p');
+    messageEl.textContent = message;
+    messageEl.style.cssText = `
+        margin: 0 0 15px 0;
+    `;
+    
+    const button = document.createElement('button');
+    button.textContent = 'OK';
+    button.className = 'podawful-btn';
+    button.style.cssText = `
+        background: ${type === 'error' ? '#F44336' : type === 'success' ? '#4CAF50' : 'var(--accent, #FFD600)'};
+        color: ${type === 'error' || type === 'success' ? 'white' : 'black'};
+    `;
+    button.onclick = () => modal.remove();
+    
+    modalContent.appendChild(titleEl);
+    modalContent.appendChild(messageEl);
+    modalContent.appendChild(button);
+    modal.appendChild(modalContent);
+    
+    document.body.appendChild(modal);
+}
+
+// Input modal function for getting theme names
+function showInputModal(title, message, placeholder = '', callback) {
+    // Remove any existing modal
+    const existingModal = document.getElementById('popupInputModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'popupInputModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: var(--note-bg, #222);
+        border: 1px solid var(--sidebar-border, #333);
+        border-radius: 8px;
+        padding: 20px;
+        max-width: 350px;
+        width: 90%;
+        text-align: center;
+        color: var(--sidebar-fg, #e0e0e0);
+    `;
+    
+    const titleEl = document.createElement('h3');
+    titleEl.textContent = title;
+    titleEl.style.cssText = `
+        margin: 0 0 10px 0;
+        color: var(--accent, #FFD600);
+    `;
+    
+    const messageEl = document.createElement('p');
+    messageEl.textContent = message;
+    messageEl.style.cssText = `
+        margin: 0 0 15px 0;
+    `;
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = placeholder;
+    input.style.cssText = `
+        width: 100%;
+        padding: 8px;
+        margin: 10px 0;
+        border: 1px solid var(--sidebar-border, #333);
+        border-radius: 4px;
+        background: var(--surface, #333);
+        color: var(--sidebar-fg, #e0e0e0);
+        font-size: 14px;
+    `;
+    
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = `
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 15px;
+    `;
+    
+    const saveButton = document.createElement('button');
+    saveButton.textContent = 'Save';
+    saveButton.className = 'podawful-btn';
+    saveButton.style.cssText = `
+        background: var(--accent, #FFD600);
+        color: black;
+        flex: 1;
+    `;
+    
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'Cancel';
+    cancelButton.className = 'podawful-btn';
+    cancelButton.style.cssText = `
+        background: var(--surface, #333);
+        color: var(--sidebar-fg, #e0e0e0);
+        flex: 1;
+    `;
+    
+    saveButton.onclick = () => {
+        const value = input.value.trim();
+        if (value) {
+            modal.remove();
+            callback(value);
+        }
+    };
+    
+    cancelButton.onclick = () => modal.remove();
+    
+    // Handle Enter key
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const value = input.value.trim();
+            if (value) {
+                modal.remove();
+                callback(value);
+            }
+        }
+    });
+    
+    buttonContainer.appendChild(saveButton);
+    buttonContainer.appendChild(cancelButton);
+    
+    modalContent.appendChild(titleEl);
+    modalContent.appendChild(messageEl);
+    modalContent.appendChild(input);
+    modalContent.appendChild(buttonContainer);
+    modal.appendChild(modalContent);
+    
+    document.body.appendChild(modal);
+    
+    // Focus the input
+    setTimeout(() => input.focus(), 100);
+}
+
+// Save theme as new preset
+async function saveAsCustomTheme() {
+    try {
+        const { saveCustomPreset } = await import('./customTheme.js');
+        
+        // Get current theme from form
+        const theme = getCurrentThemeFromForm();
+        
+        showInputModal(
+            'Save Theme As',
+            'Enter a name for your custom theme:',
+            'My Custom Theme',
+            (name) => {
+                saveCustomPreset(name, theme, (err) => {
+                    if (err) {
+                        LogDev('Error saving custom preset: ' + err, 'error');
+                        showModal('Error', 'Failed to save custom preset', 'error');
+                    } else {
+                        LogDev('Custom preset saved successfully', 'system');
+                        showModal('Success', `Theme "${name}" saved as preset!`, 'success');
+                        loadPresets(); // Reload presets
+                    }
+                });
+            }
+        );
+    } catch (err) {
+        LogDev('Error saving custom preset: ' + err, 'error');
+        showModal('Error', 'Failed to save custom preset', 'error');
+    }
+}
+
+// Delete selected preset
+async function deleteSelectedPreset() {
+    const presetSelect = document.getElementById('presetSelect');
+    const selectedPreset = presetSelect.value;
+    
+    if (!selectedPreset) {
+        showModal('Error', 'Please select a preset to delete', 'error');
+        return;
+    }
+    
+    showModal(
+        'Delete Preset',
+        `Are you sure you want to delete "${selectedPreset}"?`,
+        'warning',
+        async () => {
+            try {
+                const { deletePreset } = await import('./customTheme.js');
+                deletePreset(selectedPreset, (err) => {
+                    if (err) {
+                        LogDev('Error deleting preset: ' + err, 'error');
+                        showModal('Error', 'Failed to delete preset', 'error');
+                    } else {
+                        LogDev('Preset deleted successfully', 'system');
+                        showModal('Success', `Preset "${selectedPreset}" deleted!`, 'success');
+                        loadPresets(); // Reload presets
+                    }
+                });
+            } catch (err) {
+                LogDev('Error deleting preset: ' + err, 'error');
+                showModal('Error', 'Failed to delete preset', 'error');
+            }
+        }
+    );
+}
+
+// Save and apply custom theme
+async function saveAndApplyCustomTheme() {
+    try {
+        const { setCustomTheme, applyCustomTheme: applyTheme } = await import('./customTheme.js');
+        
+        const theme = getCurrentThemeFromForm();
+        
+        // Apply theme immediately first
+        applyTheme(theme);
+        
+        // Then save it
+        setCustomTheme(theme, (err) => {
+            if (err) {
+                LogDev('Error saving custom theme: ' + err, 'error');
+                showModal('Error', 'Failed to save custom theme', 'error');
+            } else {
+                LogDev('Custom theme saved successfully', 'system');
+                showModal('Success', 'Theme saved and applied!', 'success');
+            }
+        });
+    } catch (err) {
+        LogDev('Error saving custom theme: ' + err, 'error');
+        showModal('Error', 'Failed to save custom theme', 'error');
+    }
+}
+
+// Reset custom theme
+async function resetCustomTheme() {
+    try {
+        const { resetCustomTheme } = await import('./customTheme.js');
+        
+        resetCustomTheme((err) => {
+            if (err) {
+                LogDev('Error resetting custom theme: ' + err, 'error');
+                showModal('Error', 'Failed to reset custom theme', 'error');
+            } else {
+                LogDev('Custom theme reset successfully', 'system');
+                loadCustomThemeSettings();
+                showModal('Success', 'Custom theme reset to default!', 'success');
+            }
+        });
+    } catch (err) {
+        LogDev('Error resetting custom theme: ' + err, 'error');
+        showModal('Error', 'Failed to reset custom theme', 'error');
+    }
+}
+
 // --- Storage Keys ---
 const DEVLOG_BTN_KEY = "PodAwful::ShowDevLogBtn";
 const CHANGELOG_BTN_KEY = "PodAwful::ShowChangelogBtn";
@@ -68,6 +372,16 @@ function renderChangelogBtn()
     }, false);
 }
 
+function renderThemeSettingsBtn()
+{
+    LogDev("renderThemeSettingsBtn called", "render");
+    getBtnSetting("PodAwful::ShowThemeSettings", show =>
+    {
+        const btn = document.getElementById('themeSettings');
+        if (btn) btn.style.display = show ? '' : 'none';
+    }, false);
+}
+
 /**
  * Renders the main popup menu UI.
  */
@@ -83,6 +397,7 @@ export function renderMainMenu()
         <div class="popup-buttons">
             <button class="podawful-btn" id="importExport">Import/Export</button>
             <button class="podawful-btn" id="settings">Settings</button>
+            <button class="podawful-btn" id="themeSettings">Theme Settings</button>
             <button class="podawful-btn" id="changelog">Changelog</button>
             <button class="podawful-btn" id="devlog">Dev Log</button>
             <button class="podawful-btn" id="reportBug">Report Bug</button>
@@ -191,6 +506,11 @@ export function renderMainMenu()
         LogDev("Settings button clicked", "interaction");
         renderSettings();
     });
+    document.getElementById("themeSettings")?.addEventListener("click", () =>
+    {
+        LogDev("Theme Settings button clicked", "interaction");
+        renderThemeSettings();
+    });
     document.getElementById("changelog")?.addEventListener("click", () =>
     {
         LogDev("Changelog button clicked", "interaction");
@@ -212,6 +532,7 @@ export function renderMainMenu()
 
     renderDevLogBtn();
     renderChangelogBtn();
+    renderThemeSettingsBtn();
 }
 
 function showHelpAboutModal() {
@@ -243,7 +564,7 @@ function showHelpAboutModal() {
             </ul>
             
             <h3>How to Use</h3>
-            <ol>
+            <ol> 
                 <li>Navigate to any YouTube video page</li>
                 <li>Click the Goonopticon extension icon to open the popup menu</li>
                 <li>Use "Show Sidebar" to toggle the timestamping interface</li>
@@ -430,29 +751,28 @@ function renderSettings()
         <label><input type="checkbox" id="toggleDevLogBtn" /> Show Dev Log Button</label><br>
         <label><input type="checkbox" id="toggleChangelogBtn" /> Show Changelog Button</label><br>
         <label><input type="checkbox" id="toggleBulkActions" /> Enable Bulk Actions</label><br>
-        <label for="themeSelect">Theme:</label>
-        <select id="themeSelect">
-            <option value="default">Default</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-        </select>
+        <label><input type="checkbox" id="toggleThemeSettings" /> Theme Settings</label><br>
+        <button class="podawful-btn" id="restoreDefaultPresets" style="margin-top: 10px;">Restore Default Presets</button><br>
         <button class="podawful-btn" id="backBtn">Back</button>
     `;
 
-    // Theme select logic
-    const themeSelect = document.getElementById('themeSelect');
-    browser.storage.local.get("PodAwful::Theme")
-        .then(Result => {
-            const currentTheme = Result["PodAwful::Theme"] || "default";
-            themeSelect.value = currentTheme;
-            themeSelect.addEventListener('change', function (e) {
-                const selectedTheme = e.target.value;
-                browser.storage.local.set({ "PodAwful::Theme": selectedTheme })
-                    .then(() => {
-                        applyTheme(selectedTheme);
-                    });
+    // Theme Settings toggle
+    const themeSettingsToggle = document.getElementById('toggleThemeSettings');
+    if (themeSettingsToggle) {
+        // Check if theme settings are enabled
+        browser.storage.local.get("PodAwful::ShowThemeSettings")
+            .then(result => {
+                const enabled = result["PodAwful::ShowThemeSettings"] === true;
+                themeSettingsToggle.checked = enabled;
+            });
+        
+        themeSettingsToggle.addEventListener('change', function (e) {
+            LogDev("Theme Settings toggle interaction: " + e.target.checked, "interaction");
+            setBtnSetting("PodAwful::ShowThemeSettings", e.target.checked, () => {
+                renderThemeSettingsBtn();
             });
         });
+    }
 
     // Dev Log toggle
     const devLogToggle = document.getElementById('toggleDevLogBtn');
@@ -509,9 +829,285 @@ function renderSettings()
         });
     }
 
+    document.getElementById("restoreDefaultPresets")?.addEventListener("click", async () =>
+    {
+        LogDev("Restore Default Presets button clicked", "interaction");
+        try {
+            const { restoreDefaultPresets } = await import('./customTheme.js');
+            restoreDefaultPresets((err) => {
+                if (err) {
+                    LogDev('Error restoring default presets: ' + err, 'error');
+                    showModal('Error', 'Failed to restore default presets', 'error');
+                } else {
+                    LogDev('Default presets restored successfully', 'system');
+                    showModal('Success', 'Default presets restored! All custom presets have been removed.', 'success');
+                }
+            });
+        } catch (err) {
+            LogDev('Error importing restoreDefaultPresets: ' + err, 'error');
+            showModal('Error', 'Failed to restore default presets', 'error');
+        }
+    });
+
     document.getElementById("backBtn")?.addEventListener("click", () =>
     {
         LogDev("Back to Main Menu from Settings panel", "interaction");
+        renderMainMenu();
+    });
+}
+
+// --- Theme Settings Panel ---
+function renderThemeSettings()
+{
+    LogDev("Navigated to Theme Settings panel", "interaction");
+    LogDev("renderThemeSettings called", "render");
+    const MenuContent = document.getElementById("menuContent");
+    const MenuTitle = document.getElementById("menuTitle");
+    if (!MenuContent || !MenuTitle) return;
+
+    MenuTitle.textContent = "Theme Settings";
+    MenuContent.innerHTML = `
+        <div id="customThemeSettings" style="margin-top: 12px; padding: 12px; border: 1px solid var(--sidebar-border, #333); border-radius: 6px; background: var(--note-bg, #222);">
+            <h4 style="margin: 0 0 12px 0; color: var(--accent, #FFD600);">Custom Theme Settings</h4>
+            
+            <!-- Preset Themes -->
+            <div style="margin-bottom: 16px;">
+                <label for="presetSelect">Preset:</label>
+                <div style="display: flex; gap: 4px; margin-top: 4px;">
+                    <select id="presetSelect" style="flex: 1;">
+                        <option value="">Choose a preset...</option>
+                    </select>
+                    <button id="deletePreset" class="podawful-btn" style="padding: 4px 8px; font-size: 12px;" title="Delete selected preset">🗑️</button>
+                </div>
+            </div>
+            
+            <!-- Colors Section -->
+            <div style="margin-bottom: 20px; padding: 16px; background: #2a2a2a; border-radius: 8px; border: 1px solid #444;">
+                <h5 style="margin: 0 0 12px 0; color: var(--accent, #FFD600); font-size: 16px; font-weight: 600;">Colors</h5>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="primaryColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Primary</label>
+                        <input type="color" id="primaryColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="backgroundColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Background</label>
+                        <input type="color" id="backgroundColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="surfaceColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Surface</label>
+                        <input type="color" id="surfaceColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="textColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Text</label>
+                        <input type="color" id="textColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="textSecondaryColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Text Secondary</label>
+                        <input type="color" id="textSecondaryColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="borderColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Border</label>
+                        <input type="color" id="borderColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="successColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Success</label>
+                        <input type="color" id="successColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="warningColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Warning</label>
+                        <input type="color" id="warningColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="errorColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Error</label>
+                        <input type="color" id="errorColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="infoColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Info</label>
+                        <input type="color" id="infoColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="highlightColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Highlight</label>
+                        <input type="color" id="highlightColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Typography Section -->
+            <div style="margin-bottom: 20px; padding: 16px; background: #2a2a2a; border-radius: 8px; border: 1px solid #444;">
+                <h5 style="margin: 0 0 12px 0; color: var(--accent, #FFD600); font-size: 16px; font-weight: 600;">Typography</h5>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="fontSize" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Font Size</label>
+                        <input type="range" id="fontSize" min="10" max="20" value="14" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="fontSizeValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">14px</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="fontSizeSmall" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Small Text</label>
+                        <input type="range" id="fontSizeSmall" min="8" max="16" value="12" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="fontSizeSmallValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">12px</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="fontSizeLarge" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Large Text</label>
+                        <input type="range" id="fontSizeLarge" min="14" max="24" value="16" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="fontSizeLargeValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">16px</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="fontWeight" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Font Weight</label>
+                        <select id="fontWeight" style="width: 100%; padding: 6px; border: 1px solid #555; border-radius: 4px; background: #333; color: #e0e0e0; font-size: 12px;">
+                            <option value="300">Light (300)</option>
+                            <option value="400" selected>Normal (400)</option>
+                            <option value="500">Medium (500)</option>
+                            <option value="600">Semi Bold (600)</option>
+                            <option value="700">Bold (700)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="lineHeight" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Line Height</label>
+                        <input type="range" id="lineHeight" min="1.0" max="2.0" step="0.1" value="1.4" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="lineHeightValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">1.4</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="fontFamily" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Font Family</label>
+                        <select id="fontFamily" style="width: 100%; padding: 6px; border: 1px solid #555; border-radius: 4px; background: #333; color: #e0e0e0; font-size: 12px;">
+                            <option value="'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif" selected>System Default</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+                            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                            <option value="'Courier New', Courier, monospace">Courier New</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Buttons Section -->
+            <div style="margin-bottom: 20px; padding: 16px; background: #2a2a2a; border-radius: 8px; border: 1px solid #444;">
+                <h5 style="margin: 0 0 12px 0; color: var(--accent, #FFD600); font-size: 16px; font-weight: 600;">Buttons</h5>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="buttonHeight" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Height</label>
+                        <input type="range" id="buttonHeight" min="30" max="60" value="40" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="buttonHeightValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">40px</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="buttonPadding" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Padding</label>
+                        <input type="range" id="buttonPadding" min="4" max="20" value="8" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="buttonPaddingValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">8px</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="buttonFontSize" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Font Size</label>
+                        <input type="range" id="buttonFontSize" min="10" max="18" value="14" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="buttonFontSizeValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">14px</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="buttonBorderRadius" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Border Radius</label>
+                        <input type="range" id="buttonBorderRadius" min="0" max="20" value="6" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="buttonBorderRadiusValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">6px</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="buttonBackgroundColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Background</label>
+                        <input type="color" id="buttonBackgroundColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="buttonTextColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Text Color</label>
+                        <input type="color" id="buttonTextColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="buttonBorderColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Border Color</label>
+                        <input type="color" id="buttonBorderColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #333; border-radius: 4px; border: 1px solid #555;">
+                        <input type="checkbox" id="applyToMenus" style="margin: 0; width: 16px; height: 16px; accent-color: var(--accent, #FFD600);">
+                        <label for="applyToMenus" style="margin: 0; font-size: 12px; color: #e0e0e0; font-weight: 500;">Apply to Extension Menus</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Spacing Section -->
+            <div style="margin-bottom: 20px; padding: 16px; background: #2a2a2a; border-radius: 8px; border: 1px solid #444;">
+                <h5 style="margin: 0 0 12px 0; color: var(--accent, #FFD600); font-size: 16px; font-weight: 600;">Spacing</h5>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="padding" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Padding</label>
+                        <input type="range" id="padding" min="4" max="24" value="12" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="paddingValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">12px</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="margin" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Margin</label>
+                        <input type="range" id="margin" min="2" max="20" value="8" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="marginValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">8px</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="borderRadius" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Border Radius</label>
+                        <input type="range" id="borderRadius" min="0" max="20" value="6" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="borderRadiusValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">6px</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="gap" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Gap</label>
+                        <input type="range" id="gap" min="2" max="20" value="8" style="width: 100%; height: 6px; background: #444; border-radius: 3px; outline: none;">
+                        <span id="gapValue" style="color: var(--accent, #FFD600); font-size: 11px; font-weight: 600;">8px</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 12px; margin-top: 20px; padding: 16px; background: #2a2a2a; border-radius: 8px; border: 1px solid #444;">
+                <button id="saveTheme" class="podawful-btn" style="flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; background: var(--accent, #FFD600); color: #000; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">Save and Apply</button>
+                <button id="saveAsTheme" class="podawful-btn" style="flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; background: #333; color: #e0e0e0; border: 1px solid #555; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">Save As</button>
+                <button id="resetTheme" class="podawful-btn" style="flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; background: #d32f2f; color: #fff; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">Reset</button>
+            </div>
+        </div>
+        <button class="podawful-btn" id="backBtn">Back</button>
+    `;
+
+    // Load custom theme settings by default with a small delay to ensure DOM is ready
+    setTimeout(() => {
+        loadCustomThemeSettings();
+    }, 100);
+    
+    // Load presets
+    loadPresets();
+
+    // Accessibility: Add aria-labels to all menu buttons
+    const menuButtons = MenuContent.querySelectorAll('button');
+    menuButtons.forEach(btn => {
+        if (!btn.hasAttribute('aria-label')) {
+            btn.setAttribute('aria-label', btn.textContent.trim());
+        }
+    });
+
+    // Accessibility: Keyboard navigation for menu
+    MenuContent.addEventListener('keydown', (e) => {
+        const focusable = Array.from(MenuContent.querySelectorAll('button, select, input'));
+        const idx = focusable.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            if (idx !== -1) {
+                const next = focusable[(idx + 1) % focusable.length];
+                next.focus();
+            }
+        } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+            e.preventDefault();
+            if (idx !== -1) {
+                const prev = focusable[(idx - 1 + focusable.length) % focusable.length];
+                prev.focus();
+            }
+        } else if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
+                document.activeElement.click();
+            }
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            const backBtn = MenuContent.querySelector('#backBtn');
+            if (backBtn) backBtn.click();
+        }
+    });
+
+    document.getElementById("backBtn")?.addEventListener("click", () =>
+    {
+        LogDev("Back to Main Menu from Theme Settings panel", "interaction");
         renderMainMenu();
     });
 }
@@ -749,6 +1345,420 @@ function isValidNotesArray(arr) {
 function isValidAllNotesObject(obj) {
     return obj && typeof obj === 'object' &&
         Object.values(obj).every(isValidNotesArray);
+}
+
+// --- Custom Theme Functions ---
+async function loadCustomThemeSettings() {
+    try {
+        const { getCustomTheme, getPresetThemes, createThemeFromPreset } = await import('./customTheme.js');
+        
+        // Load current custom theme
+        getCustomTheme((err, theme) => {
+            if (err) {
+                LogDev('Error loading custom theme: ' + err, 'error');
+                return;
+            }
+            
+            // Populate form fields with validation
+            const setValue = (id, value, fallback = '') => {
+                const element = document.getElementById(id);
+                if (element) {
+                    if (value && typeof value === 'string' && value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                        element.value = value;
+                    } else {
+                        element.value = fallback;
+                    }
+                }
+            };
+            
+            setValue('primaryColor', theme.colors.primary, '#FFD600');
+            setValue('backgroundColor', theme.colors.background, '#1a1a1a');
+            setValue('surfaceColor', theme.colors.surface, '#222222');
+            setValue('textColor', theme.colors.text, '#e0e0e0');
+            setValue('textSecondaryColor', theme.colors.textSecondary, '#b0b0b0');
+            setValue('borderColor', theme.colors.border, '#333333');
+            setValue('successColor', theme.colors.success, '#4CAF50');
+            setValue('warningColor', theme.colors.warning, '#FF9800');
+            setValue('errorColor', theme.colors.error, '#F44336');
+            setValue('infoColor', theme.colors.info, '#2196F3');
+            setValue('highlightColor', theme.colors.highlight, '#FFD600');
+            
+            // Typography fields with validation
+            const setTypographyValue = (id, value, textId = null) => {
+                const element = document.getElementById(id);
+                if (element && value !== undefined && value !== null) {
+                    element.value = value;
+                    if (textId) {
+                        const textElement = document.getElementById(textId);
+                        if (textElement) {
+                            textElement.textContent = value;
+                        }
+                    }
+                }
+            };
+            
+            setTypographyValue('fontSize', parseInt(theme.typography.fontSize), 'fontSizeValue');
+            setTypographyValue('fontSizeSmall', parseInt(theme.typography.fontSizeSmall), 'fontSizeSmallValue');
+            setTypographyValue('fontSizeLarge', parseInt(theme.typography.fontSizeLarge), 'fontSizeLargeValue');
+            setTypographyValue('fontWeight', theme.typography.fontWeight);
+            setTypographyValue('lineHeight', parseFloat(theme.typography.lineHeight), 'lineHeightValue');
+            setTypographyValue('fontFamily', theme.typography.fontFamily);
+            
+            // Button fields with validation
+            setTypographyValue('buttonHeight', parseInt(theme.buttons.height), 'buttonHeightValue');
+            setTypographyValue('buttonPadding', parseInt(theme.buttons.padding.split(' ')[0]), 'buttonPaddingValue');
+            setTypographyValue('buttonFontSize', parseInt(theme.buttons.fontSize), 'buttonFontSizeValue');
+            setTypographyValue('buttonBorderRadius', parseInt(theme.buttons.borderRadius), 'buttonBorderRadiusValue');
+            setValue('buttonBackgroundColor', theme.buttons.backgroundColor, '#FFD600');
+            setValue('buttonTextColor', theme.buttons.textColor, '#000000');
+            setValue('buttonBorderColor', theme.buttons.borderColor, '#FFD600');
+            
+            const applyToMenusElement = document.getElementById('applyToMenus');
+            if (applyToMenusElement) {
+                applyToMenusElement.checked = theme.buttons.applyToMenus || false;
+            }
+            
+            // Spacing fields with validation
+            setTypographyValue('padding', parseInt(theme.spacing.padding), 'paddingValue');
+            setTypographyValue('margin', parseInt(theme.spacing.margin), 'marginValue');
+            setTypographyValue('borderRadius', parseInt(theme.spacing.borderRadius), 'borderRadiusValue');
+            setTypographyValue('gap', parseInt(theme.spacing.gap), 'gapValue');
+        });
+        
+        // Setup event listeners
+        setupCustomThemeEventListeners();
+        
+    } catch (err) {
+        LogDev('Error loading custom theme module: ' + err, 'error');
+    }
+}
+
+function setupCustomThemeEventListeners() {
+    // Preset selection
+    document.getElementById('presetSelect').addEventListener('change', async (e) => {
+        if (!e.target.value) return;
+        
+        try {
+            const { getAllPresets } = await import('./customTheme.js');
+            getAllPresets((err, presets) => {
+                if (err) {
+                    LogDev('Error loading presets: ' + err, 'error');
+                    return;
+                }
+                
+                const selectedPreset = presets.find(p => p.name === e.target.value);
+                if (!selectedPreset) {
+                    LogDev('Preset not found: ' + e.target.value, 'error');
+                    return;
+                }
+                
+                // Update all form fields
+                document.getElementById('primaryColor').value = selectedPreset.colors.primary;
+                document.getElementById('backgroundColor').value = selectedPreset.colors.background;
+                document.getElementById('surfaceColor').value = selectedPreset.colors.surface;
+                document.getElementById('textColor').value = selectedPreset.colors.text;
+                document.getElementById('textSecondaryColor').value = selectedPreset.colors.textSecondary;
+                document.getElementById('borderColor').value = selectedPreset.colors.border;
+                document.getElementById('successColor').value = selectedPreset.colors.success;
+                document.getElementById('warningColor').value = selectedPreset.colors.warning;
+                document.getElementById('errorColor').value = selectedPreset.colors.error;
+                document.getElementById('infoColor').value = selectedPreset.colors.info;
+                document.getElementById('highlightColor').value = selectedPreset.colors.highlight;
+                
+                document.getElementById('fontSize').value = parseInt(selectedPreset.typography.fontSize);
+                document.getElementById('fontSizeValue').textContent = selectedPreset.typography.fontSize;
+                document.getElementById('fontSizeSmall').value = parseInt(selectedPreset.typography.fontSizeSmall);
+                document.getElementById('fontSizeSmallValue').textContent = selectedPreset.typography.fontSizeSmall;
+                document.getElementById('fontSizeLarge').value = parseInt(selectedPreset.typography.fontSizeLarge);
+                document.getElementById('fontSizeLargeValue').textContent = selectedPreset.typography.fontSizeLarge;
+                document.getElementById('fontWeight').value = selectedPreset.typography.fontWeight;
+                document.getElementById('lineHeight').value = parseFloat(selectedPreset.typography.lineHeight);
+                document.getElementById('lineHeightValue').textContent = selectedPreset.typography.lineHeight;
+                document.getElementById('fontFamily').value = selectedPreset.typography.fontFamily;
+                
+                document.getElementById('buttonHeight').value = parseInt(selectedPreset.buttons.height);
+                document.getElementById('buttonHeightValue').textContent = selectedPreset.buttons.height;
+                document.getElementById('buttonPadding').value = parseInt(selectedPreset.buttons.padding.split(' ')[0]);
+                document.getElementById('buttonPaddingValue').textContent = selectedPreset.buttons.padding;
+                document.getElementById('buttonFontSize').value = parseInt(selectedPreset.buttons.fontSize);
+                document.getElementById('buttonFontSizeValue').textContent = selectedPreset.buttons.fontSize;
+                document.getElementById('buttonBorderRadius').value = parseInt(selectedPreset.buttons.borderRadius);
+                document.getElementById('buttonBorderRadiusValue').textContent = selectedPreset.buttons.borderRadius;
+                document.getElementById('buttonBackgroundColor').value = selectedPreset.buttons.backgroundColor;
+                document.getElementById('buttonTextColor').value = selectedPreset.buttons.textColor;
+                document.getElementById('buttonBorderColor').value = selectedPreset.buttons.borderColor;
+                document.getElementById('applyToMenus').checked = selectedPreset.buttons.applyToMenus || false;
+                
+                document.getElementById('padding').value = parseInt(selectedPreset.spacing.padding);
+                document.getElementById('paddingValue').textContent = selectedPreset.spacing.padding;
+                document.getElementById('margin').value = parseInt(selectedPreset.spacing.margin);
+                document.getElementById('marginValue').textContent = selectedPreset.spacing.margin;
+                document.getElementById('borderRadius').value = parseInt(selectedPreset.spacing.borderRadius);
+                document.getElementById('borderRadiusValue').textContent = selectedPreset.spacing.borderRadius;
+                document.getElementById('gap').value = parseInt(selectedPreset.spacing.gap);
+                document.getElementById('gapValue').textContent = selectedPreset.spacing.gap;
+                
+                // Apply the theme
+                applyCustomTheme();
+            });
+        } catch (err) {
+            LogDev('Error applying preset: ' + err, 'error');
+        }
+    });
+    
+    // Font size sliders
+    document.getElementById('fontSize').addEventListener('input', (e) => {
+        const value = e.target.value + 'px';
+        document.getElementById('fontSizeValue').textContent = value;
+    });
+    
+    document.getElementById('fontSizeSmall').addEventListener('input', (e) => {
+        const value = e.target.value + 'px';
+        document.getElementById('fontSizeSmallValue').textContent = value;
+    });
+    
+    document.getElementById('fontSizeLarge').addEventListener('input', (e) => {
+        const value = e.target.value + 'px';
+        document.getElementById('fontSizeLargeValue').textContent = value;
+    });
+    
+    // Line height slider
+    document.getElementById('lineHeight').addEventListener('input', (e) => {
+        const value = e.target.value;
+        document.getElementById('lineHeightValue').textContent = value;
+    });
+    
+    // Button sliders
+    document.getElementById('buttonHeight').addEventListener('input', (e) => {
+        const value = e.target.value + 'px';
+        document.getElementById('buttonHeightValue').textContent = value;
+    });
+    
+    document.getElementById('buttonPadding').addEventListener('input', (e) => {
+        const value = e.target.value + 'px';
+        document.getElementById('buttonPaddingValue').textContent = value;
+    });
+    
+    document.getElementById('buttonFontSize').addEventListener('input', (e) => {
+        const value = e.target.value + 'px';
+        document.getElementById('buttonFontSizeValue').textContent = value;
+    });
+    
+    document.getElementById('buttonBorderRadius').addEventListener('input', (e) => {
+        const value = e.target.value + 'px';
+        document.getElementById('buttonBorderRadiusValue').textContent = value;
+    });
+    
+    // Spacing sliders
+    document.getElementById('padding').addEventListener('input', (e) => {
+        const value = e.target.value + 'px';
+        document.getElementById('paddingValue').textContent = value;
+    });
+    
+    document.getElementById('margin').addEventListener('input', (e) => {
+        const value = e.target.value + 'px';
+        document.getElementById('marginValue').textContent = value;
+    });
+    
+    document.getElementById('borderRadius').addEventListener('input', (e) => {
+        const value = e.target.value + 'px';
+        document.getElementById('borderRadiusValue').textContent = value;
+    });
+    
+    document.getElementById('gap').addEventListener('input', (e) => {
+        const value = e.target.value + 'px';
+        document.getElementById('gapValue').textContent = value;
+    });
+    
+    // Color inputs - no automatic preview
+    ['primaryColor', 'backgroundColor', 'surfaceColor', 'textColor', 'textSecondaryColor', 'borderColor', 'successColor', 'warningColor', 'errorColor', 'infoColor', 'highlightColor', 'buttonBackgroundColor', 'buttonTextColor', 'buttonBorderColor'].forEach(id => {
+        // No event listener - user must click Apply to see changes
+    });
+    
+    // Typography changes - no automatic preview
+    // No event listeners - user must click Apply to see changes
+    
+    // Action buttons
+    document.getElementById('saveAsTheme').addEventListener('click', saveAsCustomTheme);
+    document.getElementById('saveTheme').addEventListener('click', saveAndApplyCustomTheme);
+    document.getElementById('resetTheme').addEventListener('click', resetCustomTheme);
+    document.getElementById('deletePreset').addEventListener('click', deleteSelectedPreset);
+}
+
+async function applyCustomTheme() {
+    try {
+        const { applyCustomTheme } = await import('./customTheme.js');
+        
+        const theme = {
+            name: 'Custom',
+            colors: {
+                primary: document.getElementById('primaryColor').value,
+                background: document.getElementById('backgroundColor').value,
+                surface: document.getElementById('surfaceColor').value,
+                text: document.getElementById('textColor').value,
+                textSecondary: document.getElementById('textSecondaryColor').value,
+                border: document.getElementById('borderColor').value,
+                success: document.getElementById('successColor').value,
+                warning: document.getElementById('warningColor').value,
+                error: document.getElementById('errorColor').value,
+                info: document.getElementById('infoColor').value,
+                highlight: document.getElementById('highlightColor').value
+            },
+            typography: {
+                fontSize: document.getElementById('fontSize').value + 'px',
+                fontSizeSmall: document.getElementById('fontSizeSmall').value + 'px',
+                fontSizeLarge: document.getElementById('fontSizeLarge').value + 'px',
+                fontWeight: document.getElementById('fontWeight').value,
+                fontWeightBold: '600',
+                lineHeight: document.getElementById('lineHeight').value,
+                fontFamily: document.getElementById('fontFamily').value
+            },
+            spacing: {
+                padding: document.getElementById('padding').value + 'px',
+                margin: document.getElementById('margin').value + 'px',
+                borderRadius: document.getElementById('borderRadius').value + 'px',
+                gap: document.getElementById('gap').value + 'px'
+            },
+            buttons: {
+                height: document.getElementById('buttonHeight').value + 'px',
+                padding: document.getElementById('buttonPadding').value + 'px 16px',
+                fontSize: document.getElementById('buttonFontSize').value + 'px',
+                borderRadius: document.getElementById('buttonBorderRadius').value + 'px'
+            }
+        };
+        
+        const { applyCustomTheme: applyTheme } = await import('./customTheme.js');
+        applyTheme(theme);
+        LogDev('Custom theme applied successfully', 'system');
+        showModal('Success', 'Theme applied! Reloading page...', 'success');
+        
+        // Reload the page after a short delay
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+    } catch (err) {
+        LogDev('Error applying custom theme: ' + err, 'error');
+        showModal('Error', 'Failed to apply theme', 'error');
+    }
+}
+
+async function saveCustomTheme() {
+    try {
+        const { setCustomTheme } = await import('./customTheme.js');
+        
+        const theme = getCurrentThemeFromForm();
+        
+        setCustomTheme(theme, (err) => {
+            if (err) {
+                LogDev('Error saving custom theme: ' + err, 'error');
+                showModal('Error', 'Failed to save custom theme', 'error');
+            } else {
+                LogDev('Custom theme saved successfully', 'system');
+                showModal('Success', 'Custom theme saved!', 'success');
+            }
+        });
+    } catch (err) {
+        LogDev('Error saving custom theme: ' + err, 'error');
+        showModal('Error', 'Failed to save custom theme', 'error');
+    }
+}
+
+// Load all presets (built-in + custom)
+async function loadPresets() {
+    try {
+        const { getAllPresets } = await import('./customTheme.js');
+        getAllPresets((err, presets) => {
+            if (err) {
+                LogDev('Error loading presets: ' + err, 'error');
+                return;
+            }
+            
+            const presetSelect = document.getElementById('presetSelect');
+            if (!presetSelect) return;
+            
+            // Clear existing options except the first one
+            presetSelect.innerHTML = '<option value="">Choose a preset...</option>';
+            
+            // Add built-in presets
+            const builtInPresets = presets.filter(p => !p.isCustom);
+            builtInPresets.forEach(preset => {
+                const option = document.createElement('option');
+                option.value = preset.name;
+                option.textContent = preset.name;
+                presetSelect.appendChild(option);
+            });
+            
+            // Add custom presets with a separator
+            const customPresets = presets.filter(p => p.isCustom);
+            if (customPresets.length > 0) {
+                const separator = document.createElement('option');
+                separator.disabled = true;
+                separator.textContent = '--- Custom Presets ---';
+                presetSelect.appendChild(separator);
+                
+                customPresets.forEach(preset => {
+                    const option = document.createElement('option');
+                    option.value = preset.name;
+                    option.textContent = preset.name;
+                    presetSelect.appendChild(option);
+                });
+            }
+        });
+    } catch (err) {
+        LogDev('Error loading presets: ' + err, 'error');
+    }
+}
+
+
+// Get current theme from form
+function getCurrentThemeFromForm() {
+    // Helper function to safely get element value with fallback
+    const getValue = (id, fallback = '') => {
+        const element = document.getElementById(id);
+        return element ? element.value || fallback : fallback;
+    };
+
+    return {
+        name: 'Custom',
+        colors: {
+            primary: getValue('primaryColor', '#FFD600'),
+            background: getValue('backgroundColor', '#1a1a1a'),
+            surface: getValue('surfaceColor', '#222222'),
+            text: getValue('textColor', '#e0e0e0'),
+            textSecondary: getValue('textSecondaryColor', '#b0b0b0'),
+            border: getValue('borderColor', '#333333'),
+            success: getValue('successColor', '#4CAF50'),
+            warning: getValue('warningColor', '#FF9800'),
+            error: getValue('errorColor', '#F44336'),
+            info: getValue('infoColor', '#2196F3'),
+            highlight: getValue('highlightColor', '#FFD600')
+        },
+        typography: {
+            fontSize: getValue('fontSize', '14') + 'px',
+            fontSizeSmall: getValue('fontSizeSmall', '12') + 'px',
+            fontSizeLarge: getValue('fontSizeLarge', '16') + 'px',
+            fontWeight: getValue('fontWeight', '400'),
+            fontWeightBold: '600',
+            lineHeight: getValue('lineHeight', '1.4'),
+            fontFamily: getValue('fontFamily', 'system-ui, -apple-system, sans-serif')
+        },
+        spacing: {
+            padding: getValue('padding', '12') + 'px',
+            margin: getValue('margin', '8') + 'px',
+            borderRadius: getValue('borderRadius', '6') + 'px',
+            gap: getValue('gap', '8') + 'px'
+        },
+        buttons: {
+            height: getValue('buttonHeight', '40') + 'px',
+            padding: getValue('buttonPadding', '8') + 'px 16px',
+            fontSize: getValue('buttonFontSize', '14') + 'px',
+            borderRadius: getValue('buttonBorderRadius', '6') + 'px',
+            backgroundColor: getValue('buttonBackgroundColor', '#FFD600'),
+            textColor: getValue('buttonTextColor', '#000000'),
+            borderColor: getValue('buttonBorderColor', '#FFD600'),
+            applyToMenus: document.getElementById('applyToMenus') ? document.getElementById('applyToMenus').checked : false
+        }
+    };
 }
 
 // --- Initial Render ---

@@ -1,4 +1,4 @@
-import browser from 'webextension-polyfill';
+import * as browser from 'webextension-polyfill';
 /**
  * Logs a message to the console and to persistent storage (dev log), with color coding.
  * All logs are sent to the background script for unified storage in browser.storage.local.

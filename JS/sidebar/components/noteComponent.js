@@ -1,7 +1,7 @@
 // Note Component
 import { setNotes, getNotes } from '../storage.js';
 import { LogDev } from '../../log.js';
-import { showInputModal, showConfirmModal } from '../modal.js';
+import { showInputModal, showConfirmModal, showChoiceModal } from '../modal.js';
 import * as browser from 'webextension-polyfill';
 
 /**
@@ -64,44 +64,28 @@ export function renderNote(props) {
         const NoteDiv = document.createElement("div");
         NoteDiv.className = "note-item";
         NoteDiv.dataset.noteId = Note.id;
-        NoteDiv.draggable = !Locked;
         NoteDiv.tabIndex = 0;
         NoteDiv.setAttribute('aria-label', `Note: ${Note.text}`);
-        let dragStartTimeout = null;
-        let dragAllowed = false;
-        NoteDiv.addEventListener('mousedown', (e) => {
-            if (Locked) return;
-            dragAllowed = false;
-            dragStartTimeout = setTimeout(() => {
-                dragAllowed = true;
-                NoteDiv.draggable = true;
-            }, 50); // Lowered from 150ms to 50ms for faster drag
-        });
-        NoteDiv.addEventListener('mouseup', (e) => {
-            clearTimeout(dragStartTimeout);
-            NoteDiv.draggable = false;
-        });
-        NoteDiv.addEventListener('mouseleave', (e) => {
-            clearTimeout(dragStartTimeout);
-            NoteDiv.draggable = false;
-        });
-        NoteDiv.addEventListener('dragstart', (e) => {
-            if (Locked || !dragAllowed) {
-                e.preventDefault();
-                return;
-            }
-        });
-        // Always show grab cursor
-        NoteDiv.style.cursor = 'grab';
-        NoteDiv.addEventListener('mousedown', () => {
-            NoteDiv.style.cursor = 'grabbing';
-        });
-        NoteDiv.addEventListener('mouseup', () => {
-            NoteDiv.style.cursor = 'grab';
-        });
-        NoteDiv.addEventListener('mouseleave', () => {
-            NoteDiv.style.cursor = 'grab';
-        });
+        NoteDiv.style.position = 'relative';
+        
+        // Make entire note clickable for timestamps when locked or when note has timestamp
+        if (Locked || Note.time) {
+            NoteDiv.style.cursor = 'pointer';
+            NoteDiv.addEventListener('click', (e) => {
+                // Don't trigger if clicking on action buttons or drag handle
+                if (e.target.closest('.note-actions') || e.target.closest('.note-drag-handle')) {
+                    return;
+                }
+                
+                if (Note.time) {
+                    const v = document.querySelector("video");
+                    if (v) {
+                        v.currentTime = parseTime(Note.time);
+                        v.play();
+                    }
+                }
+            });
+        }
 
         // Bulk select checkbox - only show if bulk actions are enabled
         browser.storage.local.get(['PodAwful::EnableBulkActions'])
@@ -119,6 +103,8 @@ export function renderNote(props) {
                     NoteDiv.appendChild(noteCheckbox);
                 }
             });
+
+        // --- Drag handle removed - using drag button instead ---
 
         // --- Note content row ---
         const contentRow = document.createElement("div");
@@ -171,6 +157,7 @@ export function renderNote(props) {
             contentCol.appendChild(tagsDiv);
         }
 
+        // Drag handle removed - no longer needed
         contentRow.appendChild(contentCol);
         NoteDiv.appendChild(contentRow);
 
@@ -178,11 +165,15 @@ export function renderNote(props) {
         const actionsDiv = document.createElement("div");
         actionsDiv.className = "note-actions";
 
-        // Prevent drag from action buttons
+        // Prevent drag from action buttons (except drag button)
         actionsDiv.addEventListener('mousedown', (e) => {
             e.stopPropagation();
         });
         actionsDiv.addEventListener('dragstart', (e) => {
+            // Allow drag button to work, prevent other buttons
+            if (e.target.classList.contains('note-drag-btn')) {
+                return; // Let the drag button handle its own drag
+            }
             e.stopPropagation();
             e.preventDefault();
         });
@@ -202,90 +193,7 @@ export function renderNote(props) {
             setTimeout(() => { statusDiv.textContent = ""; }, duration);
         }
 
-        // Edit button
-        const editBtn = document.createElement("button");
-        editBtn.className = "note-edit-btn";
-        editBtn.title = "Edit note";
-        editBtn.setAttribute('aria-label', 'Edit note');
-        editBtn.textContent = "\u270e";
-        editBtn.disabled = Locked;
-        if (Locked) editBtn.classList.add('locked-hide');
-        editBtn.onclick = async () => {
-            if (Locked) return;
-            const newText = await showInputModal({
-                title: "Edit Note",
-                label: "Note text:",
-                value: String(Note.text),
-                validate: (val) => val.trim() ? true : "Note text cannot be empty."
-            });
-            if (newText === null) return;
-            const newTime = await showInputModal({
-                title: "Edit Timestamp",
-                label: "Timestamp (optional):",
-                value: Note.time || "",
-                placeholder: "e.g., 1:23 or 1:23:45"
-            });
-            if (newTime === null) return;
-
-            getNotes(location.href, (notesRaw) => {
-                const notes = Array.isArray(notesRaw) ? notesRaw : [];
-                const idx = notes.findIndex(n => n.id === Note.id);
-                if (idx !== -1) {
-                    let changed = false;
-                    if (newText.trim() !== "" && String(notes[idx].text) !== newText.trim()) {
-                        notes[idx].text = newText.trim();
-                        changed = true;
-                    }
-                    if (typeof newTime === "string" && newTime.trim() !== "" && String(notes[idx].time) !== newTime.trim()) {
-                        notes[idx].time = newTime.trim();
-                        changed = true;
-                    }
-                    if (changed) {
-                        setNotes(location.href, notes, (err) => {
-                            if (err) { showStatus(Container, "Failed to edit note."); LogDev('Failed to edit note: ' + err, 'error'); return; }
-                            RenderSidebar(Container);
-                        });
-                    }
-                }
-            });
-        };
-        actionsDiv.appendChild(editBtn);
-
-        // Tag button
-        const tagBtn = document.createElement("button");
-        tagBtn.className = "note-tag-btn";
-        tagBtn.title = "Edit tags";
-        tagBtn.setAttribute('aria-label', 'Edit tags');
-        tagBtn.textContent = "\ud83c\udff7\ufe0f";
-        tagBtn.disabled = Locked;
-        if (Locked) tagBtn.classList.add('locked-hide');
-        tagBtn.onclick = async () => {
-            if (Locked) return;
-            // Always treat tags as array of strings
-            const currentTags = Array.isArray(Note.tags)
-                ? Note.tags.join(", ")
-                : (typeof Note.tags === "string" ? Note.tags : "");
-            const tagInput = await showInputModal({
-                title: "Edit Tags",
-                label: "Tags (comma separated):",
-                value: currentTags,
-                validate: (val) => true // Optionally add validation for tags
-            });
-            if (tagInput === null) return;
-            const tags = tagInput.split(",").map(t => t.trim()).filter(Boolean);
-            getNotes(location.href, (notesRaw) => {
-                const notes = Array.isArray(notesRaw) ? notesRaw : [];
-                const idx = notes.findIndex(n => n.id === Note.id);
-                if (idx !== -1) {
-                    notes[idx].tags = tags;
-                    setNotes(location.href, notes, (err) => {
-                        if (err) { showStatus(Container, "Failed to edit tags."); LogDev('Failed to edit tags: ' + err, 'error'); return; }
-                        RenderSidebar(Container);
-                    });
-                }
-            });
-        };
-        actionsDiv.appendChild(tagBtn);
+        // Note actions button removed
 
         // Copy timestamp URL button (only if note has a timestamp)
         if (Note.time && Note.time.trim()) {
@@ -322,6 +230,118 @@ export function renderNote(props) {
             actionsDiv.appendChild(copyBtn);
         }
 
+        // Edit Note button (shows modal to select what to edit)
+        const editBtn = document.createElement("button");
+        editBtn.className = "note-edit-btn";
+        editBtn.title = "Edit note";
+        editBtn.setAttribute('aria-label', 'Edit note');
+        editBtn.textContent = "\u270e";
+        editBtn.disabled = Locked;
+        if (Locked) editBtn.classList.add('locked-hide');
+        editBtn.onclick = async () => {
+            if (Locked) return;
+            
+            // Show 3-choice modal for what to edit
+            const editChoice = await showChoiceModal({
+                title: "Edit Note",
+                message: "What would you like to edit?",
+                option1: "Edit Timestamp",
+                option2: "Edit Text",
+                option3: "Edit Tags"
+            });
+            
+            if (editChoice === null) return; // User cancelled
+            
+            if (editChoice === "Edit Timestamp") {
+                // Edit timestamp
+                const newTime = await showInputModal({
+                    title: "Edit Timestamp",
+                    label: "Timestamp (optional):",
+                    value: Note.time || "",
+                    placeholder: "e.g., 1:23 or 1:23:45",
+                    validate: val => {
+                        if (!val || !val.trim()) return true; // Allow empty (optional field)
+                        const trimmed = val.trim();
+                        // Allow only numbers and colons (e.g., 1:23, 1:23:45, or just 123)
+                        if (!/^[\d:]+$/.test(trimmed)) {
+                            return 'Timestamp can only contain numbers and colons (e.g., 1:23 or 1:23:45)';
+                        }
+                        // Basic format validation - should be like 1:23 or 1:23:45 or just numbers
+                        if (!/^(\d+|\d+:\d+|\d+:\d+:\d+)$/.test(trimmed)) {
+                            return 'Invalid timestamp format. Use format like 1:23 or 1:23:45';
+                        }
+                        return true;
+                    }
+                });
+                if (newTime === null) return;
+                
+                getNotes(location.href, (notesRaw) => {
+                    const notes = Array.isArray(notesRaw) ? notesRaw : [];
+                    const idx = notes.findIndex(n => n.id === Note.id);
+                    if (idx !== -1) {
+                        notes[idx].time = newTime.trim();
+                        setNotes(location.href, notes, (err) => {
+                            if (err) { showStatus(Container, "Failed to edit timestamp."); LogDev('Failed to edit timestamp: ' + err, 'error'); return; }
+                            RenderSidebar(Container);
+                        });
+                    }
+                });
+            } else if (editChoice === "Edit Text") {
+                // Edit note text
+                const newText = await showInputModal({
+                    title: "Edit Note Text",
+                    label: "Note text:",
+                    value: String(Note.text),
+                    validate: (val) => val.trim() ? true : "Note text cannot be empty."
+                });
+                if (newText === null) return;
+                
+                getNotes(location.href, (notesRaw) => {
+                    const notes = Array.isArray(notesRaw) ? notesRaw : [];
+                    const idx = notes.findIndex(n => n.id === Note.id);
+                    if (idx !== -1) {
+                        notes[idx].text = newText.trim();
+                        setNotes(location.href, notes, (err) => {
+                            if (err) { showStatus(Container, "Failed to edit note."); LogDev('Failed to edit note: ' + err, 'error'); return; }
+                            RenderSidebar(Container);
+                        });
+                    }
+                });
+            } else if (editChoice === "Edit Tags") {
+                // Edit tags
+                const currentTags = Array.isArray(Note.tags)
+                    ? Note.tags.join(", ")
+                    : (typeof Note.tags === "string" ? Note.tags : "");
+                const newTags = await showInputModal({
+                    title: "Edit Tags",
+                    label: "Tags (comma separated):",
+                    value: currentTags,
+                    placeholder: "e.g., important, funny, timestamp",
+                    validate: (val) => true // Allow any input for tags
+                });
+                if (newTags === null) return;
+                
+                const tags = newTags.split(",").map(t => t.trim()).filter(Boolean);
+                
+                getNotes(location.href, (notesRaw) => {
+                    const notes = Array.isArray(notesRaw) ? notesRaw : [];
+                    const idx = notes.findIndex(n => n.id === Note.id);
+                    if (idx !== -1) {
+                        notes[idx].tags = tags;
+                        setNotes(location.href, notes, (err) => {
+                            if (err) { showStatus(Container, "Failed to edit tags."); LogDev('Failed to edit tags: ' + err, 'error'); return; }
+                            RenderSidebar(Container);
+                        });
+                    }
+                });
+            }
+        };
+        actionsDiv.appendChild(editBtn);
+
+        // Tags button removed - now integrated into edit modal
+
+        // Duplicate edit button removed - using smart edit button above
+
         // Delete button
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "note-delete-btn";
@@ -350,10 +370,19 @@ export function renderNote(props) {
         };
         actionsDiv.appendChild(deleteBtn);
 
-        NoteDiv.appendChild(actionsDiv);
-
-        // --- Drag event handlers ---
-        NoteDiv.addEventListener('dragstart', (e) => {
+        // Drag button (functional drag handle)
+        const dragBtn = document.createElement("button");
+        dragBtn.className = "note-drag-btn";
+        dragBtn.title = "Drag to move note";
+        dragBtn.setAttribute('aria-label', 'Drag to move note');
+        dragBtn.textContent = "⋮⋮";
+        dragBtn.disabled = Locked;
+        if (Locked) dragBtn.classList.add('locked-hide');
+        dragBtn.style.cursor = 'grab';
+        dragBtn.draggable = true;
+        
+        // Drag event handlers
+        dragBtn.addEventListener('dragstart', (e) => {
             if (Locked) {
                 e.preventDefault();
                 return;
@@ -362,11 +391,30 @@ export function renderNote(props) {
             NoteDiv.classList.add('dragging-note');
             document.body.classList.add('body-dragging-notes');
         });
-        NoteDiv.addEventListener('dragend', () => {
+        
+        dragBtn.addEventListener('dragend', () => {
             NoteDiv.classList.remove('dragging-note');
             document.body.classList.remove('body-dragging-notes');
             document.querySelectorAll('.note-dropzone.drag-over').forEach(el => el.classList.remove('drag-over'));
         });
+        
+        dragBtn.addEventListener('mousedown', () => {
+            if (!Locked) {
+                dragBtn.style.cursor = 'grabbing';
+            }
+        });
+        dragBtn.addEventListener('mouseup', () => {
+            dragBtn.style.cursor = 'grab';
+        });
+        dragBtn.addEventListener('mouseleave', () => {
+            dragBtn.style.cursor = 'grab';
+        });
+        
+        actionsDiv.appendChild(dragBtn);
+
+        NoteDiv.appendChild(actionsDiv);
+
+        // --- Drag functionality now handled by drag button ---
 
         // --- Return the complete note structure ---
         const wrapper = document.createElement('div');
@@ -401,4 +449,4 @@ function highlightText(text, highlight) {
     if (!highlight) return text;
     const regex = new RegExp(`(${highlight})`, 'gi');
     return text.replace(regex, '<mark>$1</mark>');
-} 
+}

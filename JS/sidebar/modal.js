@@ -128,6 +128,66 @@ export function showConfirmModal({ title, message, okText = "Delete", cancelText
     });
 }
 
+/**
+ * Shows a choice modal dialog with 3 options.
+ * @param {Object} options - Modal options (title, message, option1, option2, option3).
+ * @returns {Promise<string|null>} Resolves to selected option name or null if cancelled.
+ */
+export function showChoiceModal({ title, message, option1, option2, option3 })
+{
+    return new Promise((resolve) =>
+    {
+        document.getElementById("podawful-generic-modal")?.remove();
+
+        const modal = document.createElement("div");
+        modal.id = "podawful-generic-modal";
+        modal.className = "podawful-modal";
+        modal.tabIndex = -1;
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('role', 'dialog');
+        modal.style.zIndex = '100000'; // Ensure always above tag manager modal
+
+        const box = document.createElement("div");
+        box.className = "podawful-modal-box";
+        box.innerHTML = `<h3>${escapeHTML(title)}</h3>
+            <div style="margin-bottom:18px;">${escapeHTML(message)}</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
+                <button class="podawful-btn" id="modalOption1" style="width:100%;text-align:left;justify-content:flex-start;">${escapeHTML(option1)}</button>
+                <button class="podawful-btn" id="modalOption2" style="width:100%;text-align:left;justify-content:flex-start;">${escapeHTML(option2)}</button>
+                <button class="podawful-btn" id="modalOption3" style="width:100%;text-align:left;justify-content:flex-start;">${escapeHTML(option3)}</button>
+            </div>
+            <div style="text-align:right;">
+                <button class="podawful-btn" id="modalCancel">Cancel</button>
+            </div>`;
+
+        modal.appendChild(box);
+        document.body.appendChild(modal);
+
+        function cleanup(val)
+        {
+            modal.remove();
+            resolve(val);
+        }
+
+        box.querySelector("#modalOption1").onclick = () => cleanup(option1);
+        box.querySelector("#modalOption2").onclick = () => cleanup(option2);
+        box.querySelector("#modalOption3").onclick = () => cleanup(option3);
+        box.querySelector("#modalCancel").onclick = () => cleanup(null);
+
+        modal.addEventListener('keydown', (e) =>
+        {
+            if (e.key === "Escape") cleanup(null);
+        });
+        modal.addEventListener('click', (e) =>
+        {
+            if (e.target === modal) cleanup(null);
+        });
+
+        // Focus modal for accessibility
+        setTimeout(() => modal.focus(), 0);
+    });
+}
+
 function escapeHTML(str) {
     return String(str)
         .replace(/&/g, "&amp;")

@@ -98,25 +98,7 @@ export function setupSidebarDragAndDrop(container, renderSidebar)
     {
         let isDragging = false;
 
-        // Add drag event listeners to all note items
-        container.querySelectorAll('.note-item').forEach(item =>
-        {
-            item.setAttribute('draggable', 'true');
-
-            item.addEventListener('dragstart', (e) =>
-            {
-                isDragging = true;
-                container.classList.add('dragging-notes');
-            });
-
-            item.addEventListener('dragend', () =>
-            {
-                isDragging = false;
-                container.classList.remove('dragging-notes');
-                // Remove drag-over from all dropzones
-                container.querySelectorAll('.note-dropzone').forEach(zone => zone.classList.remove('drag-over'));
-            });
-        });
+        // Note: Drag functionality removed from note items - only drag handles can be used
 
         // Add drag event listeners to all drop zones
         container.querySelectorAll('.note-dropzone').forEach(dropZone =>
