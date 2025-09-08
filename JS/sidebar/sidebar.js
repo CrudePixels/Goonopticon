@@ -9,6 +9,7 @@ import
     addGroup, addNote, deleteGroup, renameGroup, saveUndo, setGroups, setInStorage, setLocked, setNoteSearch, setNotes, setPinnedGroups, setSidebarVisible, setTagFilter, setTheme, getDevLog, getUndo, SCHEMA_VERSION
 } from './storage.js';
 import { LogDev } from '../log.js';
+import { normalizeYouTubeUrl } from '../utils.js';
 import { applyTheme } from '../theme.js';
 import { showInputModal } from './modal.js';
 import * as browser from 'webextension-polyfill';
@@ -122,7 +123,7 @@ export function renderSidebar(Container, overrideSelectedTags, forceHeaderRerend
     if (oldBanner) oldBanner.remove();
     if (currentSidebarError) showSidebarError(currentSidebarError);
     Promise.all([
-        new Promise(Resolve => getNotes(location.href, (data) => Resolve(Array.isArray(data) ? data : []))),
+        new Promise(Resolve => getNotes(normalizeYouTubeUrl(location.href), (data) => Resolve(Array.isArray(data) ? data : []))),
         new Promise(Resolve => getPinnedGroups((err, data) => Resolve(Array.isArray(data) ? data : []))),
         new Promise(Resolve => getCompact((err, data) => Resolve(data))),
         new Promise(Resolve => getTheme((err, data) => Resolve(data))),
@@ -194,7 +195,7 @@ export function renderSidebar(Container, overrideSelectedTags, forceHeaderRerend
 
             // --- Import/Export Handlers ---
             async function onExportPage() {
-                getNotes(location.href, (notes) => {
+                getNotes(normalizeYouTubeUrl(location.href), (notes) => {
                     // Ask user for format
                     const format = prompt('Export format: json, csv, or md?', 'json');
                     let blob, filename;
@@ -235,7 +236,7 @@ export function renderSidebar(Container, overrideSelectedTags, forceHeaderRerend
                             } else {
                                 notes = JSON.parse(evt.target.result);
                             }
-                            setNotes(location.href, notes, (err) => {
+                            setNotes(normalizeYouTubeUrl(location.href), notes, (err) => {
                                 if (err) showSidebarError('Failed to import notes.');
                                 else renderSidebar(Container);
                             });
@@ -263,7 +264,7 @@ export function renderSidebar(Container, overrideSelectedTags, forceHeaderRerend
                 }) : Promise.resolve(confirm('Delete ALL notes on this page?')));
                 if (!confirmed) return;
                 import('./storage.js').then(({ setNotes }) => {
-                    setNotes(location.href, [], (err) => {
+                    setNotes(normalizeYouTubeUrl(location.href), [], (err) => {
                         if (err) {
                             showSidebarError('Failed to clear notes.');
                             return;
@@ -736,7 +737,7 @@ if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.onMessa
                 sendResponse({ success: false, error: 'Invalid note format' });
                 return true;
             }
-            setNotes(location.href, message.notes, (err) => {
+            setNotes(normalizeYouTubeUrl(location.href), message.notes, (err) => {
                 if (!err) {
                     // Also update groups list to include all unique group names from imported notes
                     const importedGroups = Array.from(new Set(message.notes.map(n => n.group).filter(Boolean)));
@@ -768,7 +769,7 @@ if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.onMessa
             return true; // Keep the message channel open for async response
         }
         if (message && message.type === 'EXPORT_NOTES') {
-            getNotes(location.href, (notes) => {
+            getNotes(normalizeYouTubeUrl(location.href), (notes) => {
                 sendResponse({ notes: Array.isArray(notes) ? notes : [] });
             });
             return true; // Keep the message channel open for async response

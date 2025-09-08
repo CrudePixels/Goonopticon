@@ -3,6 +3,7 @@ import { applyTheme } from '../theme.js';
 import { GetNotes } from './storage.js';
 import * as browser from 'webextension-polyfill';
 import { LogDev } from '../log.js';
+import { normalizeYouTubeUrl } from '../utils.js';
 import { showInputModal, showConfirmModal } from './modal.js';
 console.log('SANITY CHECK - browser:', browser);
 console.log('SANITY CHECK - LogDev:', LogDev);
@@ -57,9 +58,9 @@ browser.storage.onChanged.addListener((changes, area) =>
     }
 });
 
-let lastUrl = location.href;
+let lastUrl = normalizeYouTubeUrl(location.href);
 setInterval(() => {
-    const currentUrl = location.href;
+    const currentUrl = normalizeYouTubeUrl(location.href);
     if (currentUrl !== lastUrl) {
         LogDev(`URL changed from ${lastUrl} to ${currentUrl}`, "event");
         lastUrl = currentUrl;

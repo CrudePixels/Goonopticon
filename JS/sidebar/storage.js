@@ -2,7 +2,7 @@
 
 import * as browser from 'webextension-polyfill';
 import { LogDev } from '../log.js';
-import { safeParse, STORAGE_KEYS } from '../utils.js';
+import { safeParse, STORAGE_KEYS, normalizeYouTubeUrl } from '../utils.js';
 
 /**
  * Gets a value from browser.storage.local.
@@ -52,7 +52,7 @@ export function setInStorage(Key, Value, Cb)
 
 // Don't cache the groups key - it needs to be dynamic based on current URL
 function getGroupsKey() {
-    return STORAGE_KEYS.GROUPS(location.href);
+    return STORAGE_KEYS.GROUPS(normalizeYouTubeUrl(location.href));
 }
 const NOTE_SCHEMA_VERSION = 1;
 const GROUP_SCHEMA_VERSION = 1;
