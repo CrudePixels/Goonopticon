@@ -1,4 +1,22 @@
-﻿Version 1.4.0 (2025-01-27)
+Version 2.0.2 (2025-09-08)
+- Bug fixes and improvements
+- Enhanced user experience
+- Updated dependencies
+
+﻿Version 2.0.1 (2025-01-27)
+- Fixed URL normalization issue where YouTube URLs with different timestamp parameters were treated as separate videos
+- Added automatic release system with GitHub Actions
+- Added version display in extension popup menu
+- Enhanced update notifications with clickable release links
+- Improved extension reliability and user experience
+
+Version 2.0.0 (2025-01-27)
+- Major version bump for auto-update system
+- Added GitHub Actions workflow for automated releases
+- Enhanced update checking and notification system
+- Improved extension packaging and distribution
+
+Version 1.4.0 (2025-01-27)
 - Enhanced accessibility with ARIA labels and keyboard navigation
 - Improved error handling with user-facing error banners
 - Added comprehensive bulk actions for notes and groups
