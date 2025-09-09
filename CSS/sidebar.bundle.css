@@ -86,6 +86,56 @@ html.custom-theme {
     --button-background-color: var(--custom-buttonBackgroundColor);
     --button-text-color: var(--custom-buttonTextColor);
     --button-border-color: var(--custom-buttonBorderColor);
+    
+    /* Override old theme variables with custom theme variables */
+    --button-bg: var(--custom-buttonBackgroundColor);
+    --button-fg: var(--custom-buttonTextColor);
+    --button-hover-bg: var(--custom-primary);
+    --button-hover-fg: var(--custom-buttonTextColor);
+    --primary-bg: var(--custom-background);
+    --primary-fg: var(--custom-text);
+    --secondary-bg: var(--custom-surface);
+    --secondary-fg: var(--custom-textSecondary);
+    --accent: var(--custom-primary);
+    --border: var(--custom-border);
+    --highlight-bg: var(--custom-highlight);
+    --highlight-fg: var(--custom-buttonTextColor);
+    --highlight-border: var(--custom-primary);
+}
+
+/* Override all hardcoded #FFD600 values with custom theme variables */
+#podawful-sidebar.custom-theme * {
+    /* Override any remaining hardcoded accent colors */
+    --accent: var(--custom-primary) !important;
+}
+
+/* Specific overrides for elements that use hardcoded values */
+#podawful-sidebar.custom-theme .sidebar-title,
+#podawful-sidebar.custom-theme .group-title,
+#podawful-sidebar.custom-theme .note-timestamp,
+#podawful-sidebar.custom-theme .sidebar__action-btn,
+#podawful-sidebar.custom-theme .sidebar__tag-manager-btn,
+#podawful-sidebar.custom-theme .tag-filter__manager-btn,
+#podawful-sidebar.custom-theme .sidebar__tag-manager-close-btn,
+#podawful-sidebar.custom-theme .sidebar__bulk-bar,
+#podawful-sidebar.custom-theme .sidebar__podawful-link,
+#podawful-sidebar.custom-theme .sidebar-footer .sidebar-visit-link,
+#podawful-sidebar.custom-theme .note-tag,
+#podawful-sidebar.custom-theme .note-drag-handle,
+#podawful-sidebar.custom-theme .group-drag-handle,
+#podawful-sidebar.custom-theme .sidebar__tag-merge-row button,
+#podawful-sidebar.custom-theme #podawful-show-sidebar-btn {
+    background: var(--custom-buttonBackgroundColor) !important;
+    color: var(--custom-buttonTextColor) !important;
+    border-color: var(--custom-buttonBorderColor) !important;
+}
+
+/* Override text colors that use hardcoded accent */
+#podawful-sidebar.custom-theme .sidebar-title,
+#podawful-sidebar.custom-theme .group-title,
+#podawful-sidebar.custom-theme .note-timestamp,
+#podawful-sidebar.custom-theme .sidebar-footer .sidebar-visit-link {
+    color: var(--custom-primary) !important;
 }
 
 /* For popup context, apply theme to body and html but only affect extension elements */

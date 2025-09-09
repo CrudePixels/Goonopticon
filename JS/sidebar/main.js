@@ -1,5 +1,6 @@
 import { renderSidebar } from './sidebar.js';
 import { applyTheme } from '../theme.js';
+import { applyCustomTheme } from '../customTheme.js';
 import { GetNotes } from './storage.js';
 import * as browser from 'webextension-polyfill';
 import { LogDev } from '../log.js';
@@ -22,9 +23,22 @@ window.addEventListener('error', function (event) {
 
 export default function initSidebar()
 {
-    browser.storage.local.get('PodAwful::Theme').then(result => {
-        const theme = result['PodAwful::Theme'] || 'default';
+    // Load both regular theme and custom theme
+    Promise.all([
+        browser.storage.local.get('PodAwful::Theme'),
+        browser.storage.local.get('PodAwful::CustomTheme')
+    ]).then(([themeResult, customThemeResult]) => {
+        const theme = themeResult['PodAwful::Theme'] || 'default';
+        const customTheme = customThemeResult['PodAwful::CustomTheme'];
+        
+        // Apply regular theme first
         applyTheme(theme);
+        
+        // Apply custom theme if it exists
+        if (customTheme) {
+            LogDev('Loading custom theme on sidebar init', 'system');
+            applyCustomTheme(customTheme);
+        }
 
         if (document.getElementById('podawful-sidebar'))
         {
@@ -50,6 +64,22 @@ browser.storage.onChanged.addListener((changes, area) =>
         applyTheme(theme);
         const sidebar = document.getElementById('podawful-sidebar');
         if (sidebar) renderSidebar(sidebar);
+    }
+    if (area === 'local' && changes['PodAwful::CustomTheme'])
+    {
+        // Apply custom theme changes to the sidebar
+        const customTheme = changes['PodAwful::CustomTheme'].newValue;
+        if (customTheme) {
+            LogDev('Custom theme changed, applying to sidebar', 'system');
+            applyCustomTheme(customTheme);
+            
+            // Re-render the sidebar to apply the new theme
+            const sidebar = document.getElementById('podawful-sidebar');
+            if (sidebar) {
+                LogDev('Re-rendering sidebar with new theme', 'system');
+                renderSidebar(sidebar);
+            }
+        }
     }
     if (area === 'local' && changes['PodAwful::SidebarVisible'])
     {

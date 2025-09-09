@@ -896,6 +896,11 @@ function renderThemeSettings()
     if (!MenuContent || !MenuTitle) return;
 
     MenuTitle.textContent = "Theme Settings";
+    
+    // Load current custom theme settings when opening theme submenu
+    setTimeout(() => {
+        loadCustomThemeSettings();
+    }, 100);
     MenuContent.innerHTML = `
         <div id="customThemeSettings" style="margin-top: 12px; padding: 12px; border: 1px solid var(--sidebar-border, #333); border-radius: 6px; background: var(--note-bg, #222);">
             <h4 style="margin: 0 0 12px 0; color: var(--accent, #FFD600);">Custom Theme Settings</h4>
@@ -1424,6 +1429,131 @@ function loadSelectedPreset(callback) {
     }
 }
 
+// Apply a preset theme (for loading saved settings - no auto-reload)
+function applyPresetTheme(presetName, presets) {
+    try {
+        const preset = presets.find(p => p.name === presetName);
+        if (!preset) {
+            LogDev('Preset not found: ' + presetName, 'error');
+            return;
+        }
+        
+        LogDev('Loading preset theme: ' + presetName, 'system');
+        
+        // Update all form fields first (same as change event listener)
+        document.getElementById('primaryColor').value = preset.colors.primary;
+        document.getElementById('backgroundColor').value = preset.colors.background;
+        document.getElementById('surfaceColor').value = preset.colors.surface;
+        document.getElementById('textColor').value = preset.colors.text;
+        document.getElementById('textSecondaryColor').value = preset.colors.textSecondary;
+        document.getElementById('borderColor').value = preset.colors.border;
+        document.getElementById('successColor').value = preset.colors.success;
+        document.getElementById('warningColor').value = preset.colors.warning;
+        document.getElementById('errorColor').value = preset.colors.error;
+        document.getElementById('infoColor').value = preset.colors.info;
+        document.getElementById('highlightColor').value = preset.colors.highlight;
+        
+        document.getElementById('fontSize').value = parseInt(preset.typography.fontSize);
+        document.getElementById('fontSizeValue').textContent = preset.typography.fontSize;
+        document.getElementById('fontSizeSmall').value = parseInt(preset.typography.fontSizeSmall);
+        document.getElementById('fontSizeSmallValue').textContent = preset.typography.fontSizeSmall;
+        document.getElementById('fontSizeLarge').value = parseInt(preset.typography.fontSizeLarge);
+        document.getElementById('fontSizeLargeValue').textContent = preset.typography.fontSizeLarge;
+        document.getElementById('fontWeight').value = preset.typography.fontWeight;
+        document.getElementById('lineHeight').value = parseFloat(preset.typography.lineHeight);
+        document.getElementById('lineHeightValue').textContent = preset.typography.lineHeight;
+        document.getElementById('fontFamily').value = preset.typography.fontFamily;
+        
+        document.getElementById('buttonHeight').value = parseInt(preset.buttons.height);
+        document.getElementById('buttonHeightValue').textContent = preset.buttons.height;
+        document.getElementById('buttonPadding').value = parseInt(preset.buttons.padding.split(' ')[0]);
+        document.getElementById('buttonPaddingValue').textContent = preset.buttons.padding;
+        document.getElementById('buttonFontSize').value = parseInt(preset.buttons.fontSize);
+        document.getElementById('buttonFontSizeValue').textContent = preset.buttons.fontSize;
+        document.getElementById('buttonBorderRadius').value = parseInt(preset.buttons.borderRadius);
+        document.getElementById('buttonBorderRadiusValue').textContent = preset.buttons.borderRadius;
+        document.getElementById('buttonBackgroundColor').value = preset.buttons.backgroundColor;
+        document.getElementById('buttonTextColor').value = preset.buttons.textColor;
+        document.getElementById('buttonBorderColor').value = preset.buttons.borderColor;
+        document.getElementById('applyToMenus').checked = preset.buttons.applyToMenus || false;
+        
+        document.getElementById('padding').value = parseInt(preset.spacing.padding);
+        document.getElementById('paddingValue').textContent = preset.spacing.padding;
+        document.getElementById('margin').value = parseInt(preset.spacing.margin);
+        document.getElementById('marginValue').textContent = preset.spacing.margin;
+        document.getElementById('borderRadius').value = parseInt(preset.spacing.borderRadius);
+        document.getElementById('borderRadiusValue').textContent = preset.spacing.borderRadius;
+        document.getElementById('gap').value = parseInt(preset.spacing.gap);
+        document.getElementById('gapValue').textContent = preset.spacing.gap;
+        
+        // Apply the theme silently (without showing the success message or reloading)
+        try {
+            // Create theme object from form fields (same as applyCustomThemeFunction but without modal/reload)
+            const theme = {
+                name: 'Custom',
+                colors: {
+                    primary: document.getElementById('primaryColor').value,
+                    background: document.getElementById('backgroundColor').value,
+                    surface: document.getElementById('surfaceColor').value,
+                    text: document.getElementById('textColor').value,
+                    textSecondary: document.getElementById('textSecondaryColor').value,
+                    border: document.getElementById('borderColor').value,
+                    success: document.getElementById('successColor').value,
+                    warning: document.getElementById('warningColor').value,
+                    error: document.getElementById('errorColor').value,
+                    info: document.getElementById('infoColor').value,
+                    highlight: document.getElementById('highlightColor').value
+                },
+                typography: {
+                    fontSize: document.getElementById('fontSize').value + 'px',
+                    fontSizeSmall: document.getElementById('fontSizeSmall').value + 'px',
+                    fontSizeLarge: document.getElementById('fontSizeLarge').value + 'px',
+                    fontWeight: document.getElementById('fontWeight').value,
+                    fontWeightBold: '600',
+                    lineHeight: document.getElementById('lineHeight').value,
+                    fontFamily: document.getElementById('fontFamily').value
+                },
+                spacing: {
+                    padding: document.getElementById('padding').value + 'px',
+                    margin: document.getElementById('margin').value + 'px',
+                    borderRadius: document.getElementById('borderRadius').value + 'px',
+                    gap: document.getElementById('gap').value + 'px'
+                },
+                buttons: {
+                    height: document.getElementById('buttonHeight').value + 'px',
+                    padding: document.getElementById('buttonPadding').value + 'px 16px',
+                    fontSize: document.getElementById('buttonFontSize').value + 'px',
+                    borderRadius: document.getElementById('buttonBorderRadius').value + 'px',
+                    backgroundColor: document.getElementById('buttonBackgroundColor').value,
+                    textColor: document.getElementById('buttonTextColor').value,
+                    borderColor: document.getElementById('buttonBorderColor').value,
+                    applyToMenus: document.getElementById('applyToMenus').checked
+                }
+            };
+            
+            // Apply the theme silently (no modal, no reload)
+            applyCustomTheme(theme);
+            
+            // Save the theme to storage so sidebar gets notified
+            setCustomTheme(theme, (err) => {
+                if (err) {
+                    LogDev('Error saving theme: ' + err, 'error');
+                } else {
+                    LogDev('Theme saved successfully: ' + presetName, 'system');
+                }
+            });
+            
+            LogDev('Theme applied silently: ' + presetName, 'system');
+        } catch (err) {
+            LogDev('Error applying theme silently: ' + err, 'error');
+        }
+        
+        LogDev('Preset form fields loaded: ' + presetName, 'system');
+    } catch (err) {
+        LogDev('Error loading preset theme: ' + err, 'error');
+    }
+}
+
 async function loadCustomThemeSettings() {
     try {
         // getCustomTheme, getPresetThemes, createThemeFromPreset are now statically imported
@@ -1585,6 +1715,24 @@ function setupCustomThemeEventListeners() {
         }
     });
     
+    // Color inputs - apply theme when changed
+    const colorInputs = [
+        'primaryColor', 'backgroundColor', 'surfaceColor', 'textColor', 'textSecondaryColor',
+        'borderColor', 'successColor', 'warningColor', 'errorColor', 'infoColor', 'highlightColor',
+        'buttonBackgroundColor', 'buttonTextColor', 'buttonBorderColor'
+    ];
+    
+    colorInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('input', () => {
+                // Apply theme immediately when color changes
+                LogDev('Color input changed: ' + inputId + ' = ' + input.value, 'system');
+                applyCustomThemeFunction();
+            });
+        }
+    });
+    
     // Font size sliders
     document.getElementById('fontSize').addEventListener('input', (e) => {
         const value = e.target.value + 'px';
@@ -1706,15 +1854,18 @@ async function applyCustomThemeFunction() {
             }
         };
         
-        // applyCustomTheme is now statically imported
-        applyTheme(theme);
-        LogDev('Custom theme applied successfully', 'system');
-        showModal('Success', 'Theme applied! Reloading page...', 'success');
+        // Apply the theme silently (no modal, no reload)
+        LogDev('Applying custom theme to popup', 'system');
+        applyCustomTheme(theme);
         
-        // Reload the page after a short delay
-        setTimeout(() => {
-            window.location.reload();
-        }, 1500);
+        // Save the theme to storage so sidebar gets notified
+        setCustomTheme(theme, (err) => {
+            if (err) {
+                LogDev('Error saving custom theme: ' + err, 'error');
+            } else {
+                LogDev('Custom theme applied and saved successfully', 'system');
+            }
+        });
     } catch (err) {
         LogDev('Error applying custom theme: ' + err, 'error');
         showModal('Error', 'Failed to apply theme', 'error');
@@ -1789,8 +1940,12 @@ async function loadPresets() {
                 const availablePresets = ['Default', ...builtInPresets.map(p => p.name), ...customPresets.map(p => p.name)];
                 if (availablePresets.includes(lastSelectedPreset)) {
                     presetSelect.value = lastSelectedPreset;
+                    // Apply the theme when loading the saved preset
+                    applyPresetTheme(lastSelectedPreset, presets);
                 } else {
                     presetSelect.value = 'Default';
+                    // Apply Default theme
+                    applyPresetTheme('Default', presets);
                 }
             });
         });

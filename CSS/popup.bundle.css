@@ -10,6 +10,32 @@
     padding: 0;
 }
 
+/* Custom theme overrides for popup */
+body.popup.custom-theme {
+    background: var(--custom-background, var(--primary-bg, #fff));
+    color: var(--custom-text, var(--primary-fg, #222));
+    font-size: var(--custom-fontSize, 16px);
+    font-family: var(--custom-fontFamily, inherit);
+    line-height: var(--custom-lineHeight, 1.4);
+    
+    /* Override old theme variables with custom theme variables */
+    --primary-bg: var(--custom-background);
+    --primary-fg: var(--custom-text);
+    --secondary-bg: var(--custom-surface);
+    --secondary-fg: var(--custom-textSecondary);
+    --accent: var(--custom-primary);
+    --button-bg: var(--custom-buttonBackgroundColor);
+    --button-fg: var(--custom-buttonTextColor);
+    --button-hover-bg: var(--custom-primary);
+    --button-hover-fg: var(--custom-buttonTextColor);
+    --input-bg: var(--custom-surface);
+    --input-fg: var(--custom-text);
+    --border: var(--custom-border);
+    --highlight-bg: var(--custom-highlight);
+    --highlight-fg: var(--custom-buttonTextColor);
+    --highlight-border: var(--custom-primary);
+}
+
 /* === Popup Header === */
 .popup-header
 {
@@ -23,6 +49,13 @@
     border-radius: 0 0 8px 8px;
 }
 
+/* Custom theme overrides for popup header */
+body.popup.custom-theme .popup-header {
+    background: var(--custom-background, var(--primary-bg, #fff));
+    color: var(--custom-text, var(--primary-fg, #222));
+    border-bottom: 1px solid var(--custom-border, var(--border, #ccc));
+}
+
     .popup-header h2
     {
         margin: 0 0 8px 0;
@@ -31,6 +64,158 @@
         color: var(--accent, #FFD600);
         text-align: center;
     }
+
+/* Custom theme overrides for popup title */
+body.popup.custom-theme .popup-header h2 {
+    color: var(--custom-primary, var(--accent, #FFD600));
+}
+
+/* Custom theme overrides for popup buttons */
+body.popup.custom-theme .podawful-btn,
+body.popup.custom-theme .popup-menu-btn,
+body.popup.custom-theme .sidebar-action-btn,
+body.popup.custom-theme .popup-menu-content button,
+body.popup.custom-theme .button,
+body.popup.custom-theme .note-action-btn,
+body.popup.custom-theme .note-edit-btn,
+body.popup.custom-theme .note-delete-btn,
+body.popup.custom-theme .note-tag-btn,
+body.popup.custom-theme .note-copy-btn,
+body.popup.custom-theme .group-action-btn,
+body.popup.custom-theme .group-edit-btn,
+body.popup.custom-theme .group-delete-btn,
+body.popup.custom-theme .add-timestamp-btn {
+    background: var(--custom-buttonBackgroundColor, var(--accent, #FFD600));
+    color: var(--custom-buttonTextColor, var(--sidebar-bg, #1a1a1a));
+    border: 2px solid var(--custom-buttonBorderColor, var(--accent, #FFD600));
+    border-radius: var(--custom-buttonBorderRadius, 6px);
+    font-size: var(--custom-buttonFontSize, 14px);
+    height: var(--custom-buttonHeight, 40px);
+    padding: var(--custom-buttonPadding, 8px 16px);
+}
+
+body.popup.custom-theme .podawful-btn:hover,
+body.popup.custom-theme .popup-menu-btn:hover,
+body.popup.custom-theme .sidebar-action-btn:hover,
+body.popup.custom-theme .popup-menu-content button:hover,
+body.popup.custom-theme .button:hover,
+body.popup.custom-theme .note-action-btn:hover,
+body.popup.custom-theme .note-edit-btn:hover,
+body.popup.custom-theme .note-delete-btn:hover,
+body.popup.custom-theme .note-tag-btn:hover,
+body.popup.custom-theme .note-copy-btn:hover,
+body.popup.custom-theme .group-action-btn:hover,
+body.popup.custom-theme .group-edit-btn:hover,
+body.popup.custom-theme .group-delete-btn:hover,
+body.popup.custom-theme .add-timestamp-btn:hover {
+    background: var(--custom-primary, var(--accent-hover, #FFE066));
+    color: var(--custom-buttonTextColor, var(--sidebar-bg, #1a1a1a));
+    border-color: var(--custom-primary, var(--accent-hover, #FFE066));
+}
+
+body.popup.custom-theme .podawful-btn:focus,
+body.popup.custom-theme .popup-menu-btn:focus,
+body.popup.custom-theme .sidebar-action-btn:focus,
+body.popup.custom-theme .popup-menu-content button:focus,
+body.popup.custom-theme .button:focus,
+body.popup.custom-theme .note-action-btn:focus,
+body.popup.custom-theme .note-edit-btn:focus,
+body.popup.custom-theme .note-delete-btn:focus,
+body.popup.custom-theme .note-tag-btn:focus,
+body.popup.custom-theme .note-copy-btn:focus,
+body.popup.custom-theme .group-action-btn:focus,
+body.popup.custom-theme .group-edit-btn:focus,
+body.popup.custom-theme .group-delete-btn:focus,
+body.popup.custom-theme .add-timestamp-btn:focus {
+    outline: 2px solid var(--custom-primary, var(--accent, #FFD600));
+    outline-offset: 2px;
+}
+
+/* Custom theme overrides for popup menu title */
+body.popup.custom-theme .popup-menu-title {
+    color: var(--custom-primary, var(--accent, #FFD600));
+    background: var(--custom-background, var(--primary-bg, #fff));
+    border-bottom: 1px solid var(--custom-border, var(--border, #ccc));
+}
+
+/* Custom theme overrides for popup footer */
+body.popup.custom-theme .popup-footer {
+    background: var(--custom-background, var(--primary-bg, #fff));
+    color: var(--custom-text, var(--primary-fg, #222));
+    border-top: 1px solid var(--custom-border, var(--border, #ccc));
+}
+
+body.popup.custom-theme .version-display {
+    color: var(--custom-primary, var(--accent, #FFD600));
+}
+
+/* Custom theme overrides for popup modal content */
+body.popup.custom-theme .popup-modal__content {
+    background: var(--custom-background, var(--primary-bg, #fff));
+    border: 1px solid var(--custom-border, var(--border, #ccc));
+    color: var(--custom-text, var(--primary-fg, #222));
+}
+
+body.popup.custom-theme .popup-modal__content h3 {
+    color: var(--custom-text, var(--primary-fg, #222));
+}
+
+body.popup.custom-theme .popup-modal__content p,
+body.popup.custom-theme .popup-modal__content li {
+    color: var(--custom-text, var(--primary-fg, #222));
+}
+
+/* Custom theme overrides for update badge */
+body.popup.custom-theme .update-badge {
+    background: var(--custom-primary, var(--accent, #FFD600));
+    color: var(--custom-buttonTextColor, var(--sidebar-bg, #1a1a1a));
+}
+
+body.popup.custom-theme .update-badge:hover {
+    background: var(--custom-primary, var(--accent-hover, #FFE066));
+}
+
+/* Apply to Extension Menus overrides */
+body.popup.custom-theme.apply-to-menus .podawful-btn,
+body.popup.custom-theme.apply-to-menus .popup-menu-btn,
+body.popup.custom-theme.apply-to-menus .sidebar-action-btn,
+body.popup.custom-theme.apply-to-menus .popup-menu-content button,
+body.popup.custom-theme.apply-to-menus .button,
+body.popup.custom-theme.apply-to-menus .note-action-btn,
+body.popup.custom-theme.apply-to-menus .note-edit-btn,
+body.popup.custom-theme.apply-to-menus .note-delete-btn,
+body.popup.custom-theme.apply-to-menus .note-tag-btn,
+body.popup.custom-theme.apply-to-menus .note-copy-btn,
+body.popup.custom-theme.apply-to-menus .group-action-btn,
+body.popup.custom-theme.apply-to-menus .group-edit-btn,
+body.popup.custom-theme.apply-to-menus .group-delete-btn,
+body.popup.custom-theme.apply-to-menus .add-timestamp-btn {
+    background-color: var(--custom-buttonBackgroundColor) !important;
+    color: var(--custom-buttonTextColor) !important;
+    border-color: var(--custom-buttonBorderColor) !important;
+    border-radius: var(--custom-buttonBorderRadius) !important;
+    font-size: var(--custom-buttonFontSize) !important;
+    height: var(--custom-buttonHeight) !important;
+    padding: var(--custom-buttonPadding) !important;
+}
+
+body.popup.custom-theme.apply-to-menus .podawful-btn:hover,
+body.popup.custom-theme.apply-to-menus .popup-menu-btn:hover,
+body.popup.custom-theme.apply-to-menus .sidebar-action-btn:hover,
+body.popup.custom-theme.apply-to-menus .popup-menu-content button:hover,
+body.popup.custom-theme.apply-to-menus .button:hover,
+body.popup.custom-theme.apply-to-menus .note-action-btn:hover,
+body.popup.custom-theme.apply-to-menus .note-edit-btn:hover,
+body.popup.custom-theme.apply-to-menus .note-delete-btn:hover,
+body.popup.custom-theme.apply-to-menus .note-tag-btn:hover,
+body.popup.custom-theme.apply-to-menus .note-copy-btn:hover,
+body.popup.custom-theme.apply-to-menus .group-action-btn:hover,
+body.popup.custom-theme.apply-to-menus .group-edit-btn:hover,
+body.popup.custom-theme.apply-to-menus .group-delete-btn:hover,
+body.popup.custom-theme.apply-to-menus .add-timestamp-btn:hover {
+    background-color: var(--custom-primary) !important;
+    opacity: 0.8;
+}
 
 .popup-logo
 {
@@ -50,9 +235,9 @@
 
 .podawful-btn
 {
-    background: var(--accent, #FFD600);
-    color: var(--sidebar-bg, #1a1a1a);
-    border: none;
+    background: var(--custom-buttonBackgroundColor, var(--accent, #FFD600));
+    color: var(--custom-buttonTextColor, var(--sidebar-bg, #1a1a1a));
+    border: 2px solid var(--custom-buttonBorderColor, var(--accent, #FFD600));
     border-radius: 6px;
     padding: 12px 16px;
     font-size: 1em;
@@ -81,7 +266,7 @@
 
 .podawful-btn:focus
 {
-    outline: 2px solid var(--accent, #FFD600);
+    outline: 2px solid var(--custom-primary, var(--accent, #FFD600));
     outline-offset: 2px;
 }
 
@@ -90,7 +275,7 @@
 {
     font-size: 1.2em;
     font-weight: bold;
-    color: var(--accent, #FFD600);
+    color: var(--custom-primary, var(--accent, #FFD600));
     text-align: center;
     padding: 16px 20px 8px 20px;
     border-bottom: 1px solid var(--border, #ccc);
@@ -115,7 +300,7 @@
 }
 
 .version-display {
-    color: var(--accent, #FFD600);
+    color: var(--custom-primary, var(--accent, #FFD600));
     font-weight: bold;
     margin-bottom: 4px;
     font-size: 0.85em;
@@ -186,8 +371,8 @@
 }
 
 .update-badge {
-    background: var(--accent, #FFD600);
-    color: var(--sidebar-bg, #1a1a1a);
+    background: var(--custom-primary, var(--accent, #FFD600));
+    color: var(--custom-buttonTextColor, var(--sidebar-bg, #1a1a1a));
     padding: 4px 8px;
     border-radius: 12px;
     font-size: 10px;

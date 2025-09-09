@@ -442,3 +442,112 @@ body, .sidebar-container, body.popup
     box-shadow: 0 0 8px 2px var(--highlight-border, #FFD600);
     transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
+
+/* === CUSTOM THEME STYLES === */
+body.custom-theme,
+html.custom-theme {
+    --custom-primary: #FFD600;
+    --custom-background: #1a1a1a;
+    --custom-surface: #222222;
+    --custom-text: #e0e0e0;
+    --custom-textSecondary: #b0b0b0;
+    --custom-border: #333333;
+    --custom-success: #4CAF50;
+    --custom-warning: #FF9800;
+    --custom-error: #F44336;
+    --custom-info: #2196F3;
+    --custom-highlight: #FFD600;
+    
+    --custom-fontSize: 14px;
+    --custom-fontSizeSmall: 12px;
+    --custom-fontSizeLarge: 16px;
+    --custom-fontWeight: 400;
+    --custom-fontWeightBold: 600;
+    --custom-lineHeight: 1.4;
+    --custom-fontFamily: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    
+    --custom-padding: 12px;
+    --custom-margin: 8px;
+    --custom-borderRadius: 6px;
+    --custom-gap: 8px;
+    
+    --custom-buttonHeight: 40px;
+    --custom-buttonPadding: 8px 16px;
+    --custom-buttonFontSize: 14px;
+    --custom-buttonBorderRadius: 6px;
+    --custom-buttonBackgroundColor: #FFD600;
+    --custom-buttonTextColor: #000000;
+    --custom-buttonBorderColor: #FFD600;
+    
+    /* Override theme variables with custom values */
+    --primary-bg: var(--custom-background);
+    --primary-fg: var(--custom-text);
+    --secondary-bg: var(--custom-surface);
+    --secondary-fg: var(--custom-textSecondary);
+    --accent: var(--custom-primary);
+    --button-bg: var(--custom-buttonBackgroundColor);
+    --button-fg: var(--custom-buttonTextColor);
+    --button-hover-bg: var(--custom-primary);
+    --button-hover-fg: var(--custom-buttonTextColor);
+    --input-bg: var(--custom-surface);
+    --input-fg: var(--custom-text);
+    --border: var(--custom-border);
+    --highlight-bg: var(--custom-highlight);
+    --highlight-fg: var(--custom-buttonTextColor);
+    --highlight-border: var(--custom-primary);
+}
+
+/* Custom theme overrides for popup */
+body.popup.custom-theme {
+    background: var(--custom-background);
+    color: var(--custom-text);
+    font-size: var(--custom-fontSize);
+    font-family: var(--custom-fontFamily);
+    line-height: var(--custom-lineHeight);
+}
+
+/* Custom theme overrides for popup buttons */
+body.popup.custom-theme .popup-menu-content button,
+body.popup.custom-theme .popup-menu-btn,
+body.popup.custom-theme .podawful-btn,
+body.popup.custom-theme .sidebar-action-btn {
+    background: var(--custom-buttonBackgroundColor);
+    color: var(--custom-buttonTextColor);
+    border: 2px solid var(--custom-buttonBorderColor);
+    border-radius: var(--custom-buttonBorderRadius);
+    font-size: var(--custom-buttonFontSize);
+    height: var(--custom-buttonHeight);
+    padding: var(--custom-buttonPadding);
+}
+
+body.popup.custom-theme .popup-menu-content button:hover,
+body.popup.custom-theme .popup-menu-btn:hover,
+body.popup.custom-theme .podawful-btn:hover,
+body.popup.custom-theme .sidebar-action-btn:hover {
+    background: var(--custom-primary);
+    color: var(--custom-buttonTextColor);
+    border-color: var(--custom-primary);
+}
+
+/* Custom theme overrides for popup inputs */
+body.popup.custom-theme input[type="text"],
+body.popup.custom-theme input[type="number"],
+body.popup.custom-theme input[type="search"],
+body.popup.custom-theme input[type="color"],
+body.popup.custom-theme select {
+    background: var(--custom-surface);
+    color: var(--custom-text);
+    border: 1px solid var(--custom-border);
+    border-radius: var(--custom-borderRadius);
+}
+
+/* Custom theme overrides for popup modals */
+body.popup.custom-theme .podawful-modal-box {
+    background: var(--custom-background);
+    color: var(--custom-text);
+    border: 2px solid var(--custom-primary);
+}
+
+body.popup.custom-theme .podawful-modal-box h3 {
+    color: var(--custom-primary);
+}

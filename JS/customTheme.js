@@ -163,13 +163,53 @@ export function applyCustomTheme(theme) {
     document.body.classList.add('custom-theme');
     document.documentElement.classList.add('custom-theme');
     
+    // Add custom theme class to sidebar if it exists
+    const sidebar = document.getElementById('podawful-sidebar');
+    if (sidebar) {
+        sidebar.classList.add('custom-theme');
+        LogDev('Added custom-theme class to sidebar', 'system');
+        
+        // Also set CSS variables directly on the sidebar element
+        Object.entries(mergedTheme.colors).forEach(([key, value]) => {
+            if (value && typeof value === 'string' && value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                sidebar.style.setProperty(`--custom-${key}`, value);
+                LogDev(`Set sidebar color ${key}: ${value}`, 'system');
+            }
+        });
+        
+        // Set other CSS variables on sidebar
+        Object.entries(mergedTheme.typography).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                sidebar.style.setProperty(`--custom-${key}`, value);
+            }
+        });
+        
+        Object.entries(mergedTheme.spacing).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                sidebar.style.setProperty(`--custom-${key}`, value);
+            }
+        });
+        
+        Object.entries(mergedTheme.buttons).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                sidebar.style.setProperty(`--custom-${key}`, value);
+            }
+        });
+    }
+    
     // Add apply-to-menus class if enabled
     if (mergedTheme.buttons.applyToMenus) {
         document.body.classList.add('apply-to-menus');
         document.documentElement.classList.add('apply-to-menus');
+        if (sidebar) {
+            sidebar.classList.add('apply-to-menus');
+        }
     } else {
         document.body.classList.remove('apply-to-menus');
         document.documentElement.classList.remove('apply-to-menus');
+        if (sidebar) {
+            sidebar.classList.remove('apply-to-menus');
+        }
     }
     
     LogDev('Custom theme applied successfully', 'render');

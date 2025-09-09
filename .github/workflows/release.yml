@@ -74,15 +74,9 @@ jobs:
           ## Goonopticon ${{ steps.version.outputs.tag }}
           
           ### What's New
-          - Fixed webpack bundling errors that caused "is not a function" runtime errors
-          - Fixed "Cb is not a function" errors in LogDev callback handling
-          - Fixed "D is not a function", "n is not a function", "o is not a function", and "r is not a function" errors
-          - Disabled webpack minification to prevent problematic variable binding patterns
-          - Added proper type checking for callback functions to prevent runtime errors
-          - Enhanced extension stability and reliability
-          - Fixed GitHub Actions workflow file structure for proper extension packaging
-          - Improved release process to ensure correct file organization
-          - Enhanced extension installation reliability
+          - **Theme System Improvements (Partial)**: Added custom theme variable overrides for sidebar buttons, fixed theme submenu loading, added CSS overrides for hardcoded colors
+
+          **Note**: Some theme issues remain and will be addressed in future updates.
           
           ### Installation
           1. Download the `goonopticon-extension.zip` file

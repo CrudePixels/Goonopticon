@@ -1,3 +1,11 @@
+Version 2.0.6 (2025-01-08)
+- Partial theme system improvements
+- Added custom theme variable overrides for sidebar buttons
+- Fixed theme submenu to load current custom theme values
+- Added CSS overrides for hardcoded #FFD600 values in popup
+- Improved theme persistence and form loading
+- Note: Some theme issues remain and will be addressed in future updates
+
 Version 2.0.5 (2025-01-08)
 - Fixed webpack bundling errors that caused "is not a function" runtime errors
 - Fixed "Cb is not a function" errors in LogDev callback handling

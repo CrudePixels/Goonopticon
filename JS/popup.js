@@ -1,28 +1,50 @@
 ﻿import { applyTheme } from './theme.js';
+import { applyCustomTheme, getCustomTheme } from './customTheme.js';
 import { renderMainMenu } from './popup-menus.js';
 import * as browser from 'webextension-polyfill';
 
 // Apply the theme and render the menu after DOM is ready
 document.addEventListener("DOMContentLoaded", () =>
 {
-    // Always apply custom theme
-    applyTheme("custom");
-
-    // Only render the menu after the theme is applied
-    renderMainMenu();
-    
-    // Load version and check for updates
-    loadVersion();
-    checkForUpdates();
+    // Load and apply custom theme if it exists
+    getCustomTheme((err, customTheme) => {
+        if (err) {
+            console.error('Error loading custom theme:', err);
+            // Fallback to default theme
+            applyTheme("default");
+        } else if (customTheme) {
+            console.log('Loading custom theme on popup init');
+            applyCustomTheme(customTheme);
+        } else {
+            // No custom theme, use default
+            applyTheme("default");
+        }
+        
+        // Only render the menu after the theme is applied
+        renderMainMenu();
+        
+        // Load version and check for updates
+        loadVersion();
+        checkForUpdates();
+    });
 });
 
 // Listen for theme changes in real-time (if changed elsewhere)
 browser.storage.onChanged.addListener((changes, area) =>
 {
-    if (area === "local" && (changes["PodAwful::CustomTheme"] || changes["PodAwful::Theme"]))
+    if (area === "local" && changes["PodAwful::CustomTheme"])
     {
-        // Always apply custom theme
-        applyTheme("custom");
+        // Apply custom theme changes
+        const customTheme = changes["PodAwful::CustomTheme"].newValue;
+        if (customTheme) {
+            console.log('Custom theme changed, applying to popup');
+            applyCustomTheme(customTheme);
+        }
+    } else if (area === "local" && changes["PodAwful::Theme"])
+    {
+        // Apply regular theme changes
+        const theme = changes["PodAwful::Theme"].newValue || "default";
+        applyTheme(theme);
     }
 });
 
