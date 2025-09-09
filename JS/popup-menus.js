@@ -1,6 +1,18 @@
 import { LogDev } from './log.js';
 import { applyTheme } from './theme.js';
 import { getNotes, setNotes } from './sidebar/storage.js';
+import { 
+    saveCustomPreset, 
+    deletePreset, 
+    setCustomTheme, 
+    resetCustomTheme, 
+    restoreDefaultPresets,
+    getCustomTheme,
+    getPresetThemes,
+    createThemeFromPreset,
+    getAllPresets,
+    applyCustomTheme
+} from './customTheme.js';
 import browser from 'webextension-polyfill';
 
 // Simple modal function for popup context
@@ -197,7 +209,7 @@ function showInputModal(title, message, placeholder = '', callback) {
 // Save theme as new preset
 async function saveAsCustomTheme() {
     try {
-        const { saveCustomPreset } = await import('./customTheme.js');
+        // saveCustomPreset is now statically imported
         
         // Get current theme from form
         const theme = getCurrentThemeFromForm();
@@ -241,7 +253,7 @@ async function deleteSelectedPreset() {
         'warning',
         async () => {
             try {
-                const { deletePreset } = await import('./customTheme.js');
+                // deletePreset is now statically imported
                 deletePreset(selectedPreset, (err) => {
                     if (err) {
                         LogDev('Error deleting preset: ' + err, 'error');
@@ -263,7 +275,7 @@ async function deleteSelectedPreset() {
 // Save and apply custom theme
 async function saveAndApplyCustomTheme() {
     try {
-        const { setCustomTheme, applyCustomTheme: applyTheme } = await import('./customTheme.js');
+        // setCustomTheme and applyCustomTheme are now statically imported
         
         const theme = getCurrentThemeFromForm();
         
@@ -287,9 +299,9 @@ async function saveAndApplyCustomTheme() {
 }
 
 // Reset custom theme
-async function resetCustomTheme() {
+async function resetCustomThemeFunction() {
     try {
-        const { resetCustomTheme } = await import('./customTheme.js');
+        // resetCustomTheme is now statically imported
         
         resetCustomTheme((err) => {
             if (err) {
@@ -547,20 +559,20 @@ function showHelpAboutModal() {
     modal.innerHTML = `
         <div class="popup-modal__content">
             <button class="popup-modal__close" aria-label="Close Help/About">✕</button>
-            <h2>About Goonopticon</h2>
-            <p><strong>Goonopticon</strong> is a powerful browser extension for timestamping YouTube videos with advanced group, tag, and note management capabilities. Built for PodAwful.</p>
-            
+            <h2>Help and About</h2>
+            <p><strong>Goonopticon</strong> is a big and unstoppable browser extension for timestamping YouTube video.
             <h3>Key Features</h3>
             <ul>
-                <li>📝 Timestamped notes with rich text and metadata</li>
-                <li>🏷️ Advanced tag system with search and filtering</li>
-                <li>📁 Group organization for better content management</li>
-                <li>📊 Bulk actions for efficient note management</li>
+                <li>📝 Timestamped notes</li>
+                <li>🏷️ Tag system with search and filtering</li>
+                <li>📁 Group organization</li>
                 <li>📤 Import/export in JSON, CSV, and Markdown formats</li>
                 <li>🎨 Multiple themes (Default, Light, Dark, Compact)</li>
-                <li>⌨️ Customizable hotkeys for quick actions</li>
-                <li>🌐 Cross-browser support (Chrome, Firefox, Edge)</li>
+                <li>🌐 Cross-browser support</li>
                 <li>♿ Full accessibility support with ARIA and keyboard navigation</li>
+                <li>🔄 Automatic updates with GitHub Actions</li>
+                <li>🔗 URL normalization for consistent note storage</li>
+                <li>📢 Update notifications with direct release links</li>
             </ul>
             
             <h3>How to Use</h3>
@@ -570,19 +582,9 @@ function showHelpAboutModal() {
                 <li>Use "Show Sidebar" to toggle the timestamping interface</li>
                 <li>Add notes at specific timestamps using the video player</li>
                 <li>Organize content with groups and tags for easy retrieval</li>
-                <li>Use bulk actions for efficient management of multiple notes</li>
                 <li>Export your notes in various formats for backup or sharing</li>
             </ol>
             
-            <h3>Advanced Features</h3>
-            <ul>
-                <li><strong>Tag Manager:</strong> Search, edit, and manage all tags in one place</li>
-                <li><strong>Bulk Actions:</strong> Select multiple notes/groups for deletion, moving, or tagging</li>
-                <li><strong>Search & Filter:</strong> Find notes quickly with real-time search and tag filtering</li>
-                <li><strong>Theme System:</strong> Choose from multiple visual themes to match your preferences</li>
-                <li><strong>Dev Tools:</strong> Access detailed logging and debugging information</li>
-                <li><strong>Error Recovery:</strong> Robust error handling with user-friendly notifications</li>
-            </ul>
             
             <h3>Credits</h3>
             <p>Created by Henchman CrudePixels<br>
@@ -752,7 +754,7 @@ function renderSettings()
         <label><input type="checkbox" id="toggleChangelogBtn" /> Show Changelog Button</label><br>
         <label><input type="checkbox" id="toggleBulkActions" /> Enable Bulk Actions</label><br>
         <label><input type="checkbox" id="toggleThemeSettings" /> Theme Settings</label><br>
-        <button class="podawful-btn" id="restoreDefaultPresets" style="margin-top: 10px;">Restore Default Presets</button><br>
+        <button class="podawful-btn" id="checkForUpdates" style="margin-top: 10px;">Check for Updates</button><br>
         <button class="podawful-btn" id="backBtn">Back</button>
     `;
 
@@ -829,23 +831,51 @@ function renderSettings()
         });
     }
 
-    document.getElementById("restoreDefaultPresets")?.addEventListener("click", async () =>
+
+    document.getElementById("checkForUpdates")?.addEventListener("click", async () =>
     {
-        LogDev("Restore Default Presets button clicked", "interaction");
+        LogDev("Check for Updates button clicked", "interaction");
+        
+        // Show loading state
+        const updateBtn = document.getElementById("checkForUpdates");
+        const originalText = updateBtn.textContent;
+        updateBtn.textContent = "Checking...";
+        updateBtn.disabled = true;
+        
         try {
-            const { restoreDefaultPresets } = await import('./customTheme.js');
-            restoreDefaultPresets((err) => {
-                if (err) {
-                    LogDev('Error restoring default presets: ' + err, 'error');
-                    showModal('Error', 'Failed to restore default presets', 'error');
+            // Send message to background script to check for updates
+            const response = await browser.runtime.sendMessage({ action: 'checkForUpdates' });
+            
+            if (response && response.success) {
+                // Check if update is available
+                const updateInfo = await browser.storage.local.get(['updateAvailable', 'latestVersion', 'currentVersion']);
+                
+                if (updateInfo.updateAvailable) {
+                    const currentVersion = updateInfo.currentVersion || browser.runtime.getManifest().version;
+                    showModal(
+                        'Update Available!', 
+                        `Version ${updateInfo.latestVersion} is available. You are currently on version ${currentVersion}. Check the extension popup for update details.`, 
+                        'success'
+                    );
                 } else {
-                    LogDev('Default presets restored successfully', 'system');
-                    showModal('Success', 'Default presets restored! All custom presets have been removed.', 'success');
+                    // Get current version from manifest if not in storage
+                    const currentVersion = updateInfo.currentVersion || browser.runtime.getManifest().version;
+                    showModal(
+                        'Up to Date', 
+                        `You are running the latest version (${currentVersion}).`, 
+                        'info'
+                    );
                 }
-            });
-        } catch (err) {
-            LogDev('Error importing restoreDefaultPresets: ' + err, 'error');
-            showModal('Error', 'Failed to restore default presets', 'error');
+            } else {
+                showModal('Update Check Failed', 'Could not check for updates. Please try again later.', 'error');
+            }
+        } catch (error) {
+            LogDev('Error checking for updates: ' + error.message, 'error');
+            showModal('Update Check Failed', 'An error occurred while checking for updates. Please try again later.', 'error');
+        } finally {
+            // Restore button state
+            updateBtn.textContent = originalText;
+            updateBtn.disabled = false;
         }
     });
 
@@ -875,7 +905,7 @@ function renderThemeSettings()
                 <label for="presetSelect">Preset:</label>
                 <div style="display: flex; gap: 4px; margin-top: 4px;">
                     <select id="presetSelect" style="flex: 1;">
-                        <option value="">Choose a preset...</option>
+                        <option value="Default">Default</option>
                     </select>
                     <button id="deletePreset" class="podawful-btn" style="padding: 4px 8px; font-size: 12px;" title="Delete selected preset">🗑️</button>
                 </div>
@@ -1058,6 +1088,7 @@ function renderThemeSettings()
                 <button id="resetTheme" class="podawful-btn" style="flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; background: #d32f2f; color: #fff; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">Reset</button>
             </div>
         </div>
+        <button class="podawful-btn" id="restoreDefaultPresets" style="margin-top: 10px;">Restore Default Presets</button>
         <button class="podawful-btn" id="backBtn">Back</button>
     `;
 
@@ -1102,6 +1133,26 @@ function renderThemeSettings()
             e.preventDefault();
             const backBtn = MenuContent.querySelector('#backBtn');
             if (backBtn) backBtn.click();
+        }
+    });
+
+    document.getElementById("restoreDefaultPresets")?.addEventListener("click", async () =>
+    {
+        LogDev("Restore Default Presets button clicked", "interaction");
+        try {
+            // restoreDefaultPresets is now statically imported
+            restoreDefaultPresets((err) => {
+                if (err) {
+                    LogDev('Error restoring default presets: ' + err, 'error');
+                    showModal('Error', 'Failed to restore default presets', 'error');
+                } else {
+                    LogDev('Default presets restored successfully', 'system');
+                    showModal('Success', 'Default presets restored! All custom presets have been removed.', 'success');
+                }
+            });
+        } catch (err) {
+            LogDev('Error importing restoreDefaultPresets: ' + err, 'error');
+            showModal('Error', 'Failed to restore default presets', 'error');
         }
     });
 
@@ -1198,7 +1249,7 @@ function renderDevLog()
             <option value="performance">Performance</option>
             <option value="miscellaneous">Miscellaneous</option>
         </select>
-        <pre style="max-height:200px;overflow:auto;" id="devlogContent">Loading...</pre>
+        <pre style="max-height:200px;overflow:auto;overflow-x:auto;white-space:pre-wrap;word-wrap:break-word;" id="devlogContent">Loading...</pre>
         <button class="podawful-btn" id="clearDevLogPanel">Clear Dev Log</button>
         <button class="podawful-btn" id="exportDevLog">Export Dev Log</button>
         <button class="podawful-btn" id="deleteAllDevLogs">Delete all Dev Logs</button>
@@ -1348,9 +1399,34 @@ function isValidAllNotesObject(obj) {
 }
 
 // --- Custom Theme Functions ---
+
+// Save the last selected preset
+function saveSelectedPreset(presetName) {
+    try {
+        browser.storage.local.set({ 'PodAwful::SelectedPreset': presetName });
+        LogDev('Saved selected preset: ' + presetName, 'data');
+    } catch (err) {
+        LogDev('Error saving selected preset: ' + err, 'error');
+    }
+}
+
+// Load the last selected preset
+function loadSelectedPreset(callback) {
+    try {
+        browser.storage.local.get(['PodAwful::SelectedPreset']).then((result) => {
+            const selectedPreset = result['PodAwful::SelectedPreset'] || 'Default';
+            LogDev('Loaded selected preset: ' + selectedPreset, 'data');
+            callback(selectedPreset);
+        });
+    } catch (err) {
+        LogDev('Error loading selected preset: ' + err, 'error');
+        callback('Default');
+    }
+}
+
 async function loadCustomThemeSettings() {
     try {
-        const { getCustomTheme, getPresetThemes, createThemeFromPreset } = await import('./customTheme.js');
+        // getCustomTheme, getPresetThemes, createThemeFromPreset are now statically imported
         
         // Load current custom theme
         getCustomTheme((err, theme) => {
@@ -1438,8 +1514,11 @@ function setupCustomThemeEventListeners() {
     document.getElementById('presetSelect').addEventListener('change', async (e) => {
         if (!e.target.value) return;
         
+        // Save the selected preset
+        saveSelectedPreset(e.target.value);
+        
         try {
-            const { getAllPresets } = await import('./customTheme.js');
+            // getAllPresets is now statically imported
             getAllPresets((err, presets) => {
                 if (err) {
                     LogDev('Error loading presets: ' + err, 'error');
@@ -1499,7 +1578,7 @@ function setupCustomThemeEventListeners() {
                 document.getElementById('gapValue').textContent = selectedPreset.spacing.gap;
                 
                 // Apply the theme
-                applyCustomTheme();
+                applyCustomThemeFunction();
             });
         } catch (err) {
             LogDev('Error applying preset: ' + err, 'error');
@@ -1581,13 +1660,13 @@ function setupCustomThemeEventListeners() {
     // Action buttons
     document.getElementById('saveAsTheme').addEventListener('click', saveAsCustomTheme);
     document.getElementById('saveTheme').addEventListener('click', saveAndApplyCustomTheme);
-    document.getElementById('resetTheme').addEventListener('click', resetCustomTheme);
+    document.getElementById('resetTheme').addEventListener('click', resetCustomThemeFunction);
     document.getElementById('deletePreset').addEventListener('click', deleteSelectedPreset);
 }
 
-async function applyCustomTheme() {
+async function applyCustomThemeFunction() {
     try {
-        const { applyCustomTheme } = await import('./customTheme.js');
+        // applyCustomTheme is now statically imported
         
         const theme = {
             name: 'Custom',
@@ -1627,7 +1706,7 @@ async function applyCustomTheme() {
             }
         };
         
-        const { applyCustomTheme: applyTheme } = await import('./customTheme.js');
+        // applyCustomTheme is now statically imported
         applyTheme(theme);
         LogDev('Custom theme applied successfully', 'system');
         showModal('Success', 'Theme applied! Reloading page...', 'success');
@@ -1644,7 +1723,7 @@ async function applyCustomTheme() {
 
 async function saveCustomTheme() {
     try {
-        const { setCustomTheme } = await import('./customTheme.js');
+        // setCustomTheme is now statically imported
         
         const theme = getCurrentThemeFromForm();
         
@@ -1666,43 +1745,54 @@ async function saveCustomTheme() {
 // Load all presets (built-in + custom)
 async function loadPresets() {
     try {
-        const { getAllPresets } = await import('./customTheme.js');
-        getAllPresets((err, presets) => {
-            if (err) {
-                LogDev('Error loading presets: ' + err, 'error');
-                return;
-            }
-            
-            const presetSelect = document.getElementById('presetSelect');
-            if (!presetSelect) return;
-            
-            // Clear existing options except the first one
-            presetSelect.innerHTML = '<option value="">Choose a preset...</option>';
-            
-            // Add built-in presets
-            const builtInPresets = presets.filter(p => !p.isCustom);
-            builtInPresets.forEach(preset => {
-                const option = document.createElement('option');
-                option.value = preset.name;
-                option.textContent = preset.name;
-                presetSelect.appendChild(option);
-            });
-            
-            // Add custom presets with a separator
-            const customPresets = presets.filter(p => p.isCustom);
-            if (customPresets.length > 0) {
-                const separator = document.createElement('option');
-                separator.disabled = true;
-                separator.textContent = '--- Custom Presets ---';
-                presetSelect.appendChild(separator);
+        // Load the last selected preset first
+        loadSelectedPreset((lastSelectedPreset) => {
+            // getAllPresets is now statically imported
+            getAllPresets((err, presets) => {
+                if (err) {
+                    LogDev('Error loading presets: ' + err, 'error');
+                    return;
+                }
                 
-                customPresets.forEach(preset => {
+                const presetSelect = document.getElementById('presetSelect');
+                if (!presetSelect) return;
+                
+                // Clear existing options and set Default as selected
+                presetSelect.innerHTML = '<option value="Default">Default</option>';
+                
+                // Add built-in presets
+                const builtInPresets = presets.filter(p => !p.isCustom);
+                builtInPresets.forEach(preset => {
                     const option = document.createElement('option');
                     option.value = preset.name;
                     option.textContent = preset.name;
                     presetSelect.appendChild(option);
                 });
-            }
+                
+                // Add custom presets with a separator
+                const customPresets = presets.filter(p => p.isCustom);
+                if (customPresets.length > 0) {
+                    const separator = document.createElement('option');
+                    separator.disabled = true;
+                    separator.textContent = '--- Custom Presets ---';
+                    presetSelect.appendChild(separator);
+                    
+                    customPresets.forEach(preset => {
+                        const option = document.createElement('option');
+                        option.value = preset.name;
+                        option.textContent = preset.name;
+                        presetSelect.appendChild(option);
+                    });
+                }
+                
+                // Set the last selected preset, or Default if not found
+                const availablePresets = ['Default', ...builtInPresets.map(p => p.name), ...customPresets.map(p => p.name)];
+                if (availablePresets.includes(lastSelectedPreset)) {
+                    presetSelect.value = lastSelectedPreset;
+                } else {
+                    presetSelect.value = 'Default';
+                }
+            });
         });
     } catch (err) {
         LogDev('Error loading presets: ' + err, 'error');

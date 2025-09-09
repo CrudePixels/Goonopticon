@@ -1,6 +1,7 @@
 // Sidebar Body Component
 import { renderGroup } from './groupComponent.js';
 import { renderNote } from './noteComponent.js';
+import { setNotes, setGroups } from '../storage.js';
 import { LogDev } from '../../log.js';
 import * as browser from 'webextension-polyfill';
 
@@ -62,12 +63,10 @@ export function renderSidebarBody(props) {
                 let newGroups = allGroups.filter(g => !selectedGroupNames.has(String(g)));
                 newNotes = newNotes.filter(n => !selectedGroupNames.has(String(n.group)));
                 // Save
-                import('../storage.js').then(({ setNotes, setGroups }) => {
-                    setNotes(location.href, newNotes, () => {
-                        setGroups(newGroups, () => {
-                            clearBulkSelection();
-                            renderSidebar(container);
-                        });
+                setNotes(location.href, newNotes, () => {
+                    setGroups(newGroups, () => {
+                        clearBulkSelection();
+                        renderSidebar(container);
                     });
                 });
             };
@@ -89,11 +88,9 @@ export function renderSidebarBody(props) {
                 if (!targetGroup || !availableGroups.includes(targetGroup)) return;
                 // Move notes
                 let newNotes = notes.map(n => selectedNoteIds.has(n.id) ? { ...n, group: String(targetGroup) } : n);
-                import('../storage.js').then(({ setNotes }) => {
-                    setNotes(location.href, newNotes, () => {
-                        clearBulkSelection();
-                        renderSidebar(container);
-                    });
+                setNotes(location.href, newNotes, () => {
+                    clearBulkSelection();
+                    renderSidebar(container);
                 });
             };
             
@@ -113,11 +110,9 @@ export function renderSidebarBody(props) {
                 let newNotes = notes.map(n => selectedNoteIds.has(n.id)
                     ? { ...n, tags: Array.from(new Set([...(n.tags || []), tag.trim()])) }
                     : n);
-                import('../storage.js').then(({ setNotes }) => {
-                    setNotes(location.href, newNotes, () => {
-                        clearBulkSelection();
-                        renderSidebar(container);
-                    });
+                setNotes(location.href, newNotes, () => {
+                    clearBulkSelection();
+                    renderSidebar(container);
                 });
             };
             

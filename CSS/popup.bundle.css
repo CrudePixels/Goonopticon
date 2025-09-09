@@ -48,355 +48,110 @@
     padding: 20px;
 }
 
-.podawful-btn,
-button
+.podawful-btn
 {
-    background: var(--button-bg, #333);
-    color: var(--button-fg, #fff);
-    border: 1px solid var(--border, #ccc);
-    border-radius: 4px;
-    font-size: 1.1em;
-    font-weight: bold;
-    padding: 10px 18px;
-    min-width: 120px;
-    max-width: 100%;
-    text-align: center;
+    background: var(--accent, #FFD600);
+    color: var(--sidebar-bg, #1a1a1a);
+    border: none;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 1em;
+    font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    transition: background 0.2s, color 0.2s;
-    margin: 0;
-    white-space: nowrap;
-    display: inline-block;
+    transition: all 0.2s ease;
+    text-align: center;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-    .podawful-btn:hover,
-    button:hover,
-    .podawful-btn:active,
-    button:active,
-    .podawful-btn:focus,
-    button:focus
-    {
-        background: var(--button-hover-bg, #444);
-        color: var(--button-hover-fg, #FFD600);
-        outline: 2px solid var(--accent, #FFD600);
-        outline-offset: 2px;
-    }
+.podawful-btn:hover
+{
+    background: var(--accent-hover, #FFE066);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.podawful-btn:active
+{
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.podawful-btn:focus
+{
+    outline: 2px solid var(--accent, #FFD600);
+    outline-offset: 2px;
+}
+
+/* === Popup Menu === */
+.popup-menu-title
+{
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--accent, #FFD600);
+    text-align: center;
+    padding: 16px 20px 8px 20px;
+    border-bottom: 1px solid var(--border, #ccc);
+    background: var(--primary-bg, #fff);
+}
+
+.popup-menu-content
+{
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
 
 /* === Popup Footer === */
-.popup-footer
-{
-    padding: 20px;
+.popup-footer {
+    padding: 12px 20px;
+    text-align: center;
     background: var(--primary-bg, #fff);
     color: var(--primary-fg, #222);
     border-top: 1px solid var(--border, #ccc);
-    text-align: center;
-    border-radius: 8px 8px 0 0;
-    font-size: 13px;
+    font-size: 0.9em;
 }
 
-/* === Button Group === */
-.button-group
-{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
-    margin-bottom: 0;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* === Popup Content === */
-.popup-menu-content
-{
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    padding: 20px 18px;
-    display: block;
-    text-align: left;
-}
-
-    .popup-menu-content > div,
-    .popup-menu-content > label,
-    .popup-menu-content > .button-group
-    {
-        margin-bottom: 18px;
-    }
-
-    #changelogContent,
-    #devlogContent,
-    .popup-menu-content pre
-    {
-        width: 100%;
-        max-width: 100%;
-        max-height: 180px;
-        min-height: 60px;
-        overflow-x: auto;
-        overflow-y: auto;
-        background: transparent;
-        color: inherit;
-        font-size: 0.95em;
-        padding: 8px 0;
-        word-break: break-all;
-        margin-bottom: 16px;
-        border-radius: 4px;
-        box-sizing: border-box;
-        flex: 1 1 auto;
-    }
-
-/* === Misc === */
-#menuBack
-{
-    margin: 10px 0 0 0;
-    width: 100%;
-}
-
-/* Accessibility: focus outline for all buttons (already included above) */
-
-/* Removed unused .popup-btn class */#podawful-popup {
-    background: var(--sidebar-bg);
-    color: var(--sidebar-fg);
-    font-family: 'Segoe UI', Arial, sans-serif;
-    font-size: 16px;
-    min-width: 340px;
-    min-height: 420px;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-#podawful-popup .popup-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 24px 20px 16px 20px;
-    background: var(--sidebar-bg);
-    color: var(--sidebar-fg);
-    border-bottom: 1px solid var(--sidebar-border);
-    border-radius: 0 0 8px 8px;
-    text-align: center;
-}
-
-#podawful-popup .popup-header h2 {
-    margin: 0 0 8px 0;
-    font-size: 1.5em;
+.version-display {
+    color: var(--accent, #FFD600);
     font-weight: bold;
-    color: var(--accent);
-    text-align: center;
-}
-
-#podawful-popup .popup-logo {
-    width: 40px;
-    height: 40px;
-    margin: 8px 0;
-}
-
-#podawful-popup .popup-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 20px;
-}
-
-#podawful-popup button,
-#podawful-popup .podawful-btn {
-    background: var(--button-bg);
-    color: var(--button-fg);
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1em;
-    font-weight: bold;
-    padding: 10px 18px;
-    min-width: 120px;
-    max-width: 100%;
-    text-align: center;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    transition: background 0.2s, color 0.2s;
-    margin: 0;
-    white-space: nowrap;
-    display: inline-block;
-}
-
-#podawful-popup button:hover,
-#podawful-popup .podawful-btn:hover {
-    background: var(--button-hover-bg);
-    color: var(--button-hover-fg);
-}
-
-#podawful-popup .popup-footer {
-    padding: 20px 10px 10px 10px;
-    background: var(--sidebar-bg);
-    color: var(--accent);
-    border-top: 1px solid var(--sidebar-border);
-    text-align: center;
-    border-radius: 0 0 8px 8px;
-    font-size: 1em;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-#podawful-popup .button-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
-    margin-bottom: 0;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-#podawful-popup .popup-menu-content {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    padding: 20px 18px;
-    display: block;
-    text-align: left;
-}
-
-#podawful-popup .popup-menu-content > div,
-#podawful-popup .popup-menu-content > label,
-#podawful-popup .popup-menu-content > .button-group {
-    margin-bottom: 18px;
-}
-
-#podawful-popup #changelogContent,
-#podawful-popup #devlogContent,
-#podawful-popup .popup-menu-content pre {
-    width: 100%;
-    max-width: 100%;
-    max-height: 180px;
-    min-height: 60px;
-    overflow-x: auto;
-    overflow-y: auto;
-    background: transparent;
-    color: inherit;
-    font-size: 0.95em;
-    padding: 8px 0;
-    word-break: break-all;
-    margin-bottom: 16px;
-    border-radius: 4px;
-    box-sizing: border-box;
-    flex: 1 1 auto;
-}
-
-#podawful-popup input[type="text"],
-#podawful-popup input[type="search"] {
-    background: var(--input-bg);
-    color: var(--input-fg);
-    border: 1px solid var(--sidebar-border);
-    width: 100%;
-    padding: 8px;
-    border-radius: 6px;
-    margin: 8px 0;
-    box-sizing: border-box;
-    font-size: 1em;
-}
-
-#podawful-popup .note-tag {
-    display: inline-block;
-    background: var(--accent);
-    color: var(--button-fg);
-    border-radius: 3px;
-    padding: 1px 6px;
-    margin-right: 3px;
-    margin-bottom: 1px;
+    margin-bottom: 4px;
     font-size: 0.85em;
-    transition: background 0.2s, color 0.2s;
 }
 
-#podawful-popup .note-tag:hover {
-    background: var(--button-hover-bg);
-    color: var(--button-hover-fg);
-}
-
-#podawful-popup .highlight {
-    background: yellow;
-    color: black;
-    border-radius: 2px;
-    padding: 0 2px;
-}
-
-#podawful-popup .placeholder {
-    color: var(--group-placeholder-fg);
-    background: transparent;
-    font-style: italic;
-    text-align: center;
-    margin: 8px 0;
-    font-size: 1em;
-    padding: 4px 0;
-    border-radius: 4px;
-    transition: color 0.2s;
-}
-
-/* Responsive design for popup */
-@media (max-width: 600px) {
-    #podawful-popup {
-        width: 100vw !important;
-        min-width: 0 !important;
-        max-width: 100vw !important;
-        left: 0;
-        right: 0;
-        border-radius: 0 !important;
-        font-size: 15px;
-    }
-    #podawful-popup .popup-header {
-        padding: 16px 8px 10px 8px;
-    }
-    #podawful-popup .popup-menu-content {
-        margin: 10px 4px;
-        padding: 8px;
-    }
-    #podawful-popup .popup-footer {
-        padding: 12px 4px 8px 4px;
-        font-size: 0.95em;
-    }
-    #podawful-popup button,
-    #podawful-popup .podawful-btn {
-        font-size: 1em;
-        padding: 6px 0;
-        min-width: 28px;
-        min-height: 28px;
-        width: 28px;
-        height: 28px;
-    }
-    #podawful-popup input[type="text"],
-    #podawful-popup input[type="search"] {
-        font-size: 1em;
-        padding: 6px;
-    }
-}
-
-/* === POPUP MODAL (Help/About) === */
-.popup-modal {
+/* === Popup Modal === */
+.popup-modal
+{
     position: fixed;
-    z-index: 10010;
-    left: 0;
     top: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0,0,0,0.45);
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
+    z-index: 10000;
 }
-.popup-modal__content {
+
+.popup-modal__content
+{
     background: var(--primary-bg, #fff);
+    border: 1px solid var(--border, #ccc);
     border-radius: 8px;
-    box-shadow: 0 4px 32px #0004;
-    padding: 32px 36px 24px 36px;
-    min-width: 320px;
-    max-width: 90vw;
+    padding: 20px;
+    max-width: 400px;
+    width: 90%;
     max-height: 80vh;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    color: var(--primary-fg, #222);
     position: relative;
 }
-.popup-modal__close {
+
+.popup-modal__close
+{
     position: absolute;
     top: 12px;
     right: 12px;
@@ -423,31 +178,29 @@ button
     font-size: 1em;
 }
 
- 
- / *   = = =   U P D A T E   I N D I C A T O R   = = =   * / 
- . u p d a t e - i n d i c a t o r   { 
-         p o s i t i o n :   a b s o l u t e ; 
-         t o p :   8 p x ; 
-         r i g h t :   8 p x ; 
- } 
- 
- . u p d a t e - b a d g e   { 
-         b a c k g r o u n d :   v a r ( - - a c c e n t ,   # F F D 6 0 0 ) ; 
-         c o l o r :   v a r ( - - s i d e b a r - b g ,   # 1 a 1 a 1 a ) ; 
-         p a d d i n g :   4 p x   8 p x ; 
-         b o r d e r - r a d i u s :   1 2 p x ; 
-         f o n t - s i z e :   1 0 p x ; 
-         f o n t - w e i g h t :   6 0 0 ; 
-         t e x t - t r a n s f o r m :   u p p e r c a s e ; 
-         l e t t e r - s p a c i n g :   0 . 5 p x ; 
-         c u r s o r :   p o i n t e r ; 
-         t r a n s i t i o n :   a l l   0 . 2 s   e a s e ; 
-         b o x - s h a d o w :   0   2 p x   4 p x   r g b a ( 0 , 0 , 0 , 0 . 2 ) ; 
- } 
- 
- . u p d a t e - b a d g e : h o v e r   { 
-         b a c k g r o u n d :   v a r ( - - a c c e n t - h o v e r ,   # F F E 0 6 6 ) ; 
-         t r a n s f o r m :   t r a n s l a t e Y ( - 1 p x ) ; 
-         b o x - s h a d o w :   0   4 p x   8 p x   r g b a ( 0 , 0 , 0 , 0 . 3 ) ; 
- }  
- 
+/* === Update Indicator === */
+.update-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.update-badge {
+    background: var(--accent, #FFD600);
+    color: var(--sidebar-bg, #1a1a1a);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.update-badge:hover {
+    background: var(--accent-hover, #FFE066);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}

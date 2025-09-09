@@ -350,6 +350,21 @@ export function getPresetThemes() {
                 info: '#2196F3',
                 highlight: '#FFD600'
             },
+            typography: {
+                fontSize: '14px',
+                fontSizeSmall: '12px',
+                fontSizeLarge: '16px',
+                fontWeight: '400',
+                fontWeightBold: '600',
+                lineHeight: '1.4',
+                fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif"
+            },
+            spacing: {
+                padding: '12px',
+                margin: '8px',
+                borderRadius: '6px',
+                gap: '8px'
+            },
             buttons: {
                 height: '40px',
                 padding: '8px 16px',
@@ -374,6 +389,21 @@ export function getPresetThemes() {
                 error: '#d32f2f',
                 info: '#1976d2',
                 highlight: '#1976d2'
+            },
+            typography: {
+                fontSize: '14px',
+                fontSizeSmall: '12px',
+                fontSizeLarge: '16px',
+                fontWeight: '400',
+                fontWeightBold: '600',
+                lineHeight: '1.4',
+                fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif"
+            },
+            spacing: {
+                padding: '12px',
+                margin: '8px',
+                borderRadius: '6px',
+                gap: '8px'
             },
             buttons: {
                 height: '40px',
@@ -400,6 +430,21 @@ export function getPresetThemes() {
                 info: '#2196f3',
                 highlight: '#FFD600'
             },
+            typography: {
+                fontSize: '14px',
+                fontSizeSmall: '12px',
+                fontSizeLarge: '16px',
+                fontWeight: '400',
+                fontWeightBold: '600',
+                lineHeight: '1.4',
+                fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif"
+            },
+            spacing: {
+                padding: '12px',
+                margin: '8px',
+                borderRadius: '6px',
+                gap: '8px'
+            },
             buttons: {
                 height: '40px',
                 padding: '8px 16px',
@@ -411,103 +456,123 @@ export function getPresetThemes() {
             }
         },
         {
-            name: 'Dark Blue',
+            name: 'RED MODE',
             colors: {
-                primary: '#2196F3',
-                background: '#0d1117',
-                surface: '#161b22',
-                text: '#f0f6fc',
-                textSecondary: '#8b949e',
-                border: '#30363d',
-                success: '#4caf50',
-                warning: '#ff9800',
-                error: '#f44336',
-                info: '#2196f3',
-                highlight: '#2196F3'
+                primary: '#DC2626',
+                background: '#1a0a0a',
+                surface: '#2d0f0f',
+                text: '#fef2f2',
+                textSecondary: '#fca5a5',
+                border: '#991b1b',
+                success: '#16a34a',
+                warning: '#ea580c',
+                error: '#dc2626',
+                info: '#2563eb',
+                highlight: '#DC2626'
+            },
+            typography: {
+                fontSize: '14px',
+                fontSizeSmall: '12px',
+                fontSizeLarge: '16px',
+                fontWeight: '400',
+                fontWeightBold: '600',
+                lineHeight: '1.4',
+                fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif"
+            },
+            spacing: {
+                padding: '12px',
+                margin: '8px',
+                borderRadius: '6px',
+                gap: '8px'
             },
             buttons: {
                 height: '40px',
                 padding: '8px 16px',
                 fontSize: '14px',
                 borderRadius: '6px',
-                backgroundColor: '#2196F3',
+                backgroundColor: '#DC2626',
                 textColor: '#ffffff',
-                borderColor: '#2196F3'
+                borderColor: '#DC2626'
             }
         },
         {
-            name: 'Purple',
+            name: 'Polycule Blue',
             colors: {
-                primary: '#9c27b0',
-                background: '#1a0d1a',
-                surface: '#2d1b2d',
-                text: '#f3e5f5',
-                textSecondary: '#ce93d8',
-                border: '#4a148c',
-                success: '#4caf50',
-                warning: '#ff9800',
-                error: '#f44336',
-                info: '#2196f3',
-                highlight: '#9c27b0'
+                primary: '#1e40af',
+                background: '#0a0f1a',
+                surface: '#1e293b',
+                text: '#f1f5f9',
+                textSecondary: '#94a3b8',
+                border: '#334155',
+                success: '#059669',
+                warning: '#d97706',
+                error: '#dc2626',
+                info: '#1e40af',
+                highlight: '#1e40af'
+            },
+            typography: {
+                fontSize: '14px',
+                fontSizeSmall: '12px',
+                fontSizeLarge: '16px',
+                fontWeight: '400',
+                fontWeightBold: '600',
+                lineHeight: '1.4',
+                fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif"
+            },
+            spacing: {
+                padding: '12px',
+                margin: '8px',
+                borderRadius: '6px',
+                gap: '8px'
             },
             buttons: {
                 height: '40px',
                 padding: '8px 16px',
                 fontSize: '14px',
                 borderRadius: '6px',
-                backgroundColor: '#9c27b0',
+                backgroundColor: '#1e40af',
                 textColor: '#ffffff',
-                borderColor: '#9c27b0'
+                borderColor: '#1e40af'
             }
         },
         {
-            name: 'Green',
+            name: 'Paycell Green',
             colors: {
-                primary: '#4CAF50',
-                background: '#0d1a0d',
+                primary: '#16a34a',
+                background: '#0a1a0a',
                 surface: '#1a2e1a',
-                text: '#e8f5e8',
-                textSecondary: '#a5d6a7',
-                border: '#2e7d32',
-                success: '#4caf50',
-                warning: '#ff9800',
-                error: '#f44336',
-                info: '#2196f3',
-                highlight: '#4CAF50'
+                text: '#f0fdf4',
+                textSecondary: '#86efac',
+                border: '#166534',
+                success: '#16a34a',
+                warning: '#ca8a04',
+                error: '#dc2626',
+                info: '#2563eb',
+                highlight: '#16a34a'
+            },
+            typography: {
+                fontSize: '14px',
+                fontSizeSmall: '12px',
+                fontSizeLarge: '16px',
+                fontWeight: '400',
+                fontWeightBold: '600',
+                lineHeight: '1.4',
+                fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif"
+            },
+            spacing: {
+                padding: '12px',
+                margin: '8px',
+                borderRadius: '6px',
+                gap: '8px'
             },
             buttons: {
                 height: '40px',
                 padding: '8px 16px',
                 fontSize: '14px',
                 borderRadius: '6px',
-                backgroundColor: '#4CAF50',
-                textColor: '#000000',
-                borderColor: '#4CAF50'
-            }
-        },
-        {
-            name: 'Orange',
-            colors: {
-                primary: '#FF9800',
-                background: '#1a0f0a',
-                surface: '#2d1f0f',
-                text: '#fff3e0',
-                textSecondary: '#ffcc80',
-                border: '#e65100',
-                success: '#4caf50',
-                warning: '#ff9800',
-                error: '#f44336',
-                info: '#2196f3',
-                highlight: '#FF9800'
-            },
-            buttons: {
-                height: '40px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                borderRadius: '6px',
-                backgroundColor: '#FF9800',
-                textColor: '#000000',
-                borderColor: '#FF9800'
+                backgroundColor: '#16a34a',
+                textColor: '#ffffff',
+                borderColor: '#16a34a'
             }
         }
     ];

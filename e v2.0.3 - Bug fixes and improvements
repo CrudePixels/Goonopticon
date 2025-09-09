@@ -1,0 +1,5 @@
+[33m88ed95e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Update changelog with specific bug fixes for v2.0.3
+[33mf52e902[m[33m ([m[1;33mtag: [m[1;33mv2.0.3[m[33m)[m Bump version to v2.0.3
+[33mf70160d[m[33m ([m[1;33mtag: [m[1;33mv2.0.2[m[33m)[m Bump version to v2.0.2
+[33m4a74516[m Fix GitHub Actions permissions and URL normalization
+[33m6a0aee6[m Fix GitHub Actions permissions for release creation

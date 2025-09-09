@@ -1,6 +1,6 @@
 // Group Component
 import { renderNote } from './noteComponent.js';
-import { setNotes, setGroups, renameGroup, deleteGroup, getNotes } from '../storage.js';
+import { setNotes, setGroups, renameGroup, deleteGroup, getNotes, getGroups } from '../storage.js';
 import { LogDev } from '../../log.js';
 import { showInputModal, showConfirmModal } from '../modal.js';
 import * as browser from 'webextension-polyfill';
@@ -363,14 +363,12 @@ export function renderGroup(props) {
                     return;
                 }
                 // Fetch updated group order and re-render
-                import('../storage.js').then(({ getGroups }) => {
-                    getGroups((err2, updatedGroups) => {
-                        if (err2) {
-                            showStatus(Container, 'Failed to reload groups.');
-                            LogDev('Failed to reload groups: ' + err2, 'error');
-                        }
-                        RenderSidebar(Container);
-                    });
+                getGroups((err2, updatedGroups) => {
+                    if (err2) {
+                        showStatus(Container, 'Failed to reload groups.');
+                        LogDev('Failed to reload groups: ' + err2, 'error');
+                    }
+                    RenderSidebar(Container);
                 });
             });
         });

@@ -70,13 +70,17 @@ function createRelease(newVersion) {
     fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2));
     console.log('✓ Updated manifest.json');
     
+    // Update changelog.txt
+    updateChangelog(newVersion);
+    console.log('✓ Updated changelog.txt');
+    
     // Build the extension
     console.log('Building extension...');
     execSync('npm run build', { stdio: 'inherit' });
     console.log('✓ Extension built');
     
     // Commit changes
-    execSync(`git add package.json manifest.json`, { stdio: 'inherit' });
+    execSync(`git add package.json manifest.json changelog.txt`, { stdio: 'inherit' });
     execSync(`git commit -m "Bump version to v${newVersion}"`, { stdio: 'inherit' });
     console.log('✓ Changes committed');
     
@@ -95,4 +99,31 @@ function createRelease(newVersion) {
   }
   
   rl.close();
+}
+
+function updateChangelog(newVersion) {
+  const changelogPath = 'changelog.txt';
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  
+  // Read current changelog
+  let changelogContent = '';
+  try {
+    changelogContent = fs.readFileSync(changelogPath, 'utf8');
+  } catch (error) {
+    console.log('Changelog file not found, creating new one...');
+  }
+  
+  // Create new version entry
+  const newEntry = `Version ${newVersion} (${today})
+- Bug fixes and improvements
+- Enhanced user experience
+- Updated dependencies
+
+`;
+  
+  // Add new entry at the top
+  const updatedChangelog = newEntry + changelogContent;
+  
+  // Write back to file
+  fs.writeFileSync(changelogPath, updatedChangelog);
 }

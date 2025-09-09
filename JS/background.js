@@ -5,6 +5,8 @@ import * as browser from 'webextension-polyfill';
 browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>
 {
     LogDev("Received message in background: " + JSON.stringify(msg), "event");
+    
+    // Handle devlog messages
     if (msg && msg.type === "devlog" && msg.entry)
     {
         browser.storage.local.get(["PodAwful::DevLog"]).then(result => {
@@ -24,6 +26,20 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>
         // Required for async sendResponse
         return true;
     }
+    
+    // Handle manual update check requests
+    if (msg && msg.action === "checkForUpdates") {
+        LogDev("Manual update check requested", "system");
+        checkForUpdates(true).then(() => {
+            sendResponse && sendResponse({ success: true });
+        }).catch((error) => {
+            LogDev("Error during manual update check: " + error.message, "error");
+            sendResponse && sendResponse({ success: false, error: error.message });
+        });
+        // Required for async sendResponse
+        return true;
+    }
+    
     LogDev("Unhandled message received in background", "miscellaneous");
     // ...other message handling...
 });
@@ -41,7 +57,7 @@ browser.runtime.onInstalled.addListener((details) =>
 });
 
 // Update checking functionality
-async function checkForUpdates() {
+async function checkForUpdates(forceCheck = false) {
     try {
         LogDev("Checking for extension updates...", "system");
         
@@ -49,17 +65,20 @@ async function checkForUpdates() {
         const currentVersion = browser.runtime.getManifest().version;
         LogDev("Current version: " + currentVersion, "system");
         
-        // Check if we should check for updates (avoid checking too frequently)
-        const lastCheck = await browser.storage.local.get(['lastUpdateCheck']);
-        const now = Date.now();
-        const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-        
-        if (lastCheck.lastUpdateCheck && (now - lastCheck.lastUpdateCheck) < oneDay) {
-            LogDev("Update check skipped - checked recently", "system");
-            return;
+        // Check if we should check for updates (avoid checking too frequently, unless forced)
+        if (!forceCheck) {
+            const lastCheck = await browser.storage.local.get(['lastUpdateCheck']);
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+            
+            if (lastCheck.lastUpdateCheck && (now - lastCheck.lastUpdateCheck) < oneDay) {
+                LogDev("Update check skipped - checked recently", "system");
+                return;
+            }
         }
         
         // Update last check time
+        const now = Date.now();
         await browser.storage.local.set({ lastUpdateCheck: now });
         
         // Check GitHub for latest release

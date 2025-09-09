@@ -62,18 +62,18 @@ export function LogDev(Message, Type = "miscellaneous", Cb)
         };
         browser.runtime.sendMessage({ type: "devlog", entry })
             .then((response) => {
-                if (Cb) Cb(null);
+                if (typeof Cb === 'function') Cb(null);
             })
             .catch((err) => {
                 // Suppress extension context errors
                 if (err && (/(Extension context invalidated|Receiving end does not exist)/i).test(err.message)) {
                     // Silently ignore these errors
-                    if (Cb) Cb(null);
+                    if (typeof Cb === 'function') Cb(null);
                     return;
                 }
                 // Log other errors
                 console.error("SendMessage failed:", err?.message);
-                if (Cb) Cb(err);
+                if (typeof Cb === 'function') Cb(err);
         });
         return;
     }

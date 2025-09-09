@@ -1,0 +1,3 @@
+[33m7efe8e7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;33mtag: [m[1;33mv2.0.4[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Bump version to v2.0.4
+[33mb278f2b[m Fix GitHub Actions workflow file structure for proper extension packaging
+[33m88ed95e[m Update changelog with specific bug fixes for v2.0.3

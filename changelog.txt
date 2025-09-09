@@ -1,3 +1,14 @@
+Version 2.0.5 (2025-01-08)
+- Fixed webpack bundling errors that caused "is not a function" runtime errors
+- Fixed "Cb is not a function" errors in LogDev callback handling
+- Fixed "D is not a function", "n is not a function", "o is not a function", and "r is not a function" errors
+- Disabled webpack minification to prevent problematic variable binding patterns
+- Added proper type checking for callback functions to prevent runtime errors
+- Enhanced extension stability and reliability
+- Fixed GitHub Actions workflow file structure for proper extension packaging
+- Improved release process to ensure correct file organization
+- Enhanced extension installation reliability
+
 Version 2.0.4 (2025-09-09)
 - Bug fixes and improvements
 - Enhanced user experience

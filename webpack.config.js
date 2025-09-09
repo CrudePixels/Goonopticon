@@ -21,13 +21,20 @@ module.exports = {
     optimization: {
         splitChunks: false,
         runtimeChunk: false,
-        minimize: true,
-        minimizer: [
-            '...', // Use default Terser
-        ],
+        minimize: false,
+        moduleIds: 'named',
+        chunkIds: 'named',
+        usedExports: false,
+        sideEffects: false,
     },
     experiments: {
         outputModule: false
+    },
+    target: 'web',
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, 'JS')
+        }
     },
     plugins: [
         new (require('webpack').optimize.LimitChunkCountPlugin)({

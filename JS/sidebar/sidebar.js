@@ -2,6 +2,8 @@ import { renderSidebarHeader } from './components/sidebarHeader.js';
 import { renderSidebarBody } from './components/sidebarBody.js';
 import { renderSidebarFooter } from './components/sidebarFooter.js';
 import { showTagManager } from './tagmanager.js';
+import { highlightCurrentTimestamp, setupSidebarDragAndDrop } from './dragdrop.js';
+import { getTimecode, parseTime } from './logic.js';
 import
 {
     getNotes, getPinnedGroups, getCompact, getTheme, getSidebarVisible,
@@ -263,14 +265,12 @@ export function renderSidebar(Container, overrideSelectedTags, forceHeaderRerend
                     cancelText: 'Cancel'
                 }) : Promise.resolve(confirm('Delete ALL notes on this page?')));
                 if (!confirmed) return;
-                import('./storage.js').then(({ setNotes }) => {
-                    setNotes(normalizeYouTubeUrl(location.href), [], (err) => {
-                        if (err) {
-                            showSidebarError('Failed to clear notes.');
-                            return;
-                        }
-                        renderSidebar(Container);
-                    });
+                setNotes(normalizeYouTubeUrl(location.href), [], (err) => {
+                    if (err) {
+                        showSidebarError('Failed to clear notes.');
+                        return;
+                    }
+                    renderSidebar(Container);
                 });
             }
 
@@ -297,21 +297,19 @@ export function renderSidebar(Container, overrideSelectedTags, forceHeaderRerend
                     validate: val => val.trim() ? true : 'Note text cannot be empty.'
                 });
                 if (!noteText || !noteText.trim()) return;
-                import('./storage.js').then(({ addNote }) => {
-                    const note = {
-                        id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
-                        text: noteText.trim(),
-                        time: '',
-                        group: AllGroupsSanitized && AllGroupsSanitized[0] ? AllGroupsSanitized[0] : 'Default',
-                        tags: []
-                    };
-                    addNote(note, (err) => {
-                        if (err) {
-                            showSidebarError('Failed to add note.');
-                            return;
-                        }
-                        renderSidebar(Container);
-                    });
+                const note = {
+                    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+                    text: noteText.trim(),
+                    time: '',
+                    group: AllGroupsSanitized && AllGroupsSanitized[0] ? AllGroupsSanitized[0] : 'Default',
+                    tags: []
+                };
+                addNote(note, (err) => {
+                    if (err) {
+                        showSidebarError('Failed to add note.');
+                        return;
+                    }
+                    renderSidebar(Container);
                 });
             }
 
@@ -365,26 +363,24 @@ export function renderSidebar(Container, overrideSelectedTags, forceHeaderRerend
                     const s = seconds % 60;
                     parsedTime = h > 0 ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` : `${m}:${s.toString().padStart(2, '0')}`;
                 }
-                import('./storage.js').then(({ addNote }) => {
-                    let groupName = 'Default';
-                    if (AllGroupsSanitized && AllGroupsSanitized.length > 0) {
-                        groupName = typeof AllGroupsSanitized[0] === 'string' ? AllGroupsSanitized[0] : (AllGroupsSanitized[0].name || AllGroupsSanitized[0].groupName || AllGroupsSanitized[0].title || String(AllGroupsSanitized[0]));
+                let groupName = 'Default';
+                if (AllGroupsSanitized && AllGroupsSanitized.length > 0) {
+                    groupName = typeof AllGroupsSanitized[0] === 'string' ? AllGroupsSanitized[0] : (AllGroupsSanitized[0].name || AllGroupsSanitized[0].groupName || AllGroupsSanitized[0].title || String(AllGroupsSanitized[0]));
+                }
+                groupName = String(groupName);
+                const note = {
+                    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+                    text: noteText.trim(),
+                    time: parsedTime,
+                    group: groupName,
+                    tags: []
+                };
+                addNote(note, (err) => {
+                    if (err) {
+                        showSidebarError('Failed to add timestamped note.');
+                        return;
                     }
-                    groupName = String(groupName);
-                    const note = {
-                        id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
-                        text: noteText.trim(),
-                        time: parsedTime,
-                        group: groupName,
-                        tags: []
-                    };
-                    addNote(note, (err) => {
-                        if (err) {
-                            showSidebarError('Failed to add timestamped note.');
-                            return;
-                        }
-                        renderSidebar(Container);
-                    });
+                    renderSidebar(Container);
                 });
             }
 
@@ -584,28 +580,22 @@ export function renderSidebar(Container, overrideSelectedTags, forceHeaderRerend
             updateShowSidebarButton();
 
             // Theme and drag/drop logic
-            import('./dragdrop.js').then(({ highlightCurrentTimestamp, setupSidebarDragAndDrop }) =>
+            // Set globals for highlightCurrentTimestamp
+            window.Notes = Notes;
+            window.ParseTime = parseTime;
+            const v = document.querySelector("video");
+            if (v)
             {
-                // Set globals for highlightCurrentTimestamp
-                window.Notes = Notes;
-                import('./logic.js').then(mod =>
+                cleanupVideoHighlightHandler();
+                v._podawfulHighlightHandler = () =>
                 {
-                    window.ParseTime = mod.ParseTime;
-                    const v = document.querySelector("video");
-                    if (v)
-                    {
-                        cleanupVideoHighlightHandler();
-                        v._podawfulHighlightHandler = () =>
-                        {
-                            highlightCurrentTimestamp();
-                        };
-                        v.addEventListener("timeupdate", v._podawfulHighlightHandler);
-                        // Initial highlight after render
-                        highlightCurrentTimestamp();
-                    }
-                });
-                setupSidebarDragAndDrop(Container, renderSidebar);
-            });
+                    highlightCurrentTimestamp();
+                };
+                v.addEventListener("timeupdate", v._podawfulHighlightHandler);
+                // Initial highlight after render
+                highlightCurrentTimestamp();
+            }
+            setupSidebarDragAndDrop(Container, renderSidebar);
 
             const sidebar = document.getElementById('podawful-sidebar');
             if (Locked)
@@ -741,17 +731,15 @@ if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.onMessa
                 if (!err) {
                     // Also update groups list to include all unique group names from imported notes
                     const importedGroups = Array.from(new Set(message.notes.map(n => n.group).filter(Boolean)));
-                    if (importedGroups.length > 0 && typeof import('./storage.js').then === 'function') {
-                        import('./storage.js').then(({ setGroups }) => {
-                            setGroups(importedGroups, () => {
-                                const sidebar = document.getElementById('podawful-sidebar');
-                                if (sidebar && typeof window.renderSidebar === 'function') {
-                                    window.renderSidebar(sidebar);
-                                } else if (typeof renderSidebar === 'function' && sidebar) {
-                                    renderSidebar(sidebar);
-                                }
-                                sendResponse({ success: true });
-                            });
+                    if (importedGroups.length > 0) {
+                        setGroups(importedGroups, () => {
+                            const sidebar = document.getElementById('podawful-sidebar');
+                            if (sidebar && typeof window.renderSidebar === 'function') {
+                                window.renderSidebar(sidebar);
+                            } else if (typeof renderSidebar === 'function' && sidebar) {
+                                renderSidebar(sidebar);
+                            }
+                            sendResponse({ success: true });
                         });
                     } else {
                         const sidebar = document.getElementById('podawful-sidebar');

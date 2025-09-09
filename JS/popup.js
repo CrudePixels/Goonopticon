@@ -11,7 +11,8 @@ document.addEventListener("DOMContentLoaded", () =>
     // Only render the menu after the theme is applied
     renderMainMenu();
     
-    // Check for updates and show indicator
+    // Load version and check for updates
+    loadVersion();
     checkForUpdates();
 });
 
@@ -61,5 +62,18 @@ function hideUpdateIndicator() {
     const indicator = document.getElementById('updateIndicator');
     if (indicator) {
         indicator.style.display = 'none';
+    }
+}
+
+// Load version from manifest
+async function loadVersion() {
+    try {
+        const manifest = browser.runtime.getManifest();
+        const versionDisplay = document.getElementById('versionDisplay');
+        if (versionDisplay && manifest.version) {
+            versionDisplay.textContent = `v${manifest.version}`;
+        }
+    } catch (error) {
+        console.error('Error loading version:', error);
     }
 }
