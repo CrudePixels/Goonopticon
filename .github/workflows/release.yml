@@ -33,11 +33,18 @@ jobs:
         mkdir -p dist
         cp -r CSS dist/
         cp -r HTML dist/
-        cp -r JS/bundle dist/JS/
+        mkdir -p dist/JS/bundle
+        cp -r JS/bundle/* dist/JS/bundle/
         cp -r Resources dist/
         cp manifest.json dist/
         cp package.json dist/
         cp README.md dist/
+        # Verify the file structure
+        echo "Verifying file structure:"
+        ls -la dist/
+        ls -la dist/JS/
+        ls -la dist/JS/bundle/
+        
         cd dist
         zip -r ../goonopticon-extension.zip .
         cd ..
