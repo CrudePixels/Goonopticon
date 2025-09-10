@@ -517,3 +517,52 @@ export function addGroup(groupName, cb)
         }
     });
 }
+
+/**
+ * Gets all notes from all URLs
+ * @param {Function} cb - Callback function
+ */
+export function getAllNotes(cb) {
+    LogDev("GetAllNotes called", "data");
+    browser.storage.local.get(null, (result) => {
+        if (browser.runtime.lastError) {
+            LogDev("GetAllNotes error: " + browser.runtime.lastError, "error");
+            return cb && cb(browser.runtime.lastError);
+        }
+        
+        const allNotes = {};
+        Object.keys(result).forEach(key => {
+            if (key.startsWith('PodAwful::Notes::')) {
+                const url = decodeURIComponent(key.replace('PodAwful::Notes::', ''));
+                allNotes[url] = result[key];
+            }
+        });
+        
+        LogDev("GetAllNotes success: " + Object.keys(allNotes).length + " URLs", "data");
+        cb && cb(null, allNotes);
+    });
+}
+
+/**
+ * Sets all notes for all URLs
+ * @param {Object} allNotes - Object with URLs as keys and notes as values
+ * @param {Function} cb - Callback function
+ */
+export function setAllNotes(allNotes, cb) {
+    LogDev("SetAllNotes called for " + Object.keys(allNotes).length + " URLs", "data");
+    
+    const storageData = {};
+    Object.keys(allNotes).forEach(url => {
+        const key = `PodAwful::Notes::${encodeURIComponent(url)}`;
+        storageData[key] = allNotes[url];
+    });
+    
+    browser.storage.local.set(storageData, () => {
+        if (browser.runtime.lastError) {
+            LogDev("SetAllNotes error: " + browser.runtime.lastError, "error");
+            return cb && cb(browser.runtime.lastError);
+        }
+        LogDev("SetAllNotes success", "data");
+        cb && cb(null);
+    });
+}

@@ -223,7 +223,7 @@ export function renderNote(props) {
                     await navigator.clipboard.writeText(url);
                     showStatus(NoteDiv, 'URL copied!');
                 } catch (err) {
-                    console.error('Failed to copy URL:', err);
+                    LogDev('Failed to copy URL: ' + err, 'error');
                     showStatus(NoteDiv, 'Failed to copy URL');
                 }
             };

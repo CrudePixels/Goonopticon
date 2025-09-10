@@ -1,0 +1,41 @@
+{
+  "name": "Dark",
+  "colors": {
+    "primary": "#BB86FC",
+    "background": "#0a0a0a",
+    "surface": "#121212",
+    "text": "#ffffff",
+    "textSecondary": "#b3b3b3",
+    "border": "#333333",
+    "success": "#4CAF50",
+    "warning": "#FF9800",
+    "error": "#CF6679",
+    "info": "#03DAC6",
+    "highlight": "#BB86FC"
+  },
+  "typography": {
+    "fontSize": "14px",
+    "fontSizeSmall": "12px",
+    "fontSizeLarge": "16px",
+    "fontWeight": "400",
+    "fontWeightBold": "600",
+    "lineHeight": "1.4",
+    "fontFamily": "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif"
+  },
+  "spacing": {
+    "padding": "12px",
+    "margin": "8px",
+    "borderRadius": "6px",
+    "gap": "8px"
+  },
+  "buttons": {
+    "height": "40px",
+    "padding": "8px 16px",
+    "fontSize": "14px",
+    "borderRadius": "6px",
+    "backgroundColor": "#BB86FC",
+    "textColor": "#000000",
+    "borderColor": "#BB86FC",
+    "applyToMenus": true
+  }
+}

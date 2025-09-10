@@ -1,23 +1,32 @@
 ﻿import { applyTheme } from './theme.js';
 import { applyCustomTheme, getCustomTheme } from './customTheme.js';
 import { renderMainMenu } from './popup-menus.js';
+import { LogDev } from './log.js';
 import * as browser from 'webextension-polyfill';
 
 // Apply the theme and render the menu after DOM is ready
-document.addEventListener("DOMContentLoaded", () =>
+document.addEventListener("DOMContentLoaded", async () =>
 {
-    // Load and apply custom theme if it exists
-    getCustomTheme((err, customTheme) => {
-        if (err) {
-            console.error('Error loading custom theme:', err);
-            // Fallback to default theme
-            applyTheme("default");
-        } else if (customTheme) {
-            console.log('Loading custom theme on popup init');
+    try {
+        // Load the current theme from storage
+        const [themeResult, customThemeResult] = await Promise.all([
+            browser.storage.local.get('PodAwful::Theme'),
+            browser.storage.local.get('PodAwful::CustomTheme')
+        ]);
+        
+        const theme = themeResult['PodAwful::Theme'] || 'default';
+        const customTheme = customThemeResult['PodAwful::CustomTheme'];
+        
+        // Apply the theme (this will handle both preset and custom themes)
+        LogDev('Applying theme on popup init: ' + theme, 'system');
+        await applyTheme(theme);
+        
+        // If there's a custom theme in storage, apply it (this overrides preset themes)
+        if (customTheme) {
+            LogDev('Loading custom theme on popup init', 'system');
             applyCustomTheme(customTheme);
         } else {
-            // No custom theme, use default
-            applyTheme("default");
+            LogDev('No custom theme found in storage, using preset theme', 'system');
         }
         
         // Only render the menu after the theme is applied
@@ -26,7 +35,14 @@ document.addEventListener("DOMContentLoaded", () =>
         // Load version and check for updates
         loadVersion();
         checkForUpdates();
-    });
+    } catch (err) {
+        LogDev('Error loading theme on popup init: ' + err, 'error');
+        // Fallback to default theme
+        await applyTheme("default");
+        renderMainMenu();
+        loadVersion();
+        checkForUpdates();
+    }
 });
 
 // Listen for theme changes in real-time (if changed elsewhere)
@@ -37,7 +53,7 @@ browser.storage.onChanged.addListener((changes, area) =>
         // Apply custom theme changes
         const customTheme = changes["PodAwful::CustomTheme"].newValue;
         if (customTheme) {
-            console.log('Custom theme changed, applying to popup');
+            LogDev('Custom theme changed, applying to popup', 'system');
             applyCustomTheme(customTheme);
         }
     } else if (area === "local" && changes["PodAwful::Theme"])
@@ -59,7 +75,7 @@ async function checkForUpdates() {
             hideUpdateIndicator();
         }
     } catch (error) {
-        console.error('Error checking for updates:', error);
+        LogDev('Error checking for updates: ' + error, 'error');
     }
 }
 
@@ -96,6 +112,6 @@ async function loadVersion() {
             versionDisplay.textContent = `v${manifest.version}`;
         }
     } catch (error) {
-        console.error('Error loading version:', error);
+        LogDev('Error loading version: ' + error, 'error');
     }
 }

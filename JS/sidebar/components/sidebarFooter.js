@@ -97,38 +97,59 @@ export function renderSidebarFooter(props) {
             footer.appendChild(statsDiv);
         }
 
-        // Podawful link with random quote as text - ABSOLUTE POSITIONED AT BOTTOM
+        // Website selection button with random quote as text - ABSOLUTE POSITIONED AT BOTTOM
         const quotes = quotesRaw.split('\n').map(q => q.trim()).filter(Boolean);
         const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-        const podawfulLink = document.createElement('a');
-        podawfulLink.href = 'https://podawful.com';
-        podawfulLink.target = '_blank';
-        podawfulLink.rel = 'noopener noreferrer';
-        podawfulLink.className = 'sidebar__podawful-link';
-        podawfulLink.textContent = randomQuote;
-        podawfulLink.title = 'Visit Podawful.com';
+        const websiteButton = document.createElement('button');
+        websiteButton.className = 'sidebar__podawful-link';
+        websiteButton.textContent = randomQuote;
+        websiteButton.title = 'Choose Website';
         // Let CSS handle positioning and styling
-        podawfulLink.style.textAlign = 'center';
-        podawfulLink.style.padding = '10px 16px';
-        podawfulLink.style.color = 'var(--accent, #FFD600)';
-        podawfulLink.style.fontSize = '1.1em';
-        podawfulLink.style.fontWeight = '600';
-        podawfulLink.style.borderRadius = '8px';
-        podawfulLink.style.backgroundColor = 'rgba(255,214,0,0.08)';
-        podawfulLink.style.border = '1.5px solid var(--accent, #FFD600)';
-        podawfulLink.style.userSelect = 'text';
-        podawfulLink.style.textDecoration = 'none';
-        podawfulLink.style.transition = 'all 0.2s ease';
-        podawfulLink.style.cursor = 'pointer';
-        podawfulLink.addEventListener('mouseenter', () => {
-            podawfulLink.style.backgroundColor = 'var(--accent, #FFD600)';
-            podawfulLink.style.color = 'var(--sidebar-bg, #1a1a1a)';
+        websiteButton.style.textAlign = 'center';
+        websiteButton.style.padding = '10px 16px';
+        websiteButton.style.color = 'var(--accent, #FFD600)';
+        websiteButton.style.fontSize = '1.1em';
+        websiteButton.style.fontWeight = '600';
+        websiteButton.style.borderRadius = '8px';
+        websiteButton.style.backgroundColor = 'rgba(255,214,0,0.08)';
+        websiteButton.style.border = '1.5px solid var(--accent, #FFD600)';
+        websiteButton.style.userSelect = 'text';
+        websiteButton.style.textDecoration = 'none';
+        websiteButton.style.transition = 'all 0.2s ease';
+        websiteButton.style.cursor = 'pointer';
+        websiteButton.style.width = '100%';
+        websiteButton.addEventListener('mouseenter', () => {
+            websiteButton.style.backgroundColor = 'var(--accent, #FFD600)';
+            websiteButton.style.color = 'var(--sidebar-bg, #1a1a1a)';
         });
-        podawfulLink.addEventListener('mouseleave', () => {
-            podawfulLink.style.backgroundColor = 'rgba(255,214,0,0.08)';
-            podawfulLink.style.color = 'var(--accent, #FFD600)';
+        websiteButton.addEventListener('mouseleave', () => {
+            websiteButton.style.backgroundColor = 'rgba(255,214,0,0.08)';
+            websiteButton.style.color = 'var(--accent, #FFD600)';
         });
-        footer.appendChild(podawfulLink);
+        
+        // Add click handler to show website selection modal
+        websiteButton.onclick = async () => {
+            if (typeof window.showTwoChoiceModal === 'function') {
+                const choice = await window.showTwoChoiceModal({
+                    title: 'Choose Website',
+                    message: 'Which website would you like to visit?',
+                    option1: '🌐 Visit Podawful.com',
+                    option2: '⚡ Visit Awful.tech'
+                });
+                
+                if (choice === '🌐 Visit Podawful.com') {
+                    window.open('https://podawful.com', '_blank', 'noopener,noreferrer');
+                } else if (choice === '⚡ Visit Awful.tech') {
+                    window.open('https://awful.tech', '_blank', 'noopener,noreferrer');
+                }
+                // If choice is 'Cancel' or null, do nothing
+            } else {
+                // Fallback: open podawful.com directly
+                window.open('https://podawful.com', '_blank', 'noopener,noreferrer');
+            }
+        };
+        
+        footer.appendChild(websiteButton);
 
         return footer;
     } catch (e) {

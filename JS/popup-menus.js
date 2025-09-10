@@ -13,6 +13,15 @@ import {
     getAllPresets,
     applyCustomTheme
 } from './customTheme.js';
+import { 
+    loadAllThemes, 
+    loadThemeFromFile, 
+    saveCustomThemeToStorage, 
+    deleteCustomTheme, 
+    exportTheme, 
+    importTheme, 
+    downloadTheme 
+} from './themeManager.js';
 import browser from 'webextension-polyfill';
 
 // Simple modal function for popup context
@@ -76,6 +85,96 @@ function showModal(title, message, type = 'info') {
     modalContent.appendChild(titleEl);
     modalContent.appendChild(messageEl);
     modalContent.appendChild(button);
+    modal.appendChild(modalContent);
+    
+    document.body.appendChild(modal);
+}
+
+// Confirmation modal function for popup context
+function showConfirmModal(title, message, okText = 'OK', cancelText = 'Cancel', onConfirm) {
+    // Remove any existing modal
+    const existingModal = document.getElementById('popupConfirmModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'popupConfirmModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: var(--note-bg, #222);
+        border: 1px solid var(--sidebar-border, #333);
+        border-radius: 8px;
+        padding: 20px;
+        max-width: 300px;
+        width: 90%;
+        text-align: center;
+        color: var(--sidebar-fg, #e0e0e0);
+    `;
+    
+    const titleEl = document.createElement('h3');
+    titleEl.textContent = title;
+    titleEl.style.cssText = `
+        margin: 0 0 10px 0;
+        color: var(--accent, #FFD600);
+    `;
+    
+    const messageEl = document.createElement('p');
+    messageEl.textContent = message;
+    messageEl.style.cssText = `
+        margin: 0 0 15px 0;
+    `;
+    
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = `
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    `;
+    
+    const okButton = document.createElement('button');
+    okButton.textContent = okText;
+    okButton.className = 'podawful-btn';
+    okButton.style.cssText = `
+        background: #F44336;
+        color: white;
+        padding: 8px 16px;
+    `;
+    okButton.onclick = () => {
+        modal.remove();
+        if (onConfirm) onConfirm();
+    };
+    
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = cancelText;
+    cancelButton.className = 'podawful-btn';
+    cancelButton.style.cssText = `
+        background: #666;
+        color: white;
+        padding: 8px 16px;
+    `;
+    cancelButton.onclick = () => modal.remove();
+    
+    buttonContainer.appendChild(cancelButton);
+    buttonContainer.appendChild(okButton);
+    
+    modalContent.appendChild(titleEl);
+    modalContent.appendChild(messageEl);
+    modalContent.appendChild(buttonContainer);
     modal.appendChild(modalContent);
     
     document.body.appendChild(modal);
@@ -237,6 +336,132 @@ async function saveAsCustomTheme() {
     }
 }
 
+// Load selected preset theme
+async function loadSelectedPresetTheme() {
+    const presetSelect = document.getElementById('presetSelect');
+    const selectedPresetName = presetSelect.value;
+    
+    if (!selectedPresetName) {
+        showModal('Error', 'Please select a preset to load', 'error');
+        return;
+    }
+    
+    try {
+        // getAllPresets is now statically imported
+        getAllPresets((err, presets) => {
+            if (err) {
+                LogDev('Error loading presets: ' + err, 'error');
+                return;
+            }
+            
+            const selectedPreset = presets.find(p => p.name === selectedPresetName);
+            if (!selectedPreset) {
+                LogDev('Preset not found: ' + selectedPresetName, 'error');
+                showModal('Error', 'Preset not found', 'error');
+                return;
+            }
+            
+            LogDev('Loading preset: ' + selectedPresetName, 'system');
+            LogDev('Selected preset object: ' + JSON.stringify(selectedPreset), 'system');
+            
+            // Check if buttons object exists
+            if (!selectedPreset.buttons) {
+                LogDev('ERROR: selectedPreset.buttons is undefined!', 'error');
+                showModal('Error', 'Invalid preset: missing button properties', 'error');
+                return;
+            }
+            
+            // Update all form fields
+            document.getElementById('primaryColor').value = selectedPreset.colors.primary;
+            document.getElementById('backgroundColor').value = selectedPreset.colors.background;
+            document.getElementById('surfaceColor').value = selectedPreset.colors.surface;
+            document.getElementById('textColor').value = selectedPreset.colors.text;
+            document.getElementById('textSecondaryColor').value = selectedPreset.colors.textSecondary;
+            document.getElementById('borderColor').value = selectedPreset.colors.border;
+            document.getElementById('successColor').value = selectedPreset.colors.success;
+            document.getElementById('warningColor').value = selectedPreset.colors.warning;
+            document.getElementById('errorColor').value = selectedPreset.colors.error;
+            document.getElementById('infoColor').value = selectedPreset.colors.info;
+            document.getElementById('highlightColor').value = selectedPreset.colors.highlight;
+            
+            // Typography fields
+            document.getElementById('fontSize').value = parseInt(selectedPreset.typography.fontSize);
+            document.getElementById('fontSizeValue').textContent = selectedPreset.typography.fontSize;
+            document.getElementById('fontSizeSmall').value = parseInt(selectedPreset.typography.fontSizeSmall);
+            document.getElementById('fontSizeSmallValue').textContent = selectedPreset.typography.fontSizeSmall;
+            document.getElementById('fontSizeLarge').value = parseInt(selectedPreset.typography.fontSizeLarge);
+            document.getElementById('fontSizeLargeValue').textContent = selectedPreset.typography.fontSizeLarge;
+            document.getElementById('fontWeight').value = selectedPreset.typography.fontWeight;
+            document.getElementById('lineHeight').value = parseFloat(selectedPreset.typography.lineHeight);
+            document.getElementById('lineHeightValue').textContent = selectedPreset.typography.lineHeight;
+            document.getElementById('fontFamily').value = selectedPreset.typography.fontFamily;
+            
+            // Button fields
+            document.getElementById('buttonHeight').value = parseInt(selectedPreset.buttons.height);
+            document.getElementById('buttonHeightValue').textContent = selectedPreset.buttons.height;
+            document.getElementById('buttonPadding').value = parseInt(selectedPreset.buttons.padding.split(' ')[0]);
+            document.getElementById('buttonPaddingValue').textContent = selectedPreset.buttons.padding.split(' ')[0];
+            document.getElementById('buttonFontSize').value = parseInt(selectedPreset.buttons.fontSize);
+            document.getElementById('buttonFontSizeValue').textContent = selectedPreset.buttons.fontSize;
+            document.getElementById('buttonBorderRadius').value = parseInt(selectedPreset.buttons.borderRadius);
+            document.getElementById('buttonBorderRadiusValue').textContent = selectedPreset.buttons.borderRadius;
+            // Validate and set button colors with fallbacks
+            const buttonBg = selectedPreset.buttons.backgroundColor || '#FFD600';
+            const buttonText = selectedPreset.buttons.textColor || '#000000';
+            const buttonBorder = selectedPreset.buttons.borderColor || '#FFD600';
+            
+            LogDev(`Button colors - bg: ${buttonBg}, text: ${buttonText}, border: ${buttonBorder}`, 'system');
+            
+            document.getElementById('buttonBackgroundColor').value = buttonBg;
+            document.getElementById('buttonTextColor').value = buttonText;
+            document.getElementById('buttonBorderColor').value = buttonBorder;
+            
+            const applyToMenusElement = document.getElementById('applyToMenus');
+            if (applyToMenusElement) {
+                applyToMenusElement.checked = selectedPreset.buttons.applyToMenus || false;
+            }
+            
+            // Spacing fields
+            document.getElementById('padding').value = parseInt(selectedPreset.spacing.padding);
+            document.getElementById('paddingValue').textContent = selectedPreset.spacing.padding;
+            document.getElementById('margin').value = parseInt(selectedPreset.spacing.margin);
+            document.getElementById('marginValue').textContent = selectedPreset.spacing.margin;
+            document.getElementById('borderRadius').value = parseInt(selectedPreset.spacing.borderRadius);
+            document.getElementById('borderRadiusValue').textContent = selectedPreset.spacing.borderRadius;
+            document.getElementById('gap').value = parseInt(selectedPreset.spacing.gap);
+            document.getElementById('gapValue').textContent = selectedPreset.spacing.gap;
+            
+            // Apply the theme immediately
+            const theme = getCurrentThemeFromForm();
+            applyCustomTheme(theme);
+            
+            // Save the theme to storage so sidebar gets notified
+            setCustomTheme(theme, (err) => {
+                if (err) {
+                    LogDev('Error saving preset theme: ' + err, 'error');
+                    showModal('Error', 'Failed to save theme', 'error');
+                } else {
+                    LogDev('Preset theme saved successfully', 'system');
+                    
+                    // Also save the theme selection to storage for persistence
+                    browser.storage.local.set({ 'PodAwful::Theme': selectedPresetName }, (err) => {
+                        if (err) {
+                            LogDev('Error saving theme selection: ' + err, 'error');
+                        } else {
+                            LogDev('Theme selection saved: ' + selectedPresetName, 'data');
+                        }
+                    });
+                    
+                    showModal('Success', `Preset "${selectedPresetName}" loaded!`, 'success');
+                }
+            });
+        });
+    } catch (err) {
+        LogDev('Error loading preset: ' + err, 'error');
+        showModal('Error', 'Failed to load preset', 'error');
+    }
+}
+
 // Delete selected preset
 async function deleteSelectedPreset() {
     const presetSelect = document.getElementById('presetSelect');
@@ -247,10 +472,18 @@ async function deleteSelectedPreset() {
         return;
     }
     
-    showModal(
+    // Check if it's a built-in preset (only prevent deletion of core presets)
+    const corePresets = ['Default', 'Light', 'Dark'];
+    if (corePresets.includes(selectedPreset)) {
+        showModal('Error', 'Cannot delete core presets (Default, Light, Dark)', 'error');
+        return;
+    }
+    
+    showConfirmModal(
         'Delete Preset',
         `Are you sure you want to delete "${selectedPreset}"?`,
-        'warning',
+        'Delete',
+        'Cancel',
         async () => {
             try {
                 // deletePreset is now statically imported
@@ -275,14 +508,19 @@ async function deleteSelectedPreset() {
 // Save and apply custom theme
 async function saveAndApplyCustomTheme() {
     try {
+        LogDev('Save button clicked', 'system');
+        
         // setCustomTheme and applyCustomTheme are now statically imported
         
         const theme = getCurrentThemeFromForm();
+        LogDev('Theme from form: ' + JSON.stringify(theme), 'system');
         
         // Apply theme immediately first
-        applyTheme(theme);
+        LogDev('Applying theme...', 'system');
+        applyCustomTheme(theme);
         
         // Then save it
+        LogDev('Saving theme to storage...', 'system');
         setCustomTheme(theme, (err) => {
             if (err) {
                 LogDev('Error saving custom theme: ' + err, 'error');
@@ -897,10 +1135,16 @@ function renderThemeSettings()
 
     MenuTitle.textContent = "Theme Settings";
     
-    // Load current custom theme settings when opening theme submenu
-    setTimeout(() => {
-        loadCustomThemeSettings();
-    }, 100);
+    // Load custom theme settings first, then render the form
+    loadCustomThemeSettings().then(() => {
+        renderThemeSettingsForm();
+    });
+}
+
+function renderThemeSettingsForm() {
+    const MenuContent = document.getElementById("menuContent");
+    if (!MenuContent) return;
+    
     MenuContent.innerHTML = `
         <div id="customThemeSettings" style="margin-top: 12px; padding: 12px; border: 1px solid var(--sidebar-border, #333); border-radius: 6px; background: var(--note-bg, #222);">
             <h4 style="margin: 0 0 12px 0; color: var(--accent, #FFD600);">Custom Theme Settings</h4>
@@ -912,6 +1156,7 @@ function renderThemeSettings()
                     <select id="presetSelect" style="flex: 1;">
                         <option value="Default">Default</option>
                     </select>
+                    <button id="loadPreset" class="podawful-btn" style="padding: 4px 8px; font-size: 12px;" title="Load selected preset">Load</button>
                     <button id="deletePreset" class="podawful-btn" style="padding: 4px 8px; font-size: 12px;" title="Delete selected preset">🗑️</button>
                 </div>
             </div>
@@ -922,47 +1167,47 @@ function renderThemeSettings()
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="primaryColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Primary</label>
-                        <input type="color" id="primaryColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="primaryColor" value="#FFD600" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="backgroundColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Background</label>
-                        <input type="color" id="backgroundColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="backgroundColor" value="#1a1a1a" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="surfaceColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Surface</label>
-                        <input type="color" id="surfaceColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="surfaceColor" value="#222222" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="textColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Text</label>
-                        <input type="color" id="textColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="textColor" value="#e0e0e0" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="textSecondaryColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Text Secondary</label>
-                        <input type="color" id="textSecondaryColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="textSecondaryColor" value="#b0b0b0" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="borderColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Border</label>
-                        <input type="color" id="borderColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="borderColor" value="#333333" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="successColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Success</label>
-                        <input type="color" id="successColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="successColor" value="#4CAF50" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="warningColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Warning</label>
-                        <input type="color" id="warningColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="warningColor" value="#FF9800" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="errorColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Error</label>
-                        <input type="color" id="errorColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="errorColor" value="#F44336" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="infoColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Info</label>
-                        <input type="color" id="infoColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="infoColor" value="#2196F3" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="highlightColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Highlight</label>
-                        <input type="color" id="highlightColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="highlightColor" value="#FFD600" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                 </div>
             </div>
@@ -1042,15 +1287,15 @@ function renderThemeSettings()
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="buttonBackgroundColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Background</label>
-                        <input type="color" id="buttonBackgroundColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="buttonBackgroundColor" value="#FFD600" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="buttonTextColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Text Color</label>
-                        <input type="color" id="buttonTextColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="buttonTextColor" value="#000000" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <label for="buttonBorderColor" style="color: #e0e0e0; font-size: 12px; font-weight: 500;">Border Color</label>
-                        <input type="color" id="buttonBorderColor" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer;">
+                        <input type="color" id="buttonBorderColor" value="#FFD600" style="width: 100%; height: 36px; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #333; border-radius: 4px; border: 1px solid #555;">
                         <input type="checkbox" id="applyToMenus" style="margin: 0; width: 16px; height: 16px; accent-color: var(--accent, #FFD600);">
@@ -1088,22 +1333,26 @@ function renderThemeSettings()
             
             <!-- Action Buttons -->
             <div style="display: flex; gap: 12px; margin-top: 20px; padding: 16px; background: #2a2a2a; border-radius: 8px; border: 1px solid #444;">
-                <button id="saveTheme" class="podawful-btn" style="flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; background: var(--accent, #FFD600); color: #000; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">Save and Apply</button>
+                <button id="saveTheme" class="podawful-btn" style="flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; background: var(--accent, #FFD600); color: #000; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">Apply</button>
                 <button id="saveAsTheme" class="podawful-btn" style="flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; background: #333; color: #e0e0e0; border: 1px solid #555; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">Save As</button>
                 <button id="resetTheme" class="podawful-btn" style="flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; background: #d32f2f; color: #fff; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">Reset</button>
+            </div>
+            
+            <!-- Import/Export Buttons -->
+            <div style="display: flex; gap: 12px; margin-top: 12px; padding: 16px; background: #2a2a2a; border-radius: 8px; border: 1px solid #444;">
+                <button id="exportTheme" class="podawful-btn" style="flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; background: #4CAF50; color: #fff; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">📤 Export Theme</button>
+                <button id="importTheme" class="podawful-btn" style="flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; background: #2196F3; color: #fff; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">📥 Import Theme</button>
             </div>
         </div>
         <button class="podawful-btn" id="restoreDefaultPresets" style="margin-top: 10px;">Restore Default Presets</button>
         <button class="podawful-btn" id="backBtn">Back</button>
     `;
 
-    // Load custom theme settings by default with a small delay to ensure DOM is ready
-    setTimeout(() => {
-        loadCustomThemeSettings();
-    }, 100);
-    
-    // Load presets
+    // Load presets first
     loadPresets();
+    
+    // Setup event listeners
+    setupCustomThemeEventListeners();
 
     // Accessibility: Add aria-labels to all menu buttons
     const menuButtons = MenuContent.querySelectorAll('button');
@@ -1555,15 +1804,17 @@ function applyPresetTheme(presetName, presets) {
 }
 
 async function loadCustomThemeSettings() {
-    try {
-        // getCustomTheme, getPresetThemes, createThemeFromPreset are now statically imported
-        
-        // Load current custom theme
-        getCustomTheme((err, theme) => {
-            if (err) {
-                LogDev('Error loading custom theme: ' + err, 'error');
-                return;
-            }
+    return new Promise((resolve) => {
+        try {
+            // getCustomTheme, getPresetThemes, createThemeFromPreset are now statically imported
+            
+            // Load current custom theme
+            getCustomTheme((err, theme) => {
+                if (err) {
+                    LogDev('Error loading custom theme: ' + err, 'error');
+                    resolve();
+                    return;
+                }
             
             // Populate form fields with validation
             const setValue = (id, value, fallback = '') => {
@@ -1629,106 +1880,78 @@ async function loadCustomThemeSettings() {
             setTypographyValue('margin', parseInt(theme.spacing.margin), 'marginValue');
             setTypographyValue('borderRadius', parseInt(theme.spacing.borderRadius), 'borderRadiusValue');
             setTypographyValue('gap', parseInt(theme.spacing.gap), 'gapValue');
+            
+            LogDev('Custom theme settings loaded successfully', 'system');
+            
+            // Load the last selected preset
+            loadSelectedPreset((err, selectedPreset) => {
+                if (!err && selectedPreset) {
+                    const presetSelect = document.getElementById('presetSelect');
+                    if (presetSelect) {
+                        presetSelect.value = selectedPreset;
+                        LogDev('Loaded last selected preset: ' + selectedPreset, 'data');
+                    }
+                }
+                resolve();
+            });
         });
-        
-        // Setup event listeners
-        setupCustomThemeEventListeners();
         
     } catch (err) {
         LogDev('Error loading custom theme module: ' + err, 'error');
+        resolve();
     }
+    });
 }
 
 function setupCustomThemeEventListeners() {
-    // Preset selection
+    // Preset selection - only save selection, don't load preset
     document.getElementById('presetSelect').addEventListener('change', async (e) => {
         if (!e.target.value) return;
         
         // Save the selected preset
         saveSelectedPreset(e.target.value);
-        
-        try {
-            // getAllPresets is now statically imported
-            getAllPresets((err, presets) => {
-                if (err) {
-                    LogDev('Error loading presets: ' + err, 'error');
-                    return;
-                }
-                
-                const selectedPreset = presets.find(p => p.name === e.target.value);
-                if (!selectedPreset) {
-                    LogDev('Preset not found: ' + e.target.value, 'error');
-                    return;
-                }
-                
-                // Update all form fields
-                document.getElementById('primaryColor').value = selectedPreset.colors.primary;
-                document.getElementById('backgroundColor').value = selectedPreset.colors.background;
-                document.getElementById('surfaceColor').value = selectedPreset.colors.surface;
-                document.getElementById('textColor').value = selectedPreset.colors.text;
-                document.getElementById('textSecondaryColor').value = selectedPreset.colors.textSecondary;
-                document.getElementById('borderColor').value = selectedPreset.colors.border;
-                document.getElementById('successColor').value = selectedPreset.colors.success;
-                document.getElementById('warningColor').value = selectedPreset.colors.warning;
-                document.getElementById('errorColor').value = selectedPreset.colors.error;
-                document.getElementById('infoColor').value = selectedPreset.colors.info;
-                document.getElementById('highlightColor').value = selectedPreset.colors.highlight;
-                
-                document.getElementById('fontSize').value = parseInt(selectedPreset.typography.fontSize);
-                document.getElementById('fontSizeValue').textContent = selectedPreset.typography.fontSize;
-                document.getElementById('fontSizeSmall').value = parseInt(selectedPreset.typography.fontSizeSmall);
-                document.getElementById('fontSizeSmallValue').textContent = selectedPreset.typography.fontSizeSmall;
-                document.getElementById('fontSizeLarge').value = parseInt(selectedPreset.typography.fontSizeLarge);
-                document.getElementById('fontSizeLargeValue').textContent = selectedPreset.typography.fontSizeLarge;
-                document.getElementById('fontWeight').value = selectedPreset.typography.fontWeight;
-                document.getElementById('lineHeight').value = parseFloat(selectedPreset.typography.lineHeight);
-                document.getElementById('lineHeightValue').textContent = selectedPreset.typography.lineHeight;
-                document.getElementById('fontFamily').value = selectedPreset.typography.fontFamily;
-                
-                document.getElementById('buttonHeight').value = parseInt(selectedPreset.buttons.height);
-                document.getElementById('buttonHeightValue').textContent = selectedPreset.buttons.height;
-                document.getElementById('buttonPadding').value = parseInt(selectedPreset.buttons.padding.split(' ')[0]);
-                document.getElementById('buttonPaddingValue').textContent = selectedPreset.buttons.padding;
-                document.getElementById('buttonFontSize').value = parseInt(selectedPreset.buttons.fontSize);
-                document.getElementById('buttonFontSizeValue').textContent = selectedPreset.buttons.fontSize;
-                document.getElementById('buttonBorderRadius').value = parseInt(selectedPreset.buttons.borderRadius);
-                document.getElementById('buttonBorderRadiusValue').textContent = selectedPreset.buttons.borderRadius;
-                document.getElementById('buttonBackgroundColor').value = selectedPreset.buttons.backgroundColor;
-                document.getElementById('buttonTextColor').value = selectedPreset.buttons.textColor;
-                document.getElementById('buttonBorderColor').value = selectedPreset.buttons.borderColor;
-                document.getElementById('applyToMenus').checked = selectedPreset.buttons.applyToMenus || false;
-                
-                document.getElementById('padding').value = parseInt(selectedPreset.spacing.padding);
-                document.getElementById('paddingValue').textContent = selectedPreset.spacing.padding;
-                document.getElementById('margin').value = parseInt(selectedPreset.spacing.margin);
-                document.getElementById('marginValue').textContent = selectedPreset.spacing.margin;
-                document.getElementById('borderRadius').value = parseInt(selectedPreset.spacing.borderRadius);
-                document.getElementById('borderRadiusValue').textContent = selectedPreset.spacing.borderRadius;
-                document.getElementById('gap').value = parseInt(selectedPreset.spacing.gap);
-                document.getElementById('gapValue').textContent = selectedPreset.spacing.gap;
-                
-                // Apply the theme
-                applyCustomThemeFunction();
-            });
-        } catch (err) {
-            LogDev('Error applying preset: ' + err, 'error');
-        }
+        LogDev('Preset selected: ' + e.target.value, 'system');
     });
     
-    // Color inputs - apply theme when changed
+    // Load preset button - use the separate function
+    document.getElementById('loadPreset').addEventListener('click', loadSelectedPresetTheme);
+    
+    // Color inputs - apply theme when changed with debouncing
     const colorInputs = [
         'primaryColor', 'backgroundColor', 'surfaceColor', 'textColor', 'textSecondaryColor',
         'borderColor', 'successColor', 'warningColor', 'errorColor', 'infoColor', 'highlightColor',
         'buttonBackgroundColor', 'buttonTextColor', 'buttonBorderColor'
     ];
     
+    // Debounce function to limit theme application frequency
+    let themeUpdateTimeout;
+    const debouncedThemeUpdate = () => {
+        clearTimeout(themeUpdateTimeout);
+        themeUpdateTimeout = setTimeout(() => {
+            LogDev('Applying theme after color change', 'system');
+            applyCustomThemeFunction();
+        }, 300); // 300ms delay for better performance
+    };
+    
     colorInputs.forEach(inputId => {
         const input = document.getElementById(inputId);
         if (input) {
-            input.addEventListener('input', () => {
-                // Apply theme immediately when color changes
+            // Use 'change' event for immediate theme application (better performance)
+            input.addEventListener('change', () => {
                 LogDev('Color input changed: ' + inputId + ' = ' + input.value, 'system');
                 applyCustomThemeFunction();
+            });
+            
+            // Use 'input' event only for visual feedback (no theme application)
+            input.addEventListener('input', () => {
+                // Add a subtle visual indicator that color is being processed
+                input.style.opacity = '0.8';
+                input.style.transition = 'opacity 0.1s ease';
+                
+                // Reset opacity after a short delay
+                setTimeout(() => {
+                    input.style.opacity = '1';
+                }, 100);
             });
         }
     });
@@ -1809,27 +2032,49 @@ function setupCustomThemeEventListeners() {
     document.getElementById('saveAsTheme').addEventListener('click', saveAsCustomTheme);
     document.getElementById('saveTheme').addEventListener('click', saveAndApplyCustomTheme);
     document.getElementById('resetTheme').addEventListener('click', resetCustomThemeFunction);
+    document.getElementById('loadPreset').addEventListener('click', loadSelectedPresetTheme);
     document.getElementById('deletePreset').addEventListener('click', deleteSelectedPreset);
+    
+    // Import/Export buttons
+    document.getElementById('exportTheme').addEventListener('click', exportCurrentTheme);
+    document.getElementById('importTheme').addEventListener('click', importThemeFile);
 }
 
+// Prevent multiple simultaneous theme applications
+let isApplyingTheme = false;
+
 async function applyCustomThemeFunction() {
+    if (isApplyingTheme) {
+        LogDev('Theme application already in progress, skipping', 'system');
+        return;
+    }
+    
+    isApplyingTheme = true;
+    
     try {
         // applyCustomTheme is now statically imported
+        
+        // Helper function to safely get color value with fallback
+        const getColorValue = (id, fallback) => {
+            const element = document.getElementById(id);
+            const value = element ? element.value : fallback;
+            return value && value.match(/^#[0-9A-Fa-f]{6}$/) ? value : fallback;
+        };
         
         const theme = {
             name: 'Custom',
             colors: {
-                primary: document.getElementById('primaryColor').value,
-                background: document.getElementById('backgroundColor').value,
-                surface: document.getElementById('surfaceColor').value,
-                text: document.getElementById('textColor').value,
-                textSecondary: document.getElementById('textSecondaryColor').value,
-                border: document.getElementById('borderColor').value,
-                success: document.getElementById('successColor').value,
-                warning: document.getElementById('warningColor').value,
-                error: document.getElementById('errorColor').value,
-                info: document.getElementById('infoColor').value,
-                highlight: document.getElementById('highlightColor').value
+                primary: getColorValue('primaryColor', '#FFD600'),
+                background: getColorValue('backgroundColor', '#1a1a1a'),
+                surface: getColorValue('surfaceColor', '#222222'),
+                text: getColorValue('textColor', '#e0e0e0'),
+                textSecondary: getColorValue('textSecondaryColor', '#b0b0b0'),
+                border: getColorValue('borderColor', '#333333'),
+                success: getColorValue('successColor', '#4CAF50'),
+                warning: getColorValue('warningColor', '#FF9800'),
+                error: getColorValue('errorColor', '#F44336'),
+                info: getColorValue('infoColor', '#2196F3'),
+                highlight: getColorValue('highlightColor', '#FFD600')
             },
             typography: {
                 fontSize: document.getElementById('fontSize').value + 'px',
@@ -1850,13 +2095,21 @@ async function applyCustomThemeFunction() {
                 height: document.getElementById('buttonHeight').value + 'px',
                 padding: document.getElementById('buttonPadding').value + 'px 16px',
                 fontSize: document.getElementById('buttonFontSize').value + 'px',
-                borderRadius: document.getElementById('buttonBorderRadius').value + 'px'
+                borderRadius: document.getElementById('buttonBorderRadius').value + 'px',
+                backgroundColor: getColorValue('buttonBackgroundColor', '#FFD600'),
+                textColor: getColorValue('buttonTextColor', '#000000'),
+                borderColor: getColorValue('buttonBorderColor', '#FFD600'),
+                applyToMenus: document.getElementById('applyToMenus') ? document.getElementById('applyToMenus').checked : false
             }
         };
         
         // Apply the theme silently (no modal, no reload)
         LogDev('Applying custom theme to popup', 'system');
-        applyCustomTheme(theme);
+        try {
+            applyCustomTheme(theme);
+        } catch (err) {
+            LogDev('Error applying theme: ' + err, 'error');
+        }
         
         // Save the theme to storage so sidebar gets notified
         setCustomTheme(theme, (err) => {
@@ -1869,6 +2122,8 @@ async function applyCustomThemeFunction() {
     } catch (err) {
         LogDev('Error applying custom theme: ' + err, 'error');
         showModal('Error', 'Failed to apply theme', 'error');
+    } finally {
+        isApplyingTheme = false;
     }
 }
 
@@ -1893,67 +2148,184 @@ async function saveCustomTheme() {
     }
 }
 
-// Load all presets (built-in + custom)
+// Load all themes (built-in + custom) from JSON files
 async function loadPresets() {
     try {
-        // Load the last selected preset first
-        loadSelectedPreset((lastSelectedPreset) => {
-            // getAllPresets is now statically imported
-            getAllPresets((err, presets) => {
-                if (err) {
-                    LogDev('Error loading presets: ' + err, 'error');
-                    return;
-                }
-                
-                const presetSelect = document.getElementById('presetSelect');
-                if (!presetSelect) return;
-                
-                // Clear existing options and set Default as selected
-                presetSelect.innerHTML = '<option value="Default">Default</option>';
-                
-                // Add built-in presets
-                const builtInPresets = presets.filter(p => !p.isCustom);
-                builtInPresets.forEach(preset => {
-                    const option = document.createElement('option');
-                    option.value = preset.name;
-                    option.textContent = preset.name;
-                    presetSelect.appendChild(option);
-                });
-                
-                // Add custom presets with a separator
-                const customPresets = presets.filter(p => p.isCustom);
-                if (customPresets.length > 0) {
-                    const separator = document.createElement('option');
-                    separator.disabled = true;
-                    separator.textContent = '--- Custom Presets ---';
-                    presetSelect.appendChild(separator);
-                    
-                    customPresets.forEach(preset => {
-                        const option = document.createElement('option');
-                        option.value = preset.name;
-                        option.textContent = preset.name;
-                        presetSelect.appendChild(option);
-                    });
-                }
-                
-                // Set the last selected preset, or Default if not found
-                const availablePresets = ['Default', ...builtInPresets.map(p => p.name), ...customPresets.map(p => p.name)];
-                if (availablePresets.includes(lastSelectedPreset)) {
-                    presetSelect.value = lastSelectedPreset;
-                    // Apply the theme when loading the saved preset
-                    applyPresetTheme(lastSelectedPreset, presets);
-                } else {
-                    presetSelect.value = 'Default';
-                    // Apply Default theme
-                    applyPresetTheme('Default', presets);
-                }
-            });
+        LogDev('Loading themes from JSON files...', 'system');
+        
+        // Load all themes using the new theme manager
+        const themes = await loadAllThemes();
+        
+        const presetSelect = document.getElementById('presetSelect');
+        if (!presetSelect) return;
+        
+        // Clear existing options
+        presetSelect.innerHTML = '';
+        
+        // Add themes to dropdown
+        themes.forEach(theme => {
+            const option = document.createElement('option');
+            option.value = theme.name;
+            option.textContent = theme.name;
+            presetSelect.appendChild(option);
         });
+        
+        // Set default selection
+        presetSelect.value = 'Default';
+        
+        LogDev(`Themes loaded: ${themes.length}`, 'system');
     } catch (err) {
-        LogDev('Error loading presets: ' + err, 'error');
+        LogDev('Error loading themes: ' + err, 'error');
+        showModal('Error', 'Failed to load themes', 'error');
     }
 }
 
+// Export current theme as JSON file
+async function exportCurrentTheme() {
+    try {
+        LogDev('Exporting current theme...', 'system');
+        
+        const theme = getCurrentThemeFromForm();
+        downloadTheme(theme);
+        
+        showModal('Success', `Theme "${theme.name}" exported successfully!`, 'success');
+    } catch (err) {
+        LogDev('Error exporting theme: ' + err, 'error');
+        showModal('Error', 'Failed to export theme', 'error');
+    }
+}
+
+// Import theme from JSON file
+async function importThemeFile() {
+    try {
+        LogDev('Importing theme file...', 'system');
+        
+        // Create file input
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.style.display = 'none';
+        
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            try {
+                const text = await file.text();
+                const theme = importTheme(text);
+                
+                // Load the imported theme into the form
+                loadThemeIntoForm(theme);
+                
+                // Apply the theme
+                applyCustomTheme(theme);
+                
+                showModal('Success', `Theme "${theme.name}" imported successfully!`, 'success');
+            } catch (err) {
+                LogDev('Error importing theme: ' + err, 'error');
+                showModal('Error', 'Invalid theme file: ' + err.message, 'error');
+            }
+            
+            // Clean up
+            document.body.removeChild(input);
+        };
+        
+        document.body.appendChild(input);
+        input.click();
+    } catch (err) {
+        LogDev('Error setting up theme import: ' + err, 'error');
+        showModal('Error', 'Failed to import theme', 'error');
+    }
+}
+
+// Load theme into form fields
+function loadThemeIntoForm(theme) {
+    try {
+        LogDev('Loading theme into form: ' + theme.name, 'system');
+        
+        // Helper function to set value safely
+        const setValue = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.value = value;
+            }
+        };
+        
+        // Set color values
+        setValue('primaryColor', theme.colors.primary);
+        setValue('backgroundColor', theme.colors.background);
+        setValue('surfaceColor', theme.colors.surface);
+        setValue('textColor', theme.colors.text);
+        setValue('textSecondaryColor', theme.colors.textSecondary);
+        setValue('borderColor', theme.colors.border);
+        setValue('successColor', theme.colors.success);
+        setValue('warningColor', theme.colors.warning);
+        setValue('errorColor', theme.colors.error);
+        setValue('infoColor', theme.colors.info);
+        setValue('highlightColor', theme.colors.highlight);
+        
+        // Set typography values
+        setValue('fontSize', parseInt(theme.typography.fontSize));
+        setValue('fontSizeSmall', parseInt(theme.typography.fontSizeSmall));
+        setValue('fontSizeLarge', parseInt(theme.typography.fontSizeLarge));
+        setValue('fontWeight', theme.typography.fontWeight);
+        setValue('lineHeight', parseFloat(theme.typography.lineHeight));
+        setValue('fontFamily', theme.typography.fontFamily);
+        
+        // Set button values
+        setValue('buttonHeight', parseInt(theme.buttons.height));
+        setValue('buttonPadding', parseInt(theme.buttons.padding.split(' ')[0]));
+        setValue('buttonFontSize', parseInt(theme.buttons.fontSize));
+        setValue('buttonBorderRadius', parseInt(theme.buttons.borderRadius));
+        setValue('buttonBackgroundColor', theme.buttons.backgroundColor);
+        setValue('buttonTextColor', theme.buttons.textColor);
+        setValue('buttonBorderColor', theme.buttons.borderColor);
+        
+        // Set spacing values
+        setValue('padding', parseInt(theme.spacing.padding));
+        setValue('margin', parseInt(theme.spacing.margin));
+        setValue('borderRadius', parseInt(theme.spacing.borderRadius));
+        setValue('gap', parseInt(theme.spacing.gap));
+        
+        // Set apply to menus checkbox
+        const applyToMenusElement = document.getElementById('applyToMenus');
+        if (applyToMenusElement) {
+            applyToMenusElement.checked = theme.buttons.applyToMenus || false;
+        }
+        
+        // Update display values
+        updateDisplayValues();
+        
+        LogDev('Theme loaded into form successfully', 'system');
+    } catch (err) {
+        LogDev('Error loading theme into form: ' + err, 'error');
+        throw err;
+    }
+}
+
+// Update display values for sliders
+function updateDisplayValues() {
+    const updateValue = (id, valueId) => {
+        const element = document.getElementById(id);
+        const valueElement = document.getElementById(valueId);
+        if (element && valueElement) {
+            valueElement.textContent = element.value + (id.includes('Size') || id.includes('Height') || id.includes('Padding') || id.includes('Radius') || id.includes('Gap') ? 'px' : '');
+        }
+    };
+    
+    updateValue('fontSize', 'fontSizeValue');
+    updateValue('fontSizeSmall', 'fontSizeSmallValue');
+    updateValue('fontSizeLarge', 'fontSizeLargeValue');
+    updateValue('lineHeight', 'lineHeightValue');
+    updateValue('buttonHeight', 'buttonHeightValue');
+    updateValue('buttonPadding', 'buttonPaddingValue');
+    updateValue('buttonFontSize', 'buttonFontSizeValue');
+    updateValue('buttonBorderRadius', 'buttonBorderRadiusValue');
+    updateValue('padding', 'paddingValue');
+    updateValue('margin', 'marginValue');
+    updateValue('borderRadius', 'borderRadiusValue');
+    updateValue('gap', 'gapValue');
+}
 
 // Get current theme from form
 function getCurrentThemeFromForm() {

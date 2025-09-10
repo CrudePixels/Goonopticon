@@ -549,5 +549,5 @@ body.popup.custom-theme .podawful-modal-box {
 }
 
 body.popup.custom-theme .podawful-modal-box h3 {
-    color: var(--custom-primary);
+    color: var(--custom-text);
 }

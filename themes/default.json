@@ -1,0 +1,41 @@
+{
+  "name": "Default",
+  "colors": {
+    "primary": "#FFD600",
+    "background": "#0f0f0f",
+    "surface": "#1a1a1a",
+    "text": "#e0e0e0",
+    "textSecondary": "#b0b0b0",
+    "border": "#333333",
+    "success": "#4CAF50",
+    "warning": "#FF9800",
+    "error": "#F44336",
+    "info": "#2196F3",
+    "highlight": "#FFD600"
+  },
+  "typography": {
+    "fontSize": "14px",
+    "fontSizeSmall": "12px",
+    "fontSizeLarge": "16px",
+    "fontWeight": "400",
+    "fontWeightBold": "600",
+    "lineHeight": "1.4",
+    "fontFamily": "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif"
+  },
+  "spacing": {
+    "padding": "12px",
+    "margin": "8px",
+    "borderRadius": "6px",
+    "gap": "8px"
+  },
+  "buttons": {
+    "height": "40px",
+    "padding": "8px 16px",
+    "fontSize": "14px",
+    "borderRadius": "6px",
+    "backgroundColor": "#FFD600",
+    "textColor": "#000000",
+    "borderColor": "#FFD600",
+    "applyToMenus": true
+  }
+}

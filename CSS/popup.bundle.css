@@ -67,7 +67,7 @@ body.popup.custom-theme .popup-header {
 
 /* Custom theme overrides for popup title */
 body.popup.custom-theme .popup-header h2 {
-    color: var(--custom-primary, var(--accent, #FFD600));
+    color: var(--custom-text, var(--primary-fg, #222));
 }
 
 /* Custom theme overrides for popup buttons */
@@ -133,7 +133,7 @@ body.popup.custom-theme .add-timestamp-btn:focus {
 
 /* Custom theme overrides for popup menu title */
 body.popup.custom-theme .popup-menu-title {
-    color: var(--custom-primary, var(--accent, #FFD600));
+    color: var(--custom-text, var(--primary-fg, #222));
     background: var(--custom-background, var(--primary-bg, #fff));
     border-bottom: 1px solid var(--custom-border, var(--border, #ccc));
 }
@@ -146,7 +146,7 @@ body.popup.custom-theme .popup-footer {
 }
 
 body.popup.custom-theme .version-display {
-    color: var(--custom-primary, var(--accent, #FFD600));
+    color: var(--custom-text, var(--primary-fg, #222));
 }
 
 /* Custom theme overrides for popup modal content */
@@ -175,7 +175,63 @@ body.popup.custom-theme .update-badge:hover {
     background: var(--custom-primary, var(--accent-hover, #FFE066));
 }
 
-/* Apply to Extension Menus overrides */
+/* Universal button override for custom theme - highest specificity */
+body.popup.custom-theme button,
+body.popup.custom-theme input[type="button"],
+body.popup.custom-theme input[type="submit"],
+body.popup.custom-theme .btn {
+    background-color: var(--custom-buttonBackgroundColor) !important;
+    color: var(--custom-buttonTextColor) !important;
+    border-color: var(--custom-buttonBorderColor) !important;
+    border-radius: var(--custom-buttonBorderRadius) !important;
+    font-size: var(--custom-buttonFontSize) !important;
+    height: var(--custom-buttonHeight) !important;
+    padding: var(--custom-buttonPadding) !important;
+}
+
+body.popup.custom-theme button:hover,
+body.popup.custom-theme input[type="button"]:hover,
+body.popup.custom-theme input[type="submit"]:hover,
+body.popup.custom-theme .btn:hover {
+    background-color: var(--custom-primary) !important;
+    color: var(--custom-buttonTextColor) !important;
+    opacity: 0.8 !important;
+}
+
+body.popup.custom-theme button:focus,
+body.popup.custom-theme input[type="button"]:focus,
+body.popup.custom-theme input[type="submit"]:focus,
+body.popup.custom-theme .btn:focus {
+    outline: 2px solid var(--custom-primary) !important;
+    outline-offset: 2px !important;
+}
+
+/* Override inline styles with hardcoded fallbacks - highest specificity */
+body.popup.custom-theme h4,
+body.popup.custom-theme h5,
+body.popup.custom-theme span[id$="Value"],
+body.popup.custom-theme input[type="checkbox"] {
+    color: var(--custom-text) !important;
+}
+
+body.popup.custom-theme input[type="checkbox"] {
+    accent-color: var(--custom-primary) !important;
+}
+
+/* Override modal titles and buttons */
+body.popup.custom-theme #popupModal h3,
+body.popup.custom-theme #popupInputModal h3 {
+    color: var(--custom-text) !important;
+}
+
+body.popup.custom-theme #popupModal .podawful-btn,
+body.popup.custom-theme #popupInputModal .podawful-btn {
+    background-color: var(--custom-buttonBackgroundColor) !important;
+    color: var(--custom-buttonTextColor) !important;
+    border-color: var(--custom-buttonBorderColor) !important;
+}
+
+/* Apply to Extension Menus overrides - with higher specificity */
 body.popup.custom-theme.apply-to-menus .podawful-btn,
 body.popup.custom-theme.apply-to-menus .popup-menu-btn,
 body.popup.custom-theme.apply-to-menus .sidebar-action-btn,
@@ -189,7 +245,12 @@ body.popup.custom-theme.apply-to-menus .note-copy-btn,
 body.popup.custom-theme.apply-to-menus .group-action-btn,
 body.popup.custom-theme.apply-to-menus .group-edit-btn,
 body.popup.custom-theme.apply-to-menus .group-delete-btn,
-body.popup.custom-theme.apply-to-menus .add-timestamp-btn {
+body.popup.custom-theme.apply-to-menus .add-timestamp-btn,
+/* Additional selectors for all possible button elements */
+body.popup.custom-theme.apply-to-menus button,
+body.popup.custom-theme.apply-to-menus input[type="button"],
+body.popup.custom-theme.apply-to-menus input[type="submit"],
+body.popup.custom-theme.apply-to-menus .btn {
     background-color: var(--custom-buttonBackgroundColor) !important;
     color: var(--custom-buttonTextColor) !important;
     border-color: var(--custom-buttonBorderColor) !important;

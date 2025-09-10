@@ -5,13 +5,13 @@ import { GetNotes } from './storage.js';
 import * as browser from 'webextension-polyfill';
 import { LogDev } from '../log.js';
 import { normalizeYouTubeUrl } from '../utils.js';
-import { showInputModal, showConfirmModal } from './modal.js';
-console.log('SANITY CHECK - browser:', browser);
-console.log('SANITY CHECK - LogDev:', LogDev);
+import { showInputModal, showConfirmModal, showChoiceModal, showTwoChoiceModal } from './modal.js';
 
 // Set up global modal functions
 window.showInputModal = showInputModal;
 window.showConfirmModal = showConfirmModal;
+window.showChoiceModal = showChoiceModal;
+window.showTwoChoiceModal = showTwoChoiceModal;
 
 // Suppress 'SendMessage failed: Extension context invalidated' errors globally
 window.addEventListener('error', function (event) {
@@ -21,38 +21,50 @@ window.addEventListener('error', function (event) {
   }
 });
 
-export default function initSidebar()
+export default async function initSidebar()
 {
-    // Load both regular theme and custom theme
-    Promise.all([
-        browser.storage.local.get('PodAwful::Theme'),
-        browser.storage.local.get('PodAwful::CustomTheme')
-    ]).then(([themeResult, customThemeResult]) => {
+    try {
+        // Load both regular theme and custom theme
+        const [themeResult, customThemeResult] = await Promise.all([
+            browser.storage.local.get('PodAwful::Theme'),
+            browser.storage.local.get('PodAwful::CustomTheme')
+        ]);
+        
         const theme = themeResult['PodAwful::Theme'] || 'default';
         const customTheme = customThemeResult['PodAwful::CustomTheme'];
         
-        // Apply regular theme first
-        applyTheme(theme);
+        // Apply the theme (this will handle both preset and custom themes)
+        LogDev('Applying theme on sidebar init: ' + theme, 'system');
+        await applyTheme(theme);
         
-        // Apply custom theme if it exists
+        // If there's a custom theme in storage, apply it (this overrides preset themes)
         if (customTheme) {
-            LogDev('Loading custom theme on sidebar init', 'system');
+            LogDev('Loading custom theme on sidebar init: ' + JSON.stringify(customTheme), 'system');
             applyCustomTheme(customTheme);
+        } else {
+            LogDev('No custom theme found in storage, using preset theme', 'system');
         }
 
-        if (document.getElementById('podawful-sidebar'))
-        {
-            return;
-        }
-        const sidebar = document.createElement('div');
-        sidebar.id = 'podawful-sidebar';
-        sidebar.className = 'podawful-sidebar';
-        document.body.appendChild(sidebar);
-        sidebar.classList.remove('sidebar-hide');
-        sidebar.style.display = '';
-        document.body.classList.add('sidebar-visible');
-        renderSidebar(sidebar);
-    });
+        // Wait a moment for theme to be applied before creating sidebar
+        requestAnimationFrame(() => {
+            if (document.getElementById('podawful-sidebar'))
+            {
+                return;
+            }
+            const sidebar = document.createElement('div');
+            sidebar.id = 'podawful-sidebar';
+            sidebar.className = 'podawful-sidebar';
+            document.body.appendChild(sidebar);
+            sidebar.classList.remove('sidebar-hide');
+            sidebar.style.display = '';
+            document.body.classList.add('sidebar-visible');
+            renderSidebar(sidebar);
+        });
+    } catch (err) {
+        LogDev('Error initializing sidebar theme: ' + err, 'error');
+        // Fallback to default theme
+        await applyTheme('default');
+    }
 }
 
 // Listen for theme and sidebar visibility changes

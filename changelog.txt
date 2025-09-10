@@ -1,10 +1,21 @@
-Version 2.0.6 (2025-01-08)
-- Partial theme system improvements
-- Added custom theme variable overrides for sidebar buttons
-- Fixed theme submenu to load current custom theme values
-- Added CSS overrides for hardcoded #FFD600 values in popup
-- Improved theme persistence and form loading
-- Note: Some theme issues remain and will be addressed in future updates
+Version 2.0.7 (2025-01-08)
+- MAJOR: Complete theme system overhaul with proper color mapping
+- Fixed primary color incorrectly affecting text elements (now only affects accents)
+- Fixed text color not affecting text content properly
+- Renamed button "Icon Color" back to "Text Color" for clarity
+- Made text secondary color affect note text content in sidebar
+- Improved theme persistence across page reloads and navigation
+- Enhanced preset theme loading from JSON files
+- Added comprehensive theme variable mapping for better compatibility
+- Implemented missing export/import all notes functionality
+- Replaced console.log statements with LogDev for consistent logging
+- Removed debug console.log statements from main.js
+- Optimized setTimeout usage with requestAnimationFrame for better performance
+- Added getAllNotes() and setAllNotes() functions to storage layer
+- Fixed webpack build warnings and improved bundle optimization
+- Enhanced error handling and logging throughout the extension
+- Improved code organization and removed unused imports
+- Better separation of concerns in theme application logic
 
 Version 2.0.5 (2025-01-08)
 - Fixed webpack bundling errors that caused "is not a function" runtime errors

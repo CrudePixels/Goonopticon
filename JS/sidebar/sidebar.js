@@ -249,12 +249,60 @@ export function renderSidebar(Container, overrideSelectedTags, forceHeaderRerend
                 input.click();
             }
             async function onExportAll() {
-                // TODO: Implement export all notes functionality
-                showSidebarError('Export all notes functionality is not yet implemented.');
+                try {
+                    const allNotes = await getAllNotes();
+                    const allGroups = await getGroups();
+                    
+                    const exportData = {
+                        notes: allNotes,
+                        groups: allGroups,
+                        exportDate: new Date().toISOString(),
+                        version: '2.0.6'
+                    };
+                    
+                    const dataStr = JSON.stringify(exportData, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `podawful-notes-export-${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+                    
+                    showSidebarError('All notes exported successfully!');
+                } catch (err) {
+                    LogDev('Error exporting all notes: ' + err, 'error');
+                    showSidebarError('Failed to export all notes.');
+                }
             }
             async function onImportAll() {
-                // TODO: Implement import all notes functionality
-                showSidebarError('Import all notes functionality is not yet implemented.');
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    try {
+                        const text = await file.text();
+                        const data = JSON.parse(text);
+                        
+                        if (data.notes && data.groups) {
+                            await setAllNotes(data.notes);
+                            await setGroups(data.groups);
+                            showSidebarError('All notes imported successfully!');
+                            renderSidebar(document.getElementById('podawful-sidebar'));
+                        } else {
+                            showSidebarError('Invalid export file format.');
+                        }
+                    } catch (err) {
+                        LogDev('Error importing all notes: ' + err, 'error');
+                        showSidebarError('Failed to import notes. Invalid file format.');
+                    }
+                };
+                input.click();
             }
 
             async function onClearAll() {

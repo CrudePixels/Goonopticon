@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     entry: {
@@ -39,6 +40,14 @@ module.exports = {
     plugins: [
         new (require('webpack').optimize.LimitChunkCountPlugin)({
             maxChunks: 1
+        }),
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: 'themes',
+                    to: 'themes'
+                }
+            ]
         })
     ],
     module: {

@@ -39,7 +39,8 @@ const DEFAULT_CUSTOM_THEME = {
         borderRadius: '6px',     // Button border radius
         backgroundColor: '#FFD600', // Button background color
         textColor: '#000000',    // Button text color
-        borderColor: '#FFD600'   // Button border color
+        borderColor: '#FFD600',  // Button border color
+        applyToMenus: true       // Apply theme to extension menus
     }
 };
 
@@ -138,6 +139,24 @@ export function applyCustomTheme(theme) {
         }
     });
     
+    // Also set the old --accent variable for backward compatibility
+    const primaryColor = mergedTheme.colors.primary;
+    if (primaryColor && typeof primaryColor === 'string' && primaryColor.match(/^#[0-9A-Fa-f]{6}$/)) {
+        root.style.setProperty('--accent', primaryColor);
+        LogDev(`Set --accent to: ${primaryColor}`, 'system');
+    } else {
+        root.style.setProperty('--accent', '#FFD600');
+        LogDev(`Set --accent to fallback: #FFD600`, 'system');
+    }
+    
+    // Debug: Log all CSS variables being set
+    LogDev(`CSS Variables set on root:`, 'system');
+    LogDev(`--accent: ${root.style.getPropertyValue('--accent')}`, 'system');
+    LogDev(`--custom-primary: ${root.style.getPropertyValue('--custom-primary')}`, 'system');
+    LogDev(`--custom-buttonBackgroundColor: ${root.style.getPropertyValue('--custom-buttonBackgroundColor')}`, 'system');
+    LogDev(`--custom-buttonTextColor: ${root.style.getPropertyValue('--custom-buttonTextColor')}`, 'system');
+    LogDev(`--custom-buttonBorderColor: ${root.style.getPropertyValue('--custom-buttonBorderColor')}`, 'system');
+    
     // Typography with validation
     Object.entries(mergedTheme.typography).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -158,6 +177,26 @@ export function applyCustomTheme(theme) {
             root.style.setProperty(`--custom-${key}`, value);
         }
     });
+    
+    // Also set old button variables for backward compatibility
+    if (mergedTheme.buttons.backgroundColor) {
+        root.style.setProperty('--button-bg', mergedTheme.buttons.backgroundColor);
+        root.style.setProperty('--custom-buttonBackgroundColor', mergedTheme.buttons.backgroundColor);
+        root.style.setProperty('--button-background-color', mergedTheme.buttons.backgroundColor);
+        LogDev(`Set button background variables to: ${mergedTheme.buttons.backgroundColor}`, 'system');
+    }
+    if (mergedTheme.buttons.textColor) {
+        root.style.setProperty('--button-fg', mergedTheme.buttons.textColor);
+        root.style.setProperty('--custom-buttonTextColor', mergedTheme.buttons.textColor);
+        root.style.setProperty('--button-text-color', mergedTheme.buttons.textColor);
+        LogDev(`Set button text variables to: ${mergedTheme.buttons.textColor}`, 'system');
+    }
+    if (mergedTheme.buttons.borderColor) {
+        root.style.setProperty('--button-border', mergedTheme.buttons.borderColor);
+        root.style.setProperty('--custom-buttonBorderColor', mergedTheme.buttons.borderColor);
+        root.style.setProperty('--button-border-color', mergedTheme.buttons.borderColor);
+        LogDev(`Set button border variables to: ${mergedTheme.buttons.borderColor}`, 'system');
+    }
 
     // Add custom theme class to body and html
     document.body.classList.add('custom-theme');
@@ -195,6 +234,34 @@ export function applyCustomTheme(theme) {
                 sidebar.style.setProperty(`--custom-${key}`, value);
             }
         });
+        
+        // Also set old button variables on sidebar for backward compatibility
+        if (mergedTheme.buttons.backgroundColor) {
+            sidebar.style.setProperty('--button-bg', mergedTheme.buttons.backgroundColor);
+            sidebar.style.setProperty('--custom-buttonBackgroundColor', mergedTheme.buttons.backgroundColor);
+            sidebar.style.setProperty('--button-background-color', mergedTheme.buttons.backgroundColor);
+        }
+        if (mergedTheme.buttons.textColor) {
+            sidebar.style.setProperty('--button-fg', mergedTheme.buttons.textColor);
+            sidebar.style.setProperty('--custom-buttonTextColor', mergedTheme.buttons.textColor);
+            sidebar.style.setProperty('--button-text-color', mergedTheme.buttons.textColor);
+        }
+        if (mergedTheme.buttons.borderColor) {
+            sidebar.style.setProperty('--button-border', mergedTheme.buttons.borderColor);
+            sidebar.style.setProperty('--custom-buttonBorderColor', mergedTheme.buttons.borderColor);
+            sidebar.style.setProperty('--button-border-color', mergedTheme.buttons.borderColor);
+        }
+        if (mergedTheme.colors.primary) {
+            sidebar.style.setProperty('--accent', mergedTheme.colors.primary);
+        }
+        
+        // Debug: Log all CSS variables being set on sidebar
+        LogDev(`CSS Variables set on sidebar:`, 'system');
+        LogDev(`--accent: ${sidebar.style.getPropertyValue('--accent')}`, 'system');
+        LogDev(`--custom-primary: ${sidebar.style.getPropertyValue('--custom-primary')}`, 'system');
+        LogDev(`--custom-buttonBackgroundColor: ${sidebar.style.getPropertyValue('--custom-buttonBackgroundColor')}`, 'system');
+        LogDev(`--custom-buttonTextColor: ${sidebar.style.getPropertyValue('--custom-buttonTextColor')}`, 'system');
+        LogDev(`--custom-buttonBorderColor: ${sidebar.style.getPropertyValue('--custom-buttonBorderColor')}`, 'system');
     }
     
     // Add apply-to-menus class if enabled
@@ -210,6 +277,32 @@ export function applyCustomTheme(theme) {
         if (sidebar) {
             sidebar.classList.remove('apply-to-menus');
         }
+    }
+    
+    // Also set CSS variables on body for better inheritance
+    if (mergedTheme.colors.primary) {
+        document.body.style.setProperty('--accent', mergedTheme.colors.primary);
+        LogDev(`Set --accent on body to: ${mergedTheme.colors.primary}`, 'system');
+    }
+    
+    // Set button variables on body as well
+    if (mergedTheme.buttons.backgroundColor) {
+        document.body.style.setProperty('--button-bg', mergedTheme.buttons.backgroundColor);
+        document.body.style.setProperty('--custom-buttonBackgroundColor', mergedTheme.buttons.backgroundColor);
+        document.body.style.setProperty('--button-background-color', mergedTheme.buttons.backgroundColor);
+        LogDev(`Set button background variables on body to: ${mergedTheme.buttons.backgroundColor}`, 'system');
+    }
+    if (mergedTheme.buttons.textColor) {
+        document.body.style.setProperty('--button-fg', mergedTheme.buttons.textColor);
+        document.body.style.setProperty('--custom-buttonTextColor', mergedTheme.buttons.textColor);
+        document.body.style.setProperty('--button-text-color', mergedTheme.buttons.textColor);
+        LogDev(`Set button text variables on body to: ${mergedTheme.buttons.textColor}`, 'system');
+    }
+    if (mergedTheme.buttons.borderColor) {
+        document.body.style.setProperty('--button-border', mergedTheme.buttons.borderColor);
+        document.body.style.setProperty('--custom-buttonBorderColor', mergedTheme.buttons.borderColor);
+        document.body.style.setProperty('--button-border-color', mergedTheme.buttons.borderColor);
+        LogDev(`Set button border variables on body to: ${mergedTheme.buttons.borderColor}`, 'system');
     }
     
     LogDev('Custom theme applied successfully', 'render');
@@ -412,7 +505,8 @@ export function getPresetThemes() {
                 borderRadius: '6px',
                 backgroundColor: '#FFD600',
                 textColor: '#000000',
-                borderColor: '#FFD600'
+                borderColor: '#FFD600',
+                applyToMenus: true
             }
         },
         {
@@ -452,7 +546,8 @@ export function getPresetThemes() {
                 borderRadius: '6px',
                 backgroundColor: '#1976d2',
                 textColor: '#ffffff',
-                borderColor: '#1976d2'
+                borderColor: '#1976d2',
+                applyToMenus: true
             }
         },
         {
@@ -492,7 +587,8 @@ export function getPresetThemes() {
                 borderRadius: '6px',
                 backgroundColor: '#FFD600',
                 textColor: '#000000',
-                borderColor: '#FFD600'
+                borderColor: '#FFD600',
+                applyToMenus: true
             }
         },
         {
@@ -532,7 +628,8 @@ export function getPresetThemes() {
                 borderRadius: '6px',
                 backgroundColor: '#DC2626',
                 textColor: '#ffffff',
-                borderColor: '#DC2626'
+                borderColor: '#DC2626',
+                applyToMenus: true
             }
         },
         {
@@ -572,7 +669,8 @@ export function getPresetThemes() {
                 borderRadius: '6px',
                 backgroundColor: '#1e40af',
                 textColor: '#ffffff',
-                borderColor: '#1e40af'
+                borderColor: '#1e40af',
+                applyToMenus: true
             }
         },
         {
@@ -612,7 +710,8 @@ export function getPresetThemes() {
                 borderRadius: '6px',
                 backgroundColor: '#16a34a',
                 textColor: '#ffffff',
-                borderColor: '#16a34a'
+                borderColor: '#16a34a',
+                applyToMenus: true
             }
         }
     ];

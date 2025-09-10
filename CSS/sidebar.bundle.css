@@ -59,6 +59,7 @@ html.custom-theme {
 #podawful-sidebar.custom-theme {
     --sidebar-bg: var(--custom-background);
     --note-bg: var(--custom-surface);
+    --note-fg: var(--custom-textSecondary);
     --sidebar-fg: var(--custom-text);
     --sidebar-border: var(--custom-border);
     --success: var(--custom-success);
@@ -135,7 +136,64 @@ html.custom-theme {
 #podawful-sidebar.custom-theme .group-title,
 #podawful-sidebar.custom-theme .note-timestamp,
 #podawful-sidebar.custom-theme .sidebar-footer .sidebar-visit-link {
+    color: var(--custom-text) !important;
+}
+
+/* Universal button override for sidebar - highest specificity */
+#podawful-sidebar.custom-theme button,
+#podawful-sidebar.custom-theme input[type="button"],
+#podawful-sidebar.custom-theme input[type="submit"],
+#podawful-sidebar.custom-theme .btn {
+    background-color: var(--custom-buttonBackgroundColor) !important;
+    color: var(--custom-buttonTextColor) !important;
+    border-color: var(--custom-buttonBorderColor) !important;
+    border-radius: var(--custom-buttonBorderRadius) !important;
+    font-size: var(--custom-buttonFontSize) !important;
+    height: var(--custom-buttonHeight) !important;
+    padding: var(--custom-buttonPadding) !important;
+}
+
+#podawful-sidebar.custom-theme button:hover,
+#podawful-sidebar.custom-theme input[type="button"]:hover,
+#podawful-sidebar.custom-theme input[type="submit"]:hover,
+#podawful-sidebar.custom-theme .btn:hover {
+    background-color: var(--custom-primary) !important;
+    color: var(--custom-buttonTextColor) !important;
+    opacity: 0.8 !important;
+}
+
+#podawful-sidebar.custom-theme button:focus,
+#podawful-sidebar.custom-theme input[type="button"]:focus,
+#podawful-sidebar.custom-theme input[type="submit"]:focus,
+#podawful-sidebar.custom-theme .btn:focus {
+    outline: 2px solid var(--custom-primary) !important;
+    outline-offset: 2px !important;
+}
+
+/* Override inline styles with hardcoded fallbacks in sidebar components */
+#podawful-sidebar.custom-theme .group-status-msg,
+#podawful-sidebar.custom-theme .note-status-msg {
+    color: var(--custom-text) !important;
+}
+
+#podawful-sidebar.custom-theme .group-dropzone-outer {
+    border-top: 2px dashed var(--custom-primary) !important;
+    background: rgba(255, 214, 0, 0.15) !important;
+}
+
+#podawful-sidebar.custom-theme .group-dropzone-outer.drag-over {
+    background: rgba(255, 214, 0, 0.35) !important;
+}
+
+#podawful-sidebar.custom-theme .sidebar__podawful-link {
     color: var(--custom-primary) !important;
+    border: 1.5px solid var(--custom-primary) !important;
+    background-color: rgba(255, 214, 0, 0.08) !important;
+}
+
+#podawful-sidebar.custom-theme .sidebar__podawful-link:hover {
+    background-color: var(--custom-primary) !important;
+    color: var(--custom-background) !important;
 }
 
 /* For popup context, apply theme to body and html but only affect extension elements */
@@ -152,6 +210,9 @@ html.custom-theme {
     --custom-error: #F44336;
     --custom-info: #2196F3;
     --custom-highlight: #FFD600;
+    
+    /* Map note text color to text secondary */
+    --note-fg: var(--custom-textSecondary);
     
     --custom-fontSize: 14px;
     --custom-fontSizeSmall: 12px;
@@ -365,9 +426,9 @@ html.apply-to-menus button.podawful-btn:hover {
 /* === ACTION BUTTONS === */
 .sidebar__action-btn
 {
-    background: var(--button-bg, #333);
-    color: var(--button-fg, #fff);
-    border: 1px solid var(--button-border, #444);
+    background: var(--custom-buttonBackgroundColor, var(--button-bg, #333));
+    color: var(--custom-buttonTextColor, var(--button-fg, #fff));
+    border: 1px solid var(--custom-buttonBorderColor, var(--button-border, #444));
     border-radius: 8px;
     font-size: 13px;
     font-weight: 500;
@@ -394,11 +455,12 @@ html.apply-to-menus button.podawful-btn:hover {
 
     .sidebar__action-btn:hover
     {
-        background: var(--button-hover-bg, #444);
-        color: var(--button-hover-fg, #FFD600);
-        border-color: var(--accent, #FFD600);
+        background: var(--custom-buttonBackgroundColor, var(--button-hover-bg, #444));
+        color: var(--custom-buttonTextColor, var(--button-hover-fg, #FFD600));
+        border-color: var(--custom-buttonBorderColor, var(--accent, #FFD600));
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        opacity: 0.8;
     }
 
     .sidebar__action-btn:active
@@ -1537,8 +1599,8 @@ body:not(.sidebar-visible) {
 
 /* === TAG MANAGER BUTTON === */
 .sidebar__tag-manager-btn {
-    background: var(--accent, #FFD600);
-    color: var(--button-fg, #1a1a1a);
+    background: var(--custom-buttonBackgroundColor, var(--accent, #FFD600));
+    color: var(--custom-buttonTextColor, var(--button-fg, #1a1a1a));
     border: none;
     border-radius: 6px;
     font-size: 12px;
@@ -1551,10 +1613,11 @@ body:not(.sidebar-visible) {
 
 .sidebar__tag-manager-btn:hover,
 .sidebar__tag-manager-btn:focus {
-    background: var(--button-hover-bg, #444);
-    color: var(--button-hover-fg, #FFD600);
-    border: 1px solid var(--accent, #FFD600);
+    background: var(--custom-buttonBackgroundColor, var(--button-hover-bg, #444));
+    color: var(--custom-buttonTextColor, var(--button-hover-fg, #FFD600));
+    border: 1px solid var(--custom-buttonBorderColor, var(--accent, #FFD600));
     transform: translateY(-1px);
+    opacity: 0.8;
 }
 
 /* === MODAL STYLING === */
@@ -1621,9 +1684,9 @@ body:not(.sidebar-visible) {
 }
 
 .podawful-modal-box .podawful-btn {
-    background: var(--button-bg, #333);
-    color: var(--button-fg, #e0e0e0);
-    border: 1px solid var(--button-border, #444);
+    background: var(--custom-buttonBackgroundColor, var(--button-bg, #333));
+    color: var(--custom-buttonTextColor, var(--button-fg, #e0e0e0));
+    border: 1px solid var(--custom-buttonBorderColor, var(--button-border, #444));
     border-radius: 6px;
     font-size: 13px;
     font-weight: 500;
@@ -1634,21 +1697,23 @@ body:not(.sidebar-visible) {
 }
 
 .podawful-modal-box .podawful-btn:hover {
-    background: var(--button-hover-bg, #444);
-    color: var(--button-hover-fg, #FFD600);
-    border-color: var(--accent, #FFD600);
+    background: var(--custom-buttonBackgroundColor, var(--button-hover-bg, #444));
+    color: var(--custom-buttonTextColor, var(--button-hover-fg, #FFD600));
+    border-color: var(--custom-buttonBorderColor, var(--accent, #FFD600));
+    opacity: 0.8;
 }
 
 .podawful-modal-box .podawful-btn:last-child {
-    background: var(--accent, #FFD600);
-    color: var(--button-fg, #1a1a1a);
-    border-color: var(--accent, #FFD600);
+    background: var(--custom-buttonBackgroundColor, var(--accent, #FFD600));
+    color: var(--custom-buttonTextColor, var(--button-fg, #1a1a1a));
+    border-color: var(--custom-buttonBorderColor, var(--accent, #FFD600));
     font-weight: 600;
 }
 
 .podawful-modal-box .podawful-btn:last-child:hover {
-    background: var(--button-hover-bg, #444);
-    color: var(--button-hover-fg, #FFD600);
+    background: var(--custom-buttonBackgroundColor, var(--button-hover-bg, #444));
+    color: var(--custom-buttonTextColor, var(--button-hover-fg, #FFD600));
+    opacity: 0.8;
 }
 
 #modal-error {
@@ -1785,9 +1850,9 @@ body:not(.sidebar-visible) {
 
 /* Style the clear button next to the search bar */
 .sidebar-tag-filter .tag-filter__clear {
-    background: var(--button-bg, #FFD600) !important;
-    color: var(--button-fg, #111) !important;
-    border: 2px solid var(--accent, #FFD600) !important;
+    background: var(--custom-buttonBackgroundColor, var(--button-bg, #FFD600)) !important;
+    color: var(--custom-buttonTextColor, var(--button-fg, #111)) !important;
+    border: 2px solid var(--custom-buttonBorderColor, var(--accent, #FFD600)) !important;
     border-radius: 6px !important;
     font-size: 1.1em !important;
     font-weight: 400 !important;
@@ -1805,16 +1870,17 @@ body:not(.sidebar-visible) {
 
 .sidebar-tag-filter .tag-filter__clear:focus,
 .sidebar-tag-filter .tag-filter__clear:hover {
-    background: var(--button-hover-bg, #111) !important;
-    color: var(--button-hover-fg, #FFD600) !important;
-    border-color: var(--button-hover-bg, #111) !important;
+    background: var(--custom-buttonBackgroundColor, var(--button-hover-bg, #111)) !important;
+    color: var(--custom-buttonTextColor, var(--button-hover-fg, #FFD600)) !important;
+    border-color: var(--custom-buttonBorderColor, var(--button-hover-bg, #111)) !important;
+    opacity: 0.8;
 }
 
 /* Style the Manage Tags button to match main action buttons */
 .sidebar-tag-filter .tag-filter__manager-btn {
-    background: var(--button-bg, #FFD600) !important;
-    color: var(--button-fg, #111) !important;
-    border: 2px solid var(--accent, #FFD600) !important;
+    background: var(--custom-buttonBackgroundColor, var(--button-bg, #FFD600)) !important;
+    color: var(--custom-buttonTextColor, var(--button-fg, #111)) !important;
+    border: 2px solid var(--custom-buttonBorderColor, var(--accent, #FFD600)) !important;
     border-radius: 8px !important;
     font-size: 1em !important;
     font-weight: 500 !important;
@@ -1831,9 +1897,10 @@ body:not(.sidebar-visible) {
 
 .sidebar-tag-filter .tag-filter__manager-btn:focus,
 .sidebar-tag-filter .tag-filter__manager-btn:hover {
-    background: var(--button-hover-bg, #111) !important;
-    color: var(--button-hover-fg, #FFD600) !important;
-    border-color: var(--button-hover-bg, #111) !important;
+    background: var(--custom-buttonBackgroundColor, var(--button-hover-bg, #111)) !important;
+    color: var(--custom-buttonTextColor, var(--button-hover-fg, #FFD600)) !important;
+    border-color: var(--custom-buttonBorderColor, var(--button-hover-bg, #111)) !important;
+    opacity: 0.8;
 }
 
 .sidebar-splash {
