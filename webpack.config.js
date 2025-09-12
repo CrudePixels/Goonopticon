@@ -34,7 +34,8 @@ module.exports = {
     target: 'web',
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, 'JS')
+            '@': path.resolve(__dirname, 'JS'),
+            'webextension-polyfill': path.resolve(__dirname, 'JS/browser-polyfill-fix.js')
         }
     },
     plugins: [

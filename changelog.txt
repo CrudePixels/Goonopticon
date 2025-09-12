@@ -1,3 +1,21 @@
+Version 2.5.0 (2025-01-08)
+- MAJOR: Enhanced theme management system with improved user control
+- Fixed theme loading workflow: Load button now only loads settings, Apply button applies theme
+- Fixed Save As functionality: themes are now properly added to dropdown after saving
+- Fixed Import functionality: imported themes are added to dropdown and load settings only
+- Fixed Delete functionality: deleted themes are now properly removed from dropdown
+- Separated Save As (internal storage) from Export Theme (file download) for clarity
+- Enhanced theme persistence: applied themes now persist across page reloads
+- Fixed sidebar theme application timing to prevent button color reversion
+- Improved theme dropdown population to include both built-in and custom themes
+- Enhanced theme filtering to respect deleted presets list
+- Fixed race conditions between popup and sidebar theme application
+- Improved error handling for extension context invalidation
+- Enhanced changelog and devlog display with proper styling and horizontal scrolling
+- Fixed theme menu to show current settings and persist selections
+- Better separation of theme loading vs theme application workflows
+- Improved user experience with clearer success messages and workflow guidance
+
 Version 2.0.7 (2025-01-08)
 - MAJOR: Complete theme system overhaul with proper color mapping
 - Fixed primary color incorrectly affecting text elements (now only affects accents)

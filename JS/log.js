@@ -54,27 +54,48 @@ export function LogDev(Message, Type = "miscellaneous", Cb)
 
     // Always send to background for unified logging
     if (browser && browser.runtime && browser.runtime.sendMessage) {
+        // Check if extension context is still valid
+        try {
+            // Test if runtime is still available
+            if (!browser.runtime.id) {
+                // Extension context is invalid, skip logging
+                if (typeof Cb === 'function') Cb(null);
+                return;
+            }
+        } catch (e) {
+            // Extension context is invalid, skip logging
+            if (typeof Cb === 'function') Cb(null);
+            return;
+        }
+
         const entry = {
             time: new Date().toISOString(),
             action: msgStr,
             type: typeof Type === "string" ? Type : "miscellaneous",
             color: color
         };
-        browser.runtime.sendMessage({ type: "devlog", entry })
-            .then((response) => {
-                if (typeof Cb === 'function') Cb(null);
-            })
-            .catch((err) => {
-                // Suppress extension context errors
-                if (err && (/(Extension context invalidated|Receiving end does not exist)/i).test(err.message)) {
-                    // Silently ignore these errors
+        
+        // Wrap in try-catch to handle immediate context invalidation
+        try {
+            browser.runtime.sendMessage({ type: "devlog", entry })
+                .then((response) => {
                     if (typeof Cb === 'function') Cb(null);
-                    return;
-                }
-                // Log other errors
-                console.error("SendMessage failed:", err?.message);
-                if (typeof Cb === 'function') Cb(err);
-        });
+                })
+                .catch((err) => {
+                    // Suppress extension context errors
+                    if (err && (/(Extension context invalidated|Receiving end does not exist)/i).test(err.message)) {
+                        // Silently ignore these errors
+                        if (typeof Cb === 'function') Cb(null);
+                        return;
+                    }
+                    // Log other errors
+                    console.error("SendMessage failed:", err?.message);
+                    if (typeof Cb === 'function') Cb(err);
+                });
+        } catch (e) {
+            // Handle immediate context invalidation
+            if (typeof Cb === 'function') Cb(null);
+        }
         return;
     }
 }

@@ -1,5 +1,5 @@
 import { LogDev } from './log.js';
-import { applyTheme } from './theme.js';
+import { applyTheme } from './theme-new.js';
 import { getNotes, setNotes } from './sidebar/storage.js';
 import { 
     saveCustomPreset, 
@@ -324,7 +324,8 @@ async function saveAsCustomTheme() {
                         showModal('Error', 'Failed to save custom preset', 'error');
                     } else {
                         LogDev('Custom preset saved successfully', 'system');
-                        showModal('Success', `Theme "${name}" saved as preset!`, 'success');
+                        
+                        showModal('Success', `Theme "${name}" saved as preset and added to dropdown!`, 'success');
                         loadPresets(); // Reload presets
                     }
                 });
@@ -431,30 +432,9 @@ async function loadSelectedPresetTheme() {
             document.getElementById('gap').value = parseInt(selectedPreset.spacing.gap);
             document.getElementById('gapValue').textContent = selectedPreset.spacing.gap;
             
-            // Apply the theme immediately
-            const theme = getCurrentThemeFromForm();
-            applyCustomTheme(theme);
-            
-            // Save the theme to storage so sidebar gets notified
-            setCustomTheme(theme, (err) => {
-                if (err) {
-                    LogDev('Error saving preset theme: ' + err, 'error');
-                    showModal('Error', 'Failed to save theme', 'error');
-                } else {
-                    LogDev('Preset theme saved successfully', 'system');
-                    
-                    // Also save the theme selection to storage for persistence
-                    browser.storage.local.set({ 'PodAwful::Theme': selectedPresetName }, (err) => {
-                        if (err) {
-                            LogDev('Error saving theme selection: ' + err, 'error');
-                        } else {
-                            LogDev('Theme selection saved: ' + selectedPresetName, 'data');
-                        }
-                    });
-                    
-                    showModal('Success', `Preset "${selectedPresetName}" loaded!`, 'success');
-                }
-            });
+            // Just load the settings into the form, don't apply the theme yet
+            LogDev('Preset settings loaded into form: ' + selectedPresetName, 'system');
+            showModal('Success', `Preset "${selectedPresetName}" loaded into form! Click "Apply" to use it.`, 'success');
         });
     } catch (err) {
         LogDev('Error loading preset: ' + err, 'error');
@@ -527,6 +507,16 @@ async function saveAndApplyCustomTheme() {
                 showModal('Error', 'Failed to save custom theme', 'error');
             } else {
                 LogDev('Custom theme saved successfully', 'system');
+                
+                // Save as current theme selection for persistence
+                browser.storage.local.set({ 'PodAwful::Theme': 'custom' }, (err) => {
+                    if (err) {
+                        LogDev('Error saving theme selection: ' + err, 'error');
+                    } else {
+                        LogDev('Theme selection saved as custom', 'data');
+                    }
+                });
+                
                 showModal('Success', 'Theme saved and applied!', 'success');
             }
         });
@@ -645,6 +635,7 @@ export function renderMainMenu()
     MenuTitle.textContent = "Menu";
     MenuContent.innerHTML = `
         <div class="popup-buttons">
+            <button class="podawful-btn" id="toggleSidebar">Show Sidebar</button>
             <button class="podawful-btn" id="importExport">Import/Export</button>
             <button class="podawful-btn" id="settings">Settings</button>
             <button class="podawful-btn" id="themeSettings">Theme Settings</button>
@@ -1135,10 +1126,9 @@ function renderThemeSettings()
 
     MenuTitle.textContent = "Theme Settings";
     
-    // Load custom theme settings first, then render the form
-    loadCustomThemeSettings().then(() => {
-        renderThemeSettingsForm();
-    });
+    // Render the form first, then load the settings
+    renderThemeSettingsForm();
+    loadCustomThemeSettings();
 }
 
 function renderThemeSettingsForm() {
@@ -1428,14 +1418,26 @@ function renderChangelog()
 
     MenuTitle.textContent = "Changelog";
     MenuContent.innerHTML = `
-        <pre style="max-height:200px;overflow:auto;" id="changelogContent">Loading...</pre>
+        <div style="max-height: 300px; overflow-y: auto; overflow-x: hidden; padding: 10px; background: #1a1a1a; border-radius: 6px; border: 1px solid #444; margin-bottom: 10px;">
+            <pre id="changelogContent" style="white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #fff; margin: 0;">Loading...</pre>
+        </div>
         <button class="podawful-btn" id="backBtn">Back</button>
     `;
     const ChangelogContent = document.getElementById("changelogContent");
-    fetch("../changelog.txt")
+    fetch(browser.runtime.getURL("changelog.txt"))
         .then(R => R.text())
-        .then(Txt => { if (ChangelogContent) ChangelogContent.textContent = Txt; LogDev("Changelog loaded", "data"); })
-        .catch(() => { if (ChangelogContent) ChangelogContent.textContent = "Unable to load changelog."; LogDev("Unable to load changelog", "error"); });
+        .then(Txt => { 
+            if (ChangelogContent) {
+                ChangelogContent.textContent = Txt; 
+                LogDev("Changelog loaded", "data"); 
+            }
+        })
+        .catch(() => { 
+            if (ChangelogContent) {
+                ChangelogContent.textContent = "Unable to load changelog."; 
+                LogDev("Unable to load changelog", "error"); 
+            }
+        });
 
     // Accessibility: Add aria-labels to all menu buttons
     const menuButtons = MenuContent.querySelectorAll('button');
@@ -1490,23 +1492,29 @@ function renderDevLog()
 
     MenuTitle.textContent = "Dev Log";
     MenuContent.innerHTML = `
-        <label for="devlogFilter">Filter:</label>
-        <select id="devlogFilter">
-            <option value="all">All</option>
-            <option value="error">Error</option>
-            <option value="warning">Warning</option>
-            <option value="system">System</option>
-            <option value="interaction">Interaction</option>
-            <option value="event">Event</option>
-            <option value="render">Render</option>
-            <option value="data">Data</option>
-            <option value="performance">Performance</option>
-            <option value="miscellaneous">Miscellaneous</option>
-        </select>
-        <pre style="max-height:200px;overflow:auto;overflow-x:auto;white-space:pre-wrap;word-wrap:break-word;" id="devlogContent">Loading...</pre>
-        <button class="podawful-btn" id="clearDevLogPanel">Clear Dev Log</button>
-        <button class="podawful-btn" id="exportDevLog">Export Dev Log</button>
-        <button class="podawful-btn" id="deleteAllDevLogs">Delete all Dev Logs</button>
+        <div style="margin-bottom: 10px;">
+            <label for="devlogFilter" style="color: #fff; margin-right: 10px;">Filter:</label>
+            <select id="devlogFilter" style="padding: 5px; border-radius: 4px; background: #2a2a2a; color: #fff; border: 1px solid #444;">
+                <option value="all">All</option>
+                <option value="error">Error</option>
+                <option value="warning">Warning</option>
+                <option value="system">System</option>
+                <option value="interaction">Interaction</option>
+                <option value="event">Event</option>
+                <option value="render">Render</option>
+                <option value="data">Data</option>
+                <option value="performance">Performance</option>
+                <option value="miscellaneous">Miscellaneous</option>
+            </select>
+        </div>
+        <div style="max-height: 250px; overflow-y: auto; overflow-x: auto; padding: 10px; background: #1a1a1a; border-radius: 6px; border: 1px solid #444; margin-bottom: 10px; width: 100%; box-sizing: border-box;">
+            <div id="devlogContent" style="white-space: pre; word-wrap: normal; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.3; color: #fff; min-width: max-content; padding-left: 5px; display: inline-block;">Loading...</div>
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+            <button class="podawful-btn" id="clearDevLogPanel" style="flex: 1;">Clear Dev Log</button>
+            <button class="podawful-btn" id="exportDevLog" style="flex: 1;">Export Dev Log</button>
+        </div>
+        <button class="podawful-btn" id="deleteAllDevLogs" style="width: 100%; margin-bottom: 10px; background: #d32f2f;">Delete all Dev Logs</button>
         <button class="podawful-btn" id="backBtn">Back</button>
     `;
 
@@ -1562,9 +1570,9 @@ function renderDevLog()
             {
                 DevlogContent.innerHTML =
                     DevLog.map(E =>
-                        `<span style="color:${E.color || '#fff'};">[${E.time}] [${typeof E.type === "string" ? E.type.toUpperCase() : "INFO"
-                        }] ${E.action}</span>`
-                    ).join("<br>") || "No log.";
+                        `<div style="color:${E.color || '#fff'}; margin-bottom: 2px; white-space: nowrap; padding-left: 2px;">[${E.time}] [${typeof E.type === "string" ? E.type.toUpperCase() : "INFO"
+                        }] ${E.action}</div>`
+                    ).join("") || "<div style='color: #888; padding-left: 2px;'>No log entries found.</div>";
             }
         };
         browser.storage.local.get("PodAwful::DevLog")
@@ -1670,11 +1678,14 @@ function loadSelectedPreset(callback) {
         browser.storage.local.get(['PodAwful::SelectedPreset']).then((result) => {
             const selectedPreset = result['PodAwful::SelectedPreset'] || 'Default';
             LogDev('Loaded selected preset: ' + selectedPreset, 'data');
-            callback(selectedPreset);
+            callback(null, selectedPreset);
+        }).catch((err) => {
+            LogDev('Error loading selected preset: ' + err, 'error');
+            callback(err, 'Default');
         });
     } catch (err) {
         LogDev('Error loading selected preset: ' + err, 'error');
-        callback('Default');
+        callback(err, 'Default');
     }
 }
 
@@ -1789,6 +1800,15 @@ function applyPresetTheme(presetName, presets) {
                     LogDev('Error saving theme: ' + err, 'error');
                 } else {
                     LogDev('Theme saved successfully: ' + presetName, 'system');
+                    
+                    // Save as current theme selection for persistence
+                    browser.storage.local.set({ 'PodAwful::Theme': 'custom' }, (err) => {
+                        if (err) {
+                            LogDev('Error saving theme selection: ' + err, 'error');
+                        } else {
+                            LogDev('Theme selection saved as custom', 'data');
+                        }
+                    });
                 }
             });
             
@@ -1814,6 +1834,51 @@ async function loadCustomThemeSettings() {
                     LogDev('Error loading custom theme: ' + err, 'error');
                     resolve();
                     return;
+                }
+                
+                // Check if there's actually a custom theme in storage
+                if (!theme || !theme.colors) {
+                    LogDev('No custom theme in storage, using default values', 'system');
+                    // Use default theme values instead of custom theme
+                    theme = {
+                        colors: {
+                            primary: '#FFD600',
+                            background: '#1a1a1a',
+                            surface: '#222222',
+                            text: '#e0e0e0',
+                            textSecondary: '#b0b0b0',
+                            border: '#333333',
+                            success: '#4CAF50',
+                            warning: '#FF9800',
+                            error: '#F44336',
+                            info: '#2196F3',
+                            highlight: '#FFD600'
+                        },
+                        typography: {
+                            fontSize: '14px',
+                            fontSizeSmall: '12px',
+                            fontSizeLarge: '16px',
+                            fontWeight: '400',
+                            lineHeight: '1.5',
+                            fontFamily: 'Arial, sans-serif'
+                        },
+                        buttons: {
+                            height: '40px',
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            borderRadius: '4px',
+                            backgroundColor: '#FFD600',
+                            textColor: '#000000',
+                            borderColor: '#FFD600',
+                            applyToMenus: false
+                        },
+                        spacing: {
+                            padding: '16px',
+                            margin: '8px',
+                            borderRadius: '6px',
+                            gap: '12px'
+                        }
+                    };
                 }
             
             // Populate form fields with validation
@@ -1883,7 +1948,7 @@ async function loadCustomThemeSettings() {
             
             LogDev('Custom theme settings loaded successfully', 'system');
             
-            // Load the last selected preset
+            // Load the last selected preset and current theme
             loadSelectedPreset((err, selectedPreset) => {
                 if (!err && selectedPreset) {
                     const presetSelect = document.getElementById('presetSelect');
@@ -1892,6 +1957,27 @@ async function loadCustomThemeSettings() {
                         LogDev('Loaded last selected preset: ' + selectedPreset, 'data');
                     }
                 }
+                
+                // Also check what theme is currently active
+                browser.storage.local.get(['PodAwful::Theme']).then((result) => {
+                    const currentTheme = result['PodAwful::Theme'] || 'default';
+                    const presetSelect = document.getElementById('presetSelect');
+                    if (presetSelect && currentTheme !== 'custom') {
+                        // Map theme names to preset names
+                        const themeMap = {
+                            'default': 'Default',
+                            'light': 'Light', 
+                            'dark': 'Dark',
+                            'red-mode': 'RED MODE',
+                            'polycule-blue': 'Polycule Blue',
+                            'paycell-green': 'Paycell Green'
+                        };
+                        const presetName = themeMap[currentTheme] || 'Default';
+                        presetSelect.value = presetName;
+                        LogDev('Set dropdown to current theme: ' + presetName, 'data');
+                    }
+                });
+                
                 resolve();
             });
         });
@@ -2117,6 +2203,15 @@ async function applyCustomThemeFunction() {
                 LogDev('Error saving custom theme: ' + err, 'error');
             } else {
                 LogDev('Custom theme applied and saved successfully', 'system');
+                
+                // Save as current theme selection for persistence
+                browser.storage.local.set({ 'PodAwful::Theme': 'custom' }, (err) => {
+                    if (err) {
+                        LogDev('Error saving theme selection: ' + err, 'error');
+                    } else {
+                        LogDev('Theme selection saved as custom', 'data');
+                    }
+                });
             }
         });
     } catch (err) {
@@ -2217,10 +2312,20 @@ async function importThemeFile() {
                 // Load the imported theme into the form
                 loadThemeIntoForm(theme);
                 
-                // Apply the theme
-                applyCustomTheme(theme);
-                
-                showModal('Success', `Theme "${theme.name}" imported successfully!`, 'success');
+                // Save the imported theme as a preset
+                saveCustomPreset(theme.name, theme, (err) => {
+                    if (err) {
+                        LogDev('Error saving imported theme as preset: ' + err, 'warning');
+                        showModal('Error', 'Failed to save imported theme', 'error');
+                    } else {
+                        LogDev('Imported theme saved as preset successfully', 'system');
+                        
+                        // Reload presets to show the new theme in dropdown
+                        loadPresets();
+                        
+                        showModal('Success', `Theme "${theme.name}" imported and added to presets! Click "Apply" to use it.`, 'success');
+                    }
+                });
             } catch (err) {
                 LogDev('Error importing theme: ' + err, 'error');
                 showModal('Error', 'Invalid theme file: ' + err.message, 'error');

@@ -9,7 +9,13 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>
     // Handle devlog messages
     if (msg && msg.type === "devlog" && msg.entry)
     {
-        browser.storage.local.get(["PodAwful::DevLog"]).then(result => {
+        browser.storage.local.get(["PodAwful::DevLog"], (result) => {
+            if (browser.runtime.lastError) {
+                LogDev("Error fetching DevLog: " + browser.runtime.lastError, "error");
+                sendResponse && sendResponse({ status: "error" });
+                return;
+            }
+            
             LogDev("Fetched current DevLog from storage", "data");
             let DevLog = Array.isArray(result["PodAwful::DevLog"]) ? result["PodAwful::DevLog"] : [];
             DevLog.push(msg.entry);
@@ -18,7 +24,12 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) =>
                 LogDev("DevLog exceeded 100 entries, removing oldest", "performance");
                 DevLog.shift();
             }
-            browser.storage.local.set({ "PodAwful::DevLog": DevLog }).then(() => {
+            browser.storage.local.set({ "PodAwful::DevLog": DevLog }, () => {
+                if (browser.runtime.lastError) {
+                    LogDev("Error updating DevLog: " + browser.runtime.lastError, "error");
+                    sendResponse && sendResponse({ status: "error" });
+                    return;
+                }
                 LogDev("Updated DevLog in storage", "data");
                 sendResponse && sendResponse({ status: "ok" });
             });
@@ -67,7 +78,15 @@ async function checkForUpdates(forceCheck = false) {
         
         // Check if we should check for updates (avoid checking too frequently, unless forced)
         if (!forceCheck) {
-            const lastCheck = await browser.storage.local.get(['lastUpdateCheck']);
+            const lastCheck = await new Promise((resolve, reject) => {
+                browser.storage.local.get(['lastUpdateCheck'], (result) => {
+                    if (browser.runtime.lastError) {
+                        reject(browser.runtime.lastError);
+                    } else {
+                        resolve(result);
+                    }
+                });
+            });
             const now = Date.now();
             const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
             
@@ -79,7 +98,15 @@ async function checkForUpdates(forceCheck = false) {
         
         // Update last check time
         const now = Date.now();
-        await browser.storage.local.set({ lastUpdateCheck: now });
+        await new Promise((resolve, reject) => {
+            browser.storage.local.set({ lastUpdateCheck: now }, () => {
+                if (browser.runtime.lastError) {
+                    reject(browser.runtime.lastError);
+                } else {
+                    resolve();
+                }
+            });
+        });
         
         // Check GitHub for latest release
         const response = await fetch('https://api.github.com/repos/CrudePixels/Goonopticon/releases/latest');
@@ -98,12 +125,20 @@ async function checkForUpdates(forceCheck = false) {
             LogDev("New version available: " + latestVersion, "system");
             
             // Store update info for popup to display
-            await browser.storage.local.set({
-                updateAvailable: true,
-                latestVersion: latestVersion,
-                currentVersion: currentVersion,
-                releaseUrl: releaseData.html_url,
-                releaseNotes: releaseData.body
+            await new Promise((resolve, reject) => {
+                browser.storage.local.set({
+                    updateAvailable: true,
+                    latestVersion: latestVersion,
+                    currentVersion: currentVersion,
+                    releaseUrl: releaseData.html_url,
+                    releaseNotes: releaseData.body
+                }, () => {
+                    if (browser.runtime.lastError) {
+                        reject(browser.runtime.lastError);
+                    } else {
+                        resolve();
+                    }
+                });
             });
             
             // Show notification
@@ -115,7 +150,15 @@ async function checkForUpdates(forceCheck = false) {
             });
         } else {
             LogDev("Extension is up to date", "system");
-            await browser.storage.local.set({ updateAvailable: false });
+            await new Promise((resolve, reject) => {
+                browser.storage.local.set({ updateAvailable: false }, () => {
+                    if (browser.runtime.lastError) {
+                        reject(browser.runtime.lastError);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
         }
         
     } catch (error) {

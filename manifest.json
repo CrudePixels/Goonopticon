@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Goonopticon",
-  "version": "2.0.6",
+  "version": "2.5.0",
   "description": "Podawful Goonopticon tool for timestamping Youtube videos, Henchmen get to work!",
   "permissions": [
     "tabs",

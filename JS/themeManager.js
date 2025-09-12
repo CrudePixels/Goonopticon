@@ -1,19 +1,10 @@
 import { LogDev } from './log.js';
-import * as browser from 'webextension-polyfill';
+import { loadThemeFromFile as loadThemeFromFileUniversal, loadAllThemes as loadAllThemesUniversal } from './theme-loader.js';
 
 /**
  * Theme Manager - Handles loading themes from JSON files and storage
+ * Now uses the universal theme loader
  */
-
-// Built-in theme files
-const BUILT_IN_THEMES = [
-    'default.json',
-    'light.json', 
-    'dark.json',
-    'red-mode.json',
-    'polycule-blue.json',
-    'paycell-green.json'
-];
 
 /**
  * Loads a theme from a JSON file
@@ -21,34 +12,7 @@ const BUILT_IN_THEMES = [
  * @returns {Promise<Object>} Theme object
  */
 export async function loadThemeFromFile(themeName) {
-    try {
-        const fileName = themeName.endsWith('.json') ? themeName : `${themeName}.json`;
-        const filePath = `themes/${fileName}`;
-        
-        LogDev(`Loading theme from file: ${filePath}`, 'system');
-        
-        // Try to load from built-in themes first
-        if (BUILT_IN_THEMES.includes(fileName)) {
-            const response = await fetch(browser.runtime.getURL(filePath));
-            if (!response.ok) {
-                throw new Error(`Failed to load theme file: ${response.statusText}`);
-            }
-            const theme = await response.json();
-            LogDev(`Built-in theme loaded: ${theme.name}`, 'system');
-            return theme;
-        }
-        
-        // For custom themes, try to load from storage first
-        const customTheme = await loadCustomThemeFromStorage(themeName);
-        if (customTheme) {
-            return customTheme;
-        }
-        
-        throw new Error(`Theme not found: ${themeName}`);
-    } catch (err) {
-        LogDev(`Error loading theme from file: ${err.message}`, 'error');
-        throw err;
-    }
+    return await loadThemeFromFileUniversal(themeName);
 }
 
 /**
@@ -56,29 +20,7 @@ export async function loadThemeFromFile(themeName) {
  * @returns {Promise<Array>} Array of theme objects
  */
 export async function loadAllThemes() {
-    try {
-        const themes = [];
-        
-        // Load built-in themes
-        for (const themeFile of BUILT_IN_THEMES) {
-            try {
-                const theme = await loadThemeFromFile(themeFile.replace('.json', ''));
-                themes.push(theme);
-            } catch (err) {
-                LogDev(`Failed to load built-in theme ${themeFile}: ${err.message}`, 'error');
-            }
-        }
-        
-        // Load custom themes from storage
-        const customThemes = await loadCustomThemesFromStorage();
-        themes.push(...customThemes);
-        
-        LogDev(`Loaded ${themes.length} themes total`, 'system');
-        return themes;
-    } catch (err) {
-        LogDev(`Error loading all themes: ${err.message}`, 'error');
-        return [];
-    }
+    return await loadAllThemesUniversal();
 }
 
 /**

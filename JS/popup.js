@@ -1,5 +1,4 @@
-﻿import { applyTheme } from './theme.js';
-import { applyCustomTheme, getCustomTheme } from './customTheme.js';
+﻿import { applyTheme, applyCustomTheme, getCustomTheme } from './theme-new.js';
 import { renderMainMenu } from './popup-menus.js';
 import { LogDev } from './log.js';
 import * as browser from 'webextension-polyfill';
@@ -10,23 +9,20 @@ document.addEventListener("DOMContentLoaded", async () =>
     try {
         // Load the current theme from storage
         const [themeResult, customThemeResult] = await Promise.all([
-            browser.storage.local.get('PodAwful::Theme'),
-            browser.storage.local.get('PodAwful::CustomTheme')
+            browser.storage.local.get(['PodAwful::Theme']),
+            browser.storage.local.get(['PodAwful::CustomTheme'])
         ]);
         
         const theme = themeResult['PodAwful::Theme'] || 'default';
         const customTheme = customThemeResult['PodAwful::CustomTheme'];
         
         // Apply the theme (this will handle both preset and custom themes)
-        LogDev('Applying theme on popup init: ' + theme, 'system');
-        await applyTheme(theme);
-        
-        // If there's a custom theme in storage, apply it (this overrides preset themes)
         if (customTheme) {
             LogDev('Loading custom theme on popup init', 'system');
             applyCustomTheme(customTheme);
         } else {
-            LogDev('No custom theme found in storage, using preset theme', 'system');
+            LogDev('Applying preset theme on popup init: ' + theme, 'system');
+            await applyTheme(theme);
         }
         
         // Only render the menu after the theme is applied

@@ -1,7 +1,6 @@
 import { renderSidebar } from './sidebar.js';
-import { applyTheme } from '../theme.js';
-import { applyCustomTheme } from '../customTheme.js';
-import { GetNotes } from './storage.js';
+import { applyTheme, applyCustomTheme } from '../theme-new.js';
+import { GetNotes } from './storage-new.js';
 import * as browser from 'webextension-polyfill';
 import { LogDev } from '../log.js';
 import { normalizeYouTubeUrl } from '../utils.js';
@@ -26,23 +25,20 @@ export default async function initSidebar()
     try {
         // Load both regular theme and custom theme
         const [themeResult, customThemeResult] = await Promise.all([
-            browser.storage.local.get('PodAwful::Theme'),
-            browser.storage.local.get('PodAwful::CustomTheme')
+            browser.storage.local.get(['PodAwful::Theme']),
+            browser.storage.local.get(['PodAwful::CustomTheme'])
         ]);
         
         const theme = themeResult['PodAwful::Theme'] || 'default';
         const customTheme = customThemeResult['PodAwful::CustomTheme'];
         
         // Apply the theme (this will handle both preset and custom themes)
-        LogDev('Applying theme on sidebar init: ' + theme, 'system');
-        await applyTheme(theme);
-        
-        // If there's a custom theme in storage, apply it (this overrides preset themes)
         if (customTheme) {
             LogDev('Loading custom theme on sidebar init: ' + JSON.stringify(customTheme), 'system');
             applyCustomTheme(customTheme);
         } else {
-            LogDev('No custom theme found in storage, using preset theme', 'system');
+            LogDev('Applying preset theme on sidebar init: ' + theme, 'system');
+            await applyTheme(theme);
         }
 
         // Wait a moment for theme to be applied before creating sidebar
@@ -58,6 +54,16 @@ export default async function initSidebar()
             sidebar.classList.remove('sidebar-hide');
             sidebar.style.display = '';
             document.body.classList.add('sidebar-visible');
+            
+            // Apply theme to the newly created sidebar
+            if (customTheme) {
+                LogDev('Applying custom theme to newly created sidebar', 'system');
+                applyCustomTheme(customTheme);
+            } else {
+                LogDev('Applying preset theme to newly created sidebar: ' + theme, 'system');
+                applyTheme(theme);
+            }
+            
             renderSidebar(sidebar);
         });
     } catch (err) {
@@ -67,31 +73,44 @@ export default async function initSidebar()
     }
 }
 
-// Listen for theme and sidebar visibility changes
+// Debounce theme changes to prevent race conditions
+let themeChangeTimeout;
 browser.storage.onChanged.addListener((changes, area) =>
 {
-    if (area === 'local' && changes['PodAwful::Theme'])
+    if (area === 'local' && (changes['PodAwful::Theme'] || changes['PodAwful::CustomTheme']))
     {
-        const theme = changes['PodAwful::Theme'].newValue || "default";
-        applyTheme(theme);
-        const sidebar = document.getElementById('podawful-sidebar');
-        if (sidebar) renderSidebar(sidebar);
-    }
-    if (area === 'local' && changes['PodAwful::CustomTheme'])
-    {
-        // Apply custom theme changes to the sidebar
-        const customTheme = changes['PodAwful::CustomTheme'].newValue;
-        if (customTheme) {
-            LogDev('Custom theme changed, applying to sidebar', 'system');
-            applyCustomTheme(customTheme);
-            
-            // Re-render the sidebar to apply the new theme
-            const sidebar = document.getElementById('podawful-sidebar');
-            if (sidebar) {
-                LogDev('Re-rendering sidebar with new theme', 'system');
-                renderSidebar(sidebar);
-            }
+        // Clear any pending theme changes
+        if (themeChangeTimeout) {
+            clearTimeout(themeChangeTimeout);
         }
+        
+        // Debounce theme changes by 100ms
+        themeChangeTimeout = setTimeout(() => {
+            if (changes['PodAwful::Theme'])
+            {
+                const theme = changes['PodAwful::Theme'].newValue || "default";
+                LogDev('Theme changed, applying to sidebar: ' + theme, 'system');
+                applyTheme(theme);
+                const sidebar = document.getElementById('podawful-sidebar');
+                if (sidebar) renderSidebar(sidebar);
+            }
+            if (changes['PodAwful::CustomTheme'])
+            {
+                // Apply custom theme changes to the sidebar
+                const customTheme = changes['PodAwful::CustomTheme'].newValue;
+                if (customTheme) {
+                    LogDev('Custom theme changed, applying to sidebar', 'system');
+                    applyCustomTheme(customTheme);
+                    
+                    // Re-render the sidebar to apply the new theme
+                    const sidebar = document.getElementById('podawful-sidebar');
+                    if (sidebar) {
+                        LogDev('Re-rendering sidebar with new theme', 'system');
+                        renderSidebar(sidebar);
+                    }
+                }
+            }
+        }, 100);
     }
     if (area === 'local' && changes['PodAwful::SidebarVisible'])
     {
@@ -122,3 +141,8 @@ setInterval(() => {
 }, 1000);
 
 window.renderSidebar = renderSidebar;
+
+// Initialize the sidebar when the script loads
+initSidebar().catch(error => {
+    LogDev('Error initializing sidebar: ' + error.message, 'error');
+});

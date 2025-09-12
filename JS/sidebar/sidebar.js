@@ -12,15 +12,12 @@ import
 } from './storage.js';
 import { LogDev } from '../log.js';
 import { normalizeYouTubeUrl } from '../utils.js';
-import { applyTheme } from '../theme.js';
+import { applyTheme } from '../theme-new.js';
 import { showInputModal } from './modal.js';
 import * as browser from 'webextension-polyfill';
 
-import initSidebar from './main.js';
 import { startHighlightingTimestamps, stopHighlightingTimestamps } from './dragdrop.js';
 import quotesRaw from '../../Resources/Quotes.txt';
-
-initSidebar();
 
 // Add a global to track the current error message
 let currentSidebarError = null;
