@@ -36,7 +36,7 @@ if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
 
-const files = ['manifest.json', 'popup.js', 'popup.html', 'background.js', 'options.js', 'options.html', 'README.md'];
+const files = ['manifest.json', 'popup.js', 'popup.html', 'background.js', 'options.js', 'options.html', 'README.md', 'icon16.png', 'icon48.png', 'icon128.png'];
 for (const f of files) {
   const src = path.join(sourceDir, f);
   if (fs.existsSync(src)) {
@@ -44,3 +44,4 @@ for (const f of files) {
   }
 }
 console.log('prepare-extension: copied extension from', path.relative(appRoot, sourceDir), '-> src/goonopticon-bridge');
+

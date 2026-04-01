@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 
 const ICONS_DIR = path.join(__dirname, '../../icons');
-const CANDIDATES = ['tray.png', 'icon.png', 'icon.ico'];
+const CANDIDATES = ['app/App.png', 'tray.png', 'icon.png', 'icon.ico'];
 
 function getAppIconPath() {
   for (const name of CANDIDATES) {
@@ -13,3 +13,4 @@ function getAppIconPath() {
 }
 
 module.exports = { getAppIconPath, ICONS_DIR };
+
