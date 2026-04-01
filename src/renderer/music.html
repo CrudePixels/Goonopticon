@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Goonopticon Security Breach</title>
+  <link rel="stylesheet" href="./styles/module.css" />
+  <link rel="stylesheet" href="./styles/theme.css" />
+  <link rel="stylesheet" href="./styles/surveillance.css" />
+  <style>
+    body { margin: 0; padding: 0; background: var(--hud-bg); color: var(--hud-text); display: flex; flex-direction: column; height: 100vh; }
+    .music-body { flex: 1; padding: 24px; overflow: auto; }
+    h1 { margin: 0 0 16px 0; font-family: var(--hud-font-mono); font-size: 12px; letter-spacing: 0.15em; color: var(--hud-text); }
+    .music-actions { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    #folder-path { font-family: var(--hud-font-mono); font-size: 11px; color: var(--hud-text-dim); max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .music-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .music-controls button { padding: 6px 12px; min-width: 36px; }
+    .music-transport { display: flex; align-items: center; gap: 6px; }
+    .music-transport .hud-btn {
+      border-radius: 0;
+      box-shadow: none;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      color: var(--hud-text);
+      font-family: var(--hud-font-mono);
+      font-size: 12px;
+      padding: 8px 14px;
+      min-width: 44px;
+    }
+    .music-transport .hud-btn:hover {
+      box-shadow: none;
+      border-color: var(--hud-accent);
+      background: var(--hud-surface);
+      color: var(--hud-accent);
+    }
+    .music-transport .hud-btn:focus-visible {
+      box-shadow: none;
+      border-color: var(--hud-accent);
+    }
+    .music-transport .hud-btn.active { border-color: var(--hud-accent); color: var(--hud-accent); background: var(--hud-surface); }
+    #progress-wrap { flex: 1; display: flex; align-items: center; gap: 8px; }
+    #progress-bar { flex: 1; height: 6px; -webkit-appearance: none; appearance: none; background: var(--hud-surface); border-radius: 3px; }
+    #progress-bar::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--color-primary); cursor: pointer; }
+    #time-display { font-family: var(--hud-font-mono); font-size: 11px; color: var(--hud-text-dim); min-width: 100px; }
+    #track-list { min-height: 120px; max-height: 320px; overflow-y: auto; padding: 8px; border: 1px solid var(--hud-border); background: var(--hud-surface); font-family: var(--hud-font-mono); font-size: 12px; border-radius: 4px; }
+    #track-list p { margin: 0; color: var(--hud-text-dim); }
+    .track-item { padding: 6px 8px; border-radius: 4px; cursor: pointer; margin-bottom: 2px; }
+    .track-item:hover { background: var(--hud-bg); }
+    .track-item.playing { background: var(--color-primary); color: var(--hud-bg); }
+    .music-tabs .music-tab { padding: 4px 10px; font-size: 11px; border: 1px solid var(--hud-border); background: var(--hud-surface); color: var(--hud-text); cursor: pointer; border-radius: 4px; }
+    .music-tabs .music-tab:hover { border-color: var(--hud-accent); }
+    .music-tabs .music-tab.active { border-color: var(--hud-accent); color: var(--hud-accent); background: var(--hud-bg); }
+    .av-switch { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .av-switch .hud-btn { padding: 6px 10px; font-size: 11px; }
+    .av-switch .hud-btn.active { border-color: var(--hud-accent); color: var(--hud-accent); background: var(--hud-bg); }
+    #video-wrap { display: none; margin-bottom: 12px; border: 1px solid var(--hud-border); background: var(--hud-bg-elevated); }
+    #video-player { width: 100%; height: 300px; display: block; background: #000; }
+  </style>
+</head>
+<body>
+  <div class="view-title-bar">
+    <span>[ PODAWFUL AV HELL ]</span>
+    <div class="title-bar-actions">
+      <button type="button" class="hud-btn view-pop-out-btn" id="music-pop-out" title="Open in separate window">Pop out</button>
+      <button type="button" class="btn-close" id="music-close" title="Close">×</button>
+    </div>
+  </div>
+  <div class="music-body">
+  <div class="music-actions">
+    <span id="folder-path"></span>
+  </div>
+  <div id="music-tabs" class="music-tabs" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
+  <div class="av-switch" id="av-switch">
+    <button type="button" class="hud-btn active" id="av-btn-music" title="Show music">[ MUSIC ]</button>
+    <button type="button" class="hud-btn" id="av-btn-video" title="Show video">[ VIDEO ]</button>
+    <span style="opacity:0.7;font-family:var(--hud-font-mono);font-size:11px;">Podawful AV HELL</span>
+  </div>
+  <div class="music-controls">
+    <div class="music-transport">
+      <button type="button" class="hud-btn" id="btn-prev" title="Previous">[ &lt;&lt; ]</button>
+      <button type="button" class="hud-btn" id="btn-play" title="Play / Pause">[ &gt; ]</button>
+      <button type="button" class="hud-btn" id="btn-next" title="Next">[ &gt;&gt; ]</button>
+      <button type="button" class="hud-btn" id="btn-loop" title="Loop current track">[ LOOP ]</button>
+      <button type="button" class="hud-btn active" id="btn-autoplay" title="Autoplay next track">[ NEXT ]</button>
+    </div>
+    <div id="progress-wrap">
+      <input type="range" id="progress-bar" min="0" max="100" value="0" />
+      <span id="time-display">0:00 / 0:00</span>
+    </div>
+  </div>
+  <div id="video-wrap">
+    <video id="video-player" controls playsinline></video>
+  </div>
+  <div id="track-list" class="hud-panel">
+    <p>Podawful AV HELL initializing…</p>
+  </div>
+  </div>
+  <script type="module" src="./music.js"></script>
+  <script>
+    document.getElementById('music-close').addEventListener('click', () => {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'goonopticon-close-view' }, '*');
+      } else {
+        window.close();
+      }
+    });
+    const musicPopOut = document.getElementById('music-pop-out');
+    if (musicPopOut) {
+      if (window.parent !== window) {
+        musicPopOut.addEventListener('click', () => {
+          const api = window.goonAPI || window.parent?.goonAPI;
+          api?.openMusicWindow?.();
+          window.parent.postMessage({ type: 'goonopticon-view-popped-out', view: 'music' }, '*');
+        });
+      } else {
+        musicPopOut.style.display = 'none';
+        document.body.classList.add('view-popout');
+      }
+    }
+    (async () => {
+      const api = window.goonAPI || window.parent?.goonAPI;
+      const quote = await api?.getRandomSplash?.();
+      if (quote) document.title = 'Goonopticon Security Breach — ' + quote;
+    })();
+  </script>
+</body>
+</html>

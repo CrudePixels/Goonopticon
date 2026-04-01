@@ -1,0 +1,226 @@
+/* Surveillance / Command Center HUD base — overridden by theme.js */
+:root {
+  --hud-bg: #0a0e0a;
+  --hud-bg-elevated: #0d120d;
+  --hud-surface: #0d120d;
+  --hud-surface-hover: #111411;
+  --hud-border: #1a2f1a;
+  --hud-border-strong: #243b24;
+  --hud-text: #00ff41;
+  --hud-text-dim: #b8d42a;
+  --hud-accent: #00ff41;
+  --hud-accent-amber: #ffb000;
+  --hud-glow: rgba(0, 255, 65, 0.25);
+  --hud-font-mono: "VT323", "Courier New", Consolas, monospace;
+  --ui-font-size: 21px;
+  --ui-font-size-small: 18px;
+  --ui-button-padding: 12px 18px;
+  --ui-border-radius: 0px;
+}
+
+/* CRT scanlines overlay when theme has crt: true */
+body[data-crt="true"]::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.12) 2px,
+    rgba(0, 0, 0, 0.12) 4px
+  );
+  opacity: 0.6;
+}
+
+.hud-panel {
+  background: var(--hud-surface);
+  border: 1px solid var(--hud-border);
+  position: relative;
+}
+
+.hud-panel::before,
+.hud-panel::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: var(--hud-accent);
+  border-style: solid;
+  border-width: 0;
+  opacity: 0.6;
+}
+
+.hud-panel::before {
+  top: 4px;
+  left: 4px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.hud-panel::after {
+  bottom: 4px;
+  right: 4px;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+.hud-btn {
+  background: var(--hud-surface);
+  color: var(--hud-text);
+  border: 1px solid var(--hud-border);
+  font-family: var(--hud-font-mono);
+  font-size: var(--ui-font-size-small, 11px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: var(--ui-button-padding, 8px 12px);
+  border-radius: var(--ui-border-radius, 0);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.hud-btn:hover {
+  border-color: var(--hud-border-strong);
+  box-shadow: 0 0 8px var(--hud-glow);
+}
+
+.hud-btn:focus-visible {
+  outline: none;
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 10px var(--hud-glow);
+}
+
+.hud-btn.tracker-edit-btn,
+.hud-btn.tracker-delete-btn {
+  padding: 2px 6px;
+  font-size: var(--ui-font-size-small, 11px);
+}
+
+.hud-status {
+  font-family: var(--hud-font-mono);
+  font-size: var(--ui-font-size-small, 10px);
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border: 1px solid var(--hud-border);
+  border-radius: var(--ui-border-radius, 0);
+  background: var(--hud-surface);
+}
+
+.hud-status.online {
+  border-color: var(--hud-accent);
+  color: var(--hud-accent);
+  box-shadow: 0 0 6px var(--hud-glow);
+}
+
+.hud-status.offline {
+  color: var(--hud-text-dim);
+}
+
+.hud-label {
+  font-family: var(--hud-font-mono);
+  font-size: var(--ui-font-size-small, 11px);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hud-text);
+}
+
+.hud-input {
+  background: var(--hud-bg-elevated);
+  border: 1px solid var(--hud-border);
+  color: var(--hud-text);
+  font-family: var(--hud-font-mono);
+  font-size: var(--ui-font-size, 12px);
+  padding: 6px 10px;
+  border-radius: var(--ui-border-radius, 0);
+}
+
+.hud-input:focus {
+  outline: none;
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 6px var(--hud-glow);
+}
+
+.hud-title {
+  font-family: var(--hud-font-mono);
+  font-size: var(--ui-font-size, 14px);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--hud-text);
+}
+
+/* Shared view title bar — Podawful Beats style for all tabs and popout windows */
+.view-title-bar {
+  height: 40px;
+  background: var(--hud-bg-elevated);
+  border-bottom: 1px solid var(--hud-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+}
+.view-title-bar span {
+  font-family: var(--hud-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--hud-text-dim);
+}
+.view-title-bar .title-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+.view-title-bar .view-pop-out-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.view-title-bar .btn-close {
+  display: none;
+  -webkit-app-region: no-drag;
+  width: 46px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--hud-text-dim);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+}
+body.view-popout .view-title-bar .btn-close {
+  display: block;
+}
+.view-title-bar .btn-close:hover {
+  background: var(--hud-surface-hover);
+  color: var(--hud-text);
+}
+
+/* Themed scrollbars — track and thumb use HUD colors */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-border) var(--hud-surface);
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--hud-surface);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--hud-border);
+  border: 2px solid var(--hud-surface);
+  border-radius: 0;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--hud-border-strong);
+}
+*::-webkit-scrollbar-thumb:active {
+  background: var(--hud-accent);
+}
+*::-webkit-scrollbar-corner {
+  background: var(--hud-surface);
+}

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Erm, Grok — Goonopticon</title>
+  <link rel="stylesheet" href="./styles/module.css" />
+  <link rel="stylesheet" href="./styles/theme.css" />
+  <link rel="stylesheet" href="./styles/surveillance.css" />
+  <link rel="stylesheet" href="./styles/grokPanel.css" />
+  <style>
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      background: var(--hud-bg);
+      color: var(--hud-text);
+      -webkit-app-region: no-drag;
+    }
+    .grok-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0 16px 20px;
+      gap: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    .grok-tip-banner {
+      font-family: var(--hud-font-mono);
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--hud-text-dim);
+      padding: 10px 12px;
+      margin: 0 0 12px 0;
+      background: var(--hud-surface);
+      border: 1px solid var(--hud-border);
+      border-radius: var(--ui-border-radius, 4px);
+      min-height: 2.6em;
+    }
+    .grok-tip-banner:empty {
+      display: none;
+    }
+    .grok-stage {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0 20px;
+      flex-shrink: 0;
+    }
+    .grok-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      font-family: var(--hud-font-mono);
+      font-size: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+    .grok-section-label {
+      margin: 0 0 6px 0;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--hud-accent);
+      opacity: 0.9;
+    }
+    .grok-card {
+      padding: 12px 14px;
+      background: var(--hud-surface);
+      border: 1px solid var(--hud-border);
+      border-radius: var(--ui-border-radius, 4px);
+    }
+    .grok-input-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .grok-input-row input[type="text"] {
+      flex: 1;
+      min-width: 140px;
+      padding: 10px 12px;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      color: var(--hud-text);
+      font-family: var(--hud-font-mono);
+      font-size: 12px;
+      border-radius: var(--ui-border-radius, 4px);
+    }
+    .grok-input-row input[type="text"]:focus {
+      outline: none;
+      border-color: var(--hud-accent);
+      box-shadow: 0 0 0 1px var(--hud-accent);
+    }
+    .grok-row-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .grok-row-actions .hud-btn {
+      flex: 1 1 auto;
+      min-width: 120px;
+    }
+    .grok-modes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
+    .grok-modes label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grok-modes input {
+      accent-color: var(--hud-accent);
+      width: 16px;
+      height: 16px;
+    }
+    .grok-details {
+      border: 1px solid var(--hud-border);
+      background: var(--hud-bg-elevated);
+      border-radius: var(--ui-border-radius, 4px);
+      overflow: hidden;
+    }
+    .grok-details > summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 12px 14px;
+      font-family: var(--hud-font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--hud-accent);
+      user-select: none;
+    }
+    .grok-details > summary::-webkit-details-marker {
+      display: none;
+    }
+    .grok-details > summary::after {
+      content: " ▾";
+      opacity: 0.6;
+    }
+    .grok-details[open] > summary::after {
+      content: " ▴";
+    }
+    .grok-details-body {
+      padding: 0 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      border-top: 1px solid var(--hud-border);
+    }
+    .grok-settings-block h3 {
+      margin: 0 0 8px 0;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--hud-text-dim);
+      font-weight: 600;
+    }
+    .grok-settings-block input[type="range"] {
+      width: 100%;
+      max-width: 240px;
+      accent-color: var(--hud-accent);
+    }
+    .grok-settings-block select {
+      padding: 8px 10px;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      color: var(--hud-text);
+      font-family: var(--hud-font-mono);
+      font-size: 12px;
+      border-radius: var(--ui-border-radius, 4px);
+      min-width: 160px;
+    }
+    .grok-settings-block select:focus {
+      outline: none;
+      border-color: var(--hud-accent);
+    }
+    .grok-settings-block input[type="number"] {
+      padding: 6px 8px;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      color: var(--hud-text);
+      font-family: var(--hud-font-mono);
+      font-size: 12px;
+      border-radius: var(--ui-border-radius, 4px);
+    }
+    .grok-cat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+    }
+    .grok-cat-grid label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .grok-cat-grid input {
+      accent-color: var(--hud-accent);
+    }
+    .grok-footnote {
+      opacity: 0.65;
+      margin: 0;
+      font-size: 10px;
+      line-height: 1.4;
+    }
+    .grok-ambient-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 12px;
+      user-select: none;
+    }
+    .grok-ambient-label input {
+      accent-color: var(--hud-accent);
+      width: 16px;
+      height: 16px;
+    }
+    #grok-close {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="view-title-bar">
+    <span>[ ERM, GROK ]</span>
+    <div class="title-bar-actions">
+      <button type="button" class="hud-btn view-pop-out-btn" id="grok-pop-out" title="Open in separate window">Pop out</button>
+      <button type="button" class="btn-close" id="grok-panel-close" title="Close">×</button>
+    </div>
+  </div>
+  <div class="grok-wrap">
+    <div class="grok-stage" style="padding-bottom:12px;">
+      <p id="grok-tip" class="grok-tip-banner" aria-live="polite"></p>
+      <div id="grok-root">
+        <div id="grok-buddy">
+          <div id="grok-bubble" role="status"></div>
+          <div id="grok-sprite">
+            <img id="grok-sprite-img" alt="Grok buddy" data-initial="../grokBuddy/sprites/idle_1" width="140" height="158" loading="eager" />
+          </div>
+        </div>
+      </div>
+      <p class="grok-footnote" style="margin-top:10px;text-align:center;max-width:240px;">
+        Click for a line · Enter to ask
+      </p>
+    </div>
+
+    <div class="grok-controls" style="gap:10px;">
+      <div class="grok-card" style="padding:10px 12px;">
+        <div class="grok-input-row">
+          <input type="text" id="grok-input" placeholder="Ask Grok…" autocomplete="off" />
+          <button type="button" class="hud-btn" id="grok-btn">Send</button>
+        </div>
+      </div>
+
+      <div class="grok-card" style="padding:10px 12px;">
+        <div class="grok-row-actions">
+          <button type="button" class="hud-btn" id="grok-random-line" title="Random line">Random</button>
+          <button type="button" class="hud-btn" id="grok-deploy-overlay">Overlay</button>
+          <button type="button" class="hud-btn" id="grok-reload-lines">Reload</button>
+        </div>
+        <p class="grok-footnote" style="margin-top:10px;">
+          Grok settings live in <strong>Configure Surveillance → Erm, Grok</strong>.
+        </p>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="./grok.js"></script>
+  <script>
+    document.getElementById('grok-panel-close')?.addEventListener('click', () => {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'goonopticon-close-view' }, '*');
+      } else {
+        window.close();
+      }
+    });
+    const grokPopOut = document.getElementById('grok-pop-out');
+    if (grokPopOut) {
+      if (window.parent !== window) {
+        grokPopOut.addEventListener('click', () => {
+          const goon = window.goonAPI || window.parent?.goonAPI;
+          goon?.openGrokPopout?.();
+          window.parent.postMessage({ type: 'goonopticon-view-popped-out', view: 'grok' }, '*');
+        });
+      } else {
+        grokPopOut.style.display = 'none';
+        document.body.classList.add('view-popout');
+      }
+    }
+    (async () => {
+      const goon = window.goonAPI || window.parent?.goonAPI;
+      const quote = await goon?.getRandomSplash?.();
+      if (quote) document.title = 'Goonopticon — ' + quote;
+    })();
+  </script>
+</body>
+</html>

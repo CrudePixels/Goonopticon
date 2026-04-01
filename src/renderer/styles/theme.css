@@ -1,0 +1,45 @@
+:root {
+  --color-primary: #00ff41;
+  --color-background: #0a0e0a;
+  --color-surface: #0d120d;
+  --color-text: #00ff41;
+  --color-text-secondary: #b8d42a;
+  --color-border: #1a2f1a;
+  --color-success: #00ff41;
+  --color-warning: #ffb000;
+  --color-error: #ff4136;
+  --color-info: #00d4ff;
+  --color-highlight: #00ff41;
+}
+
+body {
+  background: var(--color-background) !important;
+  color: var(--color-text) !important;
+}
+
+/* Form controls follow HUD theme so they match the rest of the app (green terminal look) */
+button, input, select, textarea {
+  background: var(--hud-surface, var(--color-surface)) !important;
+  border: 1px solid var(--hud-border, var(--color-border)) !important;
+  color: var(--hud-text, var(--color-text)) !important;
+  border-radius: var(--ui-border-radius, 0px);
+  font-size: var(--ui-font-size, 21px);
+}
+
+button:hover, input:hover, select:hover, textarea:hover {
+  border-color: var(--hud-border-strong, var(--hud-border, var(--color-border))) !important;
+}
+
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none !important;
+  border-color: var(--hud-accent, var(--color-primary)) !important;
+  box-shadow: 0 0 6px var(--hud-glow, rgba(0, 255, 65, 0.25)) !important;
+}
+
+a {
+  color: var(--color-info) !important;
+}
+
+.note-time, .overlay-item-time, .btn-jump {
+  color: var(--color-info) !important;
+}

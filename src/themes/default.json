@@ -1,0 +1,24 @@
+{
+  "name": "CRT Security",
+  "crt": true,
+  "colors": {
+    "primary": "#00ff41",
+    "background": "#0a0e0a",
+    "surface": "#0d120d",
+    "text": "#00ff41",
+    "textSecondary": "#b8d42a",
+    "border": "#1a2f1a",
+    "success": "#00ff41",
+    "warning": "#ffb000",
+    "error": "#ff4136",
+    "info": "#00d4ff",
+    "highlight": "#00ff41"
+  },
+  "ui": {
+    "fontSize": 21,
+    "fontSizeSmall": 18,
+    "buttonPadding": "12px 18px",
+    "borderRadius": "0px",
+    "fontMono": "\"VT323\", \"Courier New\", Consolas, monospace"
+  }
+}

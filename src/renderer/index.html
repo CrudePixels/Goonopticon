@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Goonopticon Security Breach</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles/theme.css" />
+  <link rel="stylesheet" href="./styles/surveillance.css" />
+  <link rel="stylesheet" href="./styles/grokSidebar.css" />
+  <style>
+    body { margin: 0; background: var(--hud-bg); color: var(--hud-text); font-family: system-ui, sans-serif; display: flex; flex-direction: column; height: 100vh; }
+    .main-header { padding: 0; background: var(--hud-bg-elevated); border-bottom: 1px solid var(--hud-border); display: flex; justify-content: space-between; align-items: stretch; -webkit-app-region: no-drag; }
+    .main-header-drag { -webkit-app-region: drag; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex: 1; min-width: 0; }
+    .main-header .hud-title { margin: 0; }
+    .main-header-meta { display: flex; align-items: center; gap: 12px; }
+    .main-header-meta .version { font-family: var(--hud-font-mono); font-size: var(--ui-font-size-small, 18px); color: var(--hud-text-dim); }
+    .window-controls { display: flex; -webkit-app-region: no-drag; }
+    .window-btn { width: 46px; height: 36px; border: none; background: transparent; color: var(--hud-text-dim); font-size: var(--ui-font-size, 21px); cursor: pointer; font-family: inherit; line-height: 1; }
+    .window-btn:hover { background: var(--hud-surface-hover); color: var(--hud-text); }
+    .window-btn-close:hover { background: var(--color-error, #ff4136); color: #fff; }
+    .content { flex: 1; display: flex; padding: 16px; gap: 20px; min-height: 0; }
+    .menu { width: 240px; border-left: 1px solid var(--hud-border); padding-left: 16px; display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow-y: auto; }
+    .menu-spacer { flex: 1; min-height: 8px; }
+    .menu .hud-btn { text-align: left; width: 100%; }
+    .view-wrap { flex: 1; min-width: 0; padding: 16px; background: var(--hud-surface); border: 1px solid var(--hud-border); display: flex; flex-direction: column; }
+    .view-wrap .view-placeholder {
+      color: var(--hud-text-dim);
+      font-size: var(--ui-font-size, 21px);
+      line-height: 1.5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .view-wrap h2 { margin: 0 0 12px 0; font-family: var(--hud-font-mono); font-size: 12px; letter-spacing: 0.12em; color: var(--hud-text); }
+    .view-wrap .view-iframe { width: 100%; height: 100%; min-height: 360px; border: none; display: block; }
+    .main-footer { padding: 10px 20px; background: var(--hud-bg-elevated); border-top: 1px solid var(--hud-border); font-size: 13px; display: flex; align-items: center; font-family: var(--hud-font-mono); color: var(--hud-text-dim); gap: 12px; }
+    .main-footer .splash-text { flex-shrink: 0; }
+    .main-footer .splash-text::before { content: "> "; color: var(--hud-accent); }
+    .main-footer .footer-center { flex: 1; display: flex; justify-content: center; }
+    .main-footer .footer-center .hud-btn { padding: 6px 14px; font-size: 12px; }
+    .links { flex-shrink: 0; }
+    .links a { color: var(--hud-accent); text-decoration: none; margin-left: 12px; font-size: 12px; }
+    .links a:hover { text-decoration: underline; }
+    #first-run-overlay { display: none; position: fixed; inset: 0; background: rgba(8,9,10,0.92); z-index: 1000; align-items: center; justify-content: center; padding: 24px; }
+    #first-run-overlay .hud-panel { max-width: 480px; padding: 24px; }
+    #first-run-overlay h2 { margin: 0 0 12px 0; font-family: var(--hud-font-mono); font-size: 11px; letter-spacing: 0.15em; color: var(--hud-accent); }
+    #first-run-overlay p, #first-run-overlay ol { color: var(--hud-text); font-size: 13px; }
+    #first-run-overlay code { background: var(--hud-bg-elevated); padding: 2px 6px; border: 1px solid var(--hud-border); font-size: 12px; }
+    #first-run-overlay .first-run-actions { display: flex; gap: 8px; margin-bottom: 16px; }
+    #first-run-overlay #extension-path-display { flex: 1; font-family: var(--hud-font-mono); font-size: 11px; }
+    #first-run-overlay .first-run-dismiss { width: 100%; padding: 10px; border: 1px solid var(--hud-accent); background: transparent; color: var(--hud-accent); font-family: var(--hud-font-mono); letter-spacing: 0.1em; cursor: pointer; }
+    #first-run-overlay .first-run-dismiss:hover { box-shadow: 0 0 12px var(--hud-glow); }
+    #pill-choice-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; min-width: 100%; min-height: 100%; background: rgba(8,9,10,0.96); z-index: 1001; align-items: center; justify-content: center; padding: 24px; overflow: hidden; box-sizing: border-box; }
+    #pill-choice-overlay.visible { display: flex; }
+    .matrix-rain { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; min-width: 100%; min-height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+    .matrix-column { position: absolute; top: -150%; left: 0; font-family: "VT323", "Courier New", Consolas, monospace; font-size: 14px; line-height: 1.2; color: #00ff41; text-shadow: 0 0 8px rgba(0,255,65,0.6); white-space: pre; letter-spacing: 0.05em; }
+    @keyframes matrix-fall {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(100vh); }
+    }
+    .matrix-column { animation: matrix-fall linear infinite; }
+    .pill-choice-wrap { position: relative; max-width: 100%; max-height: 100%; z-index: 1; }
+    .pill-choice-wrap img { display: block; max-width: 100%; max-height: 85vh; width: auto; height: auto; }
+    .pill-choice-left, .pill-choice-right { position: absolute; top: 0; bottom: 0; width: 50%; cursor: pointer; }
+    .pill-choice-left { left: 0; }
+    .pill-choice-right { right: 0; }
+    .pill-choice-left:hover, .pill-choice-right:hover { background: rgba(255,255,255,0.06); }
+    .pill-choice-tooltip { position: fixed; bottom: 24px; padding: 8px 16px; font-family: var(--hud-font-mono); font-size: 12px; letter-spacing: 0.1em; color: var(--hud-text); background: var(--hud-surface); border: 1px solid var(--hud-border); border-radius: 4px; pointer-events: none; z-index: 10; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.15s; }
+    #pill-choice-overlay.visible .pill-choice-tooltip.show { opacity: 1; }
+    .settings-tab-btn.active { background: var(--hud-surface-hover); border-color: var(--hud-accent); color: var(--hud-accent); }
+    .menu .hud-btn.active { background: var(--hud-surface-hover); border-color: var(--hud-accent); color: var(--hud-accent); }
+    .view-popped-placeholder { position: relative; flex: 1; min-height: 360px; display: flex; align-items: center; justify-content: center; }
+    .view-popped-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); }
+    .view-popped-message { position: relative; z-index: 1; text-align: center; padding: 24px; font-family: var(--hud-font-mono); font-size: 12px; color: var(--hud-text-dim); }
+    .view-popped-message p { margin: 0 0 16px 0; }
+    .settings-tab-panel { flex-direction: column; gap: 16px; }
+    .devlog-view-list { overflow-y: auto; flex: 1; min-height: 0; padding: 8px; font-family: var(--hud-font-mono); font-size: 11px; }
+    .devlog-entry { padding: 4px 8px; margin-bottom: 2px; border-radius: 4px; border-left: 3px solid; white-space: pre-wrap; word-break: break-word; background: var(--hud-surface); }
+    .devlog-entry-time { opacity: 0.7; margin-right: 6px; }
+    body.chat-popout .content { padding: 0; flex: 1; min-height: 0; display: block; }
+    body.chat-popout .view-wrap { flex: 1; min-width: 0; min-height: 0; margin: 0; padding: 12px; display: flex; flex-direction: column; }
+    body.chat-popout #view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    body.chat-popout .view-title-bar,
+    body.chat-popout .chat-toolbar { position: sticky; top: 0; z-index: 10; background: var(--hud-bg, #1a1a1a); flex-shrink: 0; }
+    body.grok-popout .content { padding: 0; flex: 1; min-height: 0; display: block; }
+    body.grok-popout .view-wrap { flex: 1; min-width: 0; min-height: 0; margin: 0; padding: 12px; display: flex; flex-direction: column; }
+    body.grok-popout #view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    body.grok-popout .view-title-bar { position: sticky; top: 0; z-index: 10; background: var(--hud-bg, #1a1a1a); flex-shrink: 0; }
+    @keyframes podawful-screen-shake {
+      0%, 100% { transform: translate(0, 0); }
+      15% { transform: translate(-5px, 2px); }
+      30% { transform: translate(4px, -3px); }
+      45% { transform: translate(-3px, -2px); }
+      60% { transform: translate(5px, 1px); }
+      75% { transform: translate(-2px, 3px); }
+    }
+    body.podawful-feed-screen-fx {
+      box-shadow: inset 0 0 100px rgba(196, 30, 58, 0.28);
+    }
+    body.podawful-feed-screen-fx .content {
+      animation: podawful-screen-shake 0.11s ease-in-out 16;
+      box-shadow: inset 0 0 60px rgba(196, 30, 58, 0.22);
+    }
+    body.podawful-feed-screen-fx .main-header {
+      box-shadow: 0 0 24px rgba(196, 30, 58, 0.45);
+    }
+    @keyframes podawful-tweet-pulse {
+      0%, 100% { box-shadow: inset 0 0 0 rgba(56, 139, 253, 0); }
+      50% { box-shadow: inset 0 0 50px rgba(56, 139, 253, 0.35); }
+    }
+    body.podawful-tweet-screen-fx .content {
+      animation: podawful-tweet-pulse 0.85s ease-in-out 5;
+    }
+    body.podawful-tweet-screen-fx {
+      box-shadow: inset 0 0 80px rgba(88, 166, 255, 0.22);
+    }
+    body.podawful-tweet-screen-fx .main-header {
+      box-shadow: 0 0 20px rgba(56, 139, 253, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <header class="main-header" id="main-header">
+    <div class="main-header-drag">
+      <div class="hud-title">[ GOONOPTICON DESKTOP ]</div>
+      <div class="main-header-meta">
+        <span id="bridge-status" class="hud-status offline" title="Extension bridge: connect the Goonopticon extension to enable jump-to-time in browser. OFFLINE = not connected; LINK = connected.">[ OFFLINE ]</span>
+        <span id="app-version" class="version">v0.1.0</span>
+      </div>
+    </div>
+    <div class="window-controls">
+      <button type="button" class="window-btn" id="btn-window-minimize" title="Minimize">−</button>
+      <button type="button" class="window-btn" id="btn-window-maximize" title="Maximize">□</button>
+      <button type="button" class="window-btn window-btn-close" id="btn-window-close" title="Close">×</button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="menu">
+      <button type="button" class="hud-btn" id="btn-main-menu" title="Return to mission select">Command Center</button>
+      <button type="button" class="hud-btn" data-view="timestamp" title="Create and manage video timestamps (Ctrl+Shift+T)">Timecode Arsenal</button>
+      <button type="button" class="hud-btn" data-view="tracker" title="Add profiles to track across the net">Gangstalking</button>
+      <button type="button" class="hud-btn" data-view="goonipedia" title="Encyclopedia of tracked goons — photos, aliases, dossier">Goonipedia</button>
+      <button type="button" class="hud-btn" data-view="music" title="Podawful AV HELL — play music + videos">Podawful AV HELL</button>
+      <button type="button" class="hud-btn" data-view="chat" title="Unified livestream chat — all platforms in one feed">Chat</button>
+      <button type="button" class="hud-btn" data-view="settings" title="Theme, bridge port, extension path">Configure Surveillance</button>
+      <button type="button" class="hud-btn" data-view="report" title="Copy logs and open GitHub issue">Report to HQ</button>
+      <button type="button" class="hud-btn" id="btn-devlog" data-view="devlog" title="Dev Log — warnings, errors, actions" style="display:none;">Dev Log</button>
+      <div class="menu-spacer" aria-hidden="true"></div>
+      <div id="menu-grok-widget" class="menu-grok-widget" data-grok-theme="default" style="display:none;">
+        <div class="menu-grok-row">
+          <input type="text" id="grok-sb-input" placeholder="Ask Grok..." autocomplete="off" />
+        </div>
+        <button type="button" class="hud-btn" id="grok-sb-send">Send</button>
+        <div class="menu-grok-modes">
+          <label class="menu-grok-mode-chip" for="grok-sb-roast">
+            <input type="checkbox" id="grok-sb-roast" />
+            <span>Roast</span>
+          </label>
+          <label class="menu-grok-mode-chip" for="grok-sb-troll">
+            <input type="checkbox" id="grok-sb-troll" />
+            <span>Troll</span>
+          </label>
+        </div>
+        <p id="grok-sb-tip" class="menu-grok-tip" aria-live="polite"></p>
+        <div class="menu-grok-actions">
+          <button type="button" class="hud-btn" id="grok-sb-random" title="Random line">Random</button>
+          <button type="button" class="hud-btn" id="grok-sb-overlay" title="Deploy overlay">Overlay</button>
+          <button type="button" class="hud-btn" id="grok-sb-reload" title="Reload grok.txt">Reload</button>
+          <button type="button" class="hud-btn" id="grok-sb-popout" title="Open in separate window">Pop out</button>
+        </div>
+        <div class="menu-grok-stage">
+          <div id="grok-sb-buddy">
+            <div id="grok-sb-bubble" role="status"></div>
+            <div id="grok-sb-sprite">
+              <img id="grok-sb-img" alt="" width="96" height="108" loading="eager" data-initial="../grokBuddy/sprites/idle_1" />
+            </div>
+          </div>
+        </div>
+        <p class="menu-grok-hint">Click for a line · Enter to ask</p>
+      </div>
+    </div>
+    <div class="view-wrap hud-panel" id="view">
+      <div class="view-placeholder">
+        <img
+          id="boot-random-image"
+          alt="Goonopticon"
+          style="max-width:100%;max-height:100%;object-fit:contain;display:block;"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div id="pill-choice-overlay">
+    <div class="matrix-rain" id="matrix-rain"></div>
+    <div class="pill-choice-wrap">
+      <img src="../icons/choose.jpg" alt="Choose your path" id="pill-choice-img" />
+      <div class="pill-choice-left" id="pill-choice-blue" title="Immerse Yourself" data-hover="Immerse Yourself"></div>
+      <div class="pill-choice-right" id="pill-choice-red" title="Avoid the Noid" data-hover="Avoid the Noid"></div>
+    </div>
+    <div class="pill-choice-tooltip" id="pill-choice-tooltip"></div>
+  </div>
+  <div id="first-run-overlay" style="display:none;">
+    <div class="hud-panel" style="display:flex;flex-direction:column;align-items:stretch;">
+      <h2>SYSTEM BRIEFING — CONNECT BRIDGE</h2>
+      <p style="margin-bottom:16px;">To wield timecodes across the web — YouTube, Vimeo, Twitch — install the companion extension. Boom — instant seek.</p>
+      <ol style="text-align:left;margin-bottom:16px;padding-left:20px;">
+        <li>Open Chrome → <code>chrome://extensions</code></li>
+        <li>Enable <strong>Developer mode</strong></li>
+        <li>Click <strong>Load unpacked</strong></li>
+        <li>Select the extension folder (copy path below)</li>
+      </ol>
+      <div class="first-run-actions">
+        <input type="text" id="extension-path-display" readonly class="hud-input" />
+        <button type="button" class="hud-btn" id="copy-extension-path" title="Copy extension folder path">Copy Path</button>
+        <button type="button" class="hud-btn" id="open-extensions-page" title="Open Chrome extensions page">Open Chrome</button>
+      </div>
+      <button type="button" class="first-run-dismiss" id="first-run-dismiss">Henchmen, to your stations</button>
+    </div>
+  </div>
+
+  <div id="toast-root" aria-live="polite" style="position:fixed;bottom:48px;left:50%;transform:translateX(-50%);z-index:2000;pointer-events:none;display:none;padding:8px 16px;background:var(--hud-surface);border:1px solid var(--hud-border);border-radius:4px;font-size:12px;font-family:var(--hud-font-mono);color:var(--hud-text);box-shadow:0 4px 12px rgba(0,0,0,0.4);"></div>
+
+  <footer class="main-footer">
+    <div class="splash-text" id="splash-text">Initializing surveillance...</div>
+    <div class="footer-center">
+      <button type="button" class="hud-btn" id="btn-reboot" title="Restart app and show splash again">Reboot system</button>
+    </div>
+    <div class="links">
+      <a href="#" id="footer-podawful">Pizza fund</a>
+      <a href="#" id="footer-awfultech">Buy some merch</a>
+      <a href="#" id="footer-discord">Join the Cult</a>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { applyTheme } from './theme.js';
+    window.__applyTheme = applyTheme;
+    applyTheme();
+  </script>
+  <script>
+    (function () {
+      try {
+        var imgs = [
+          '../images/Awful_World_Pamphlet_1_Front_Color.png',
+          '../images/Awful_World_Pamphlet_1_Back_Color.png'
+        ];
+        var i = Math.floor(Math.random() * imgs.length);
+        var el = document.getElementById('boot-random-image');
+        if (el && imgs[i]) el.src = imgs[i];
+      } catch (e) {}
+    })();
+  </script>
+  <script src="./mainMenu.js"></script>
+  <script type="module" src="./grokSidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "Podawful",
+  "colors": {
+    "primary": "#facc15",
+    "background": "#0a0a0a",
+    "surface": "#171717",
+    "text": "#fef08a",
+    "textSecondary": "#fde047",
+    "border": "#404040",
+    "success": "#22c55e",
+    "warning": "#f59e0b",
+    "error": "#ef4444",
+    "info": "#facc15",
+    "highlight": "#fef08a"
+  }
+}

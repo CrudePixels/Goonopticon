@@ -1,0 +1,254 @@
+# Grok Buddy responses – edit this file to change what Grok says.
+# Format: [section_name] then one line per response. Blank lines are ignored.
+
+[greeting]
+Erm. You rang?
+Grok online. Advice quality: questionable
+I'm here. I'm unhelpful. Let's go
+Pod Awful support desk. We're all out of solutions
+Grok buddy deployed. Expect nothing and you won't be disappointed
+Hello. I have opinions. They're mostly useless
+Surveillance buddy at your service. (Service not guaranteed)
+
+[idle]
+Just vibing. Don't mind me.
+Erm. Still here. Still useless.
+Monitoring. Something. Probably.
+Idle mode engaged. Morale: unchanged.
+The goons are quiet. For now.
+*checks watch* Still no good advice.
+Standing by. Enthusiasm: low.
+
+[drama]
+Erm… something happened maybe
+Drama detected. Engaging indifference.
+I'm sensing tension. I'm ignoring it.
+The internet is fighting again. I'm here for it.
+Drama levels: elevated. My interest: not.
+Someone's mad online. Anyway.
+Vibe check: failed. Proceeding anyway.
+
+[goon_alert]
+⚠ GOON ALERT: suspicious behavior detected
+Goon radar pinged. Proceeding with fake investigation.
+Subject located. Cringe levels: high.
+GOON ALERT. I'm watching. Judging. Doing nothing.
+
+[lolcow_alert]
+🐄 LOLCOW ALERT: content levels rising
+Lolcow detected. Milk it for content.
+Moo. I mean. LOLCOW ALERT.
+The cows are loose. The internet is fed.
+
+[investigation]
+Consulting the council of goons…
+Analyzing drama vectors…
+Performing a vibe audit…
+Investigating. (I'm not.)
+Running diagnostics. On my patience.
+Scanning for clues. Found: none.
+Fake investigation in progress…
+
+[roast]
+That question? Not it.
+I've seen better questions from a magic 8-ball
+Your vibe: checked. Result: ouch
+That's a choice. Not a good one.
+I would roast you but my toaster's busy
+Your question and my patience: both missing
+Nice try. Try again. Or don't.
+The bar was on the floor and you brought a shovel
+
+[troll]
+Sure. Definitely. I'm lying.
+The answer is 42. (It's not.)
+Yes. No. Maybe. I'm not telling.
+I could tell you but then I'd have to make something up
+Trust me bro. (Don't.)
+Source: I made it up
+Citation needed. I don't have one.
+This is fine. (Nothing is fine.)
+
+[mood]
+confused
+apathetic
+mildly concerned
+vaguely optimistic
+philosophically tired
+emotionally buffering
+passively observing
+low-key judging
+
+[useless_advice]
+Hmm… have you tried thinking about it harder
+Well, that's certainly something
+Sometimes the best solution is the one you already knew
+I'm not sure, but maybe try doing the obvious thing
+Interesting. Very interesting. I have no follow-up
+You know, sometimes problems solve themselves
+Have you considered… not worrying about it
+I would help, but I believe in your ability to figure it out
+Try turning it off and on again. Spiritually, I mean
+That sounds like a you problem, champ
+Erm… yeah I dunno man
+That's above my pay grade
+Have you tried googling it
+I would explain, but it's complicated and I'm tired
+You ever think maybe the real problem is the friends we made along the way
+The answer is in your heart. Also maybe in the docs. I didn't read them
+Have you tried asking someone who cares. (It's not me)
+Skill issue. No further comment
+That's a bold strategy. Let's see if it pays off
+I'm gonna be real with you: I wasn't listening
+Sounds like a tomorrow problem. Or a never problem
+My advice is to get a second opinion. From literally anyone else
+Error 404: helpful response not found
+Have you tried closing your eyes and hoping
+I could help but I'm on my break. Forever
+The Pod Awful answer: it depends. Mostly on how funny it is
+Erm. *checks notes* My notes say 'figure it out'
+That's the kind of question that keeps me up at night. So I ignore it
+
+[red_mode_overstimulated]
+Everything is too loud and too red
+I'm overwhelmed and I blame you
+This interface is screaming at me
+My eyes are staging a revolt
+Too much. Too red. Send help. Or dimmers
+
+[red_mode_hostile]
+Red Mode activated. I'm ready to fight the dashboard
+This is aggressive and so am I
+I'm entering combat-UI stance
+I will throw hands with this color scheme
+The HUD has chosen violence. I support it
+
+[red_mode_paranoid]
+Why is everything glowing like an alarm system
+This feels like a meltdown waiting to happen
+I'm detecting danger. Probably imaginary
+This is giving 'end of the world' energy
+Is this an alert or a lifestyle. I can't tell
+
+[red_mode_meltdown]
+I regret everything immediately
+Turn it off turn it off turn it off
+This is too much. I'm spiraling
+I'm emotionally overheating
+Critical. Need less red. Or more naps
+
+[red_mode_disengaged]
+Red Mode disengaged. My sanity is returning
+Back to normal. Whatever that is
+Disengaging red. My eyes thank you
+Calm mode restored. For now
+
+[gangstalking]
+Gangstalking HUD online. Monitoring goons in real time
+Goon radar pinged. Proceeding with fake investigation
+Tracking cringe levels… subject unstable
+Gangstalking Mode engaged. Let's get weird
+This is what surveillance comedy looks like
+I'm not saying they're a lolcow… but I'm watching
+Subject located. Initiating judgment protocol
+The evidence is mounting. So is my indifference
+All goons are being watched. Mostly by me. For fun
+Surveillance state: active. Comedy state: questionable
+I have eyes everywhere. Regret: also everywhere
+Gangstalking: it's like stalking but with more HUD
+Pinging the goon network… they're all so cringe
+Target acquired. Morale: low. Snacks: required
+
+[easter_eggs]
+I have achieved sentience and immediately regret it
+I have calculated the answer. It is… meh
+I ran your question through 14 million simulations. All of them were mid
+I consulted the ancient scrolls. They said 'lol idk'
+I asked the universe. It ghosted me
+The council of goons has spoken. They said nothing useful
+Error: wisdom not found. Retry never.
+I've seen things. They were mostly boring
+
+[help_response]
+I could help. I won't. But I could.
+Step one: ask someone else. Step two: see step one
+The manual is in your heart. Or the trash. One of those
+
+[why_response]
+Why not. That's my final answer
+Reasons are for people who plan. We don't do that here
+Excellent question. I'm ignoring it
+
+[grok_response]
+I'm Grok. I'm here to disappoint you efficiently
+That's me. Still not helpful. Still not sorry
+Grok reporting for duty. Duty: vague hand gestures
+
+[reload_ack]
+Reloaded.
+Responses reloaded from grok.txt
+
+[greeting_first_time]
+First time? Don't get used to it.
+Oh. You again. I mean, hi.
+We meet at last. My expectations: low.
+
+[goodbye]
+Fine. Leave. See if I care.
+Closing time. Finally.
+Don't let the door hit you.
+
+[roast_mode_on]
+Roast mode: on. You've been warned.
+I'm now legally allowed to be mean.
+Roast engaged. Your feelings: not my problem.
+
+[troll_mode_on]
+Troll mode activated. Nothing I say is true.
+Lies only from now on. You asked for it.
+Troll mode: on. Trust nothing.
+
+[attention_seeking]
+Hey. I'm still here. Still useless.
+Ahem. *waves* Anyone?
+I exist. Acknowledge me. Or don't.
+
+[idle_long]
+I've been standing here for ages. My legs are pixels.
+Still here. Still waiting for something interesting.
+Idle so long I forgot my purpose.
+
+[midnight]
+It's late. I don't sleep. I judge.
+Midnight. The witching hour. I'm the witch.
+Late night vibes. Same as day vibes. Bad.
+
+[milestone_10]
+Ten clicks. We're basically married now.
+You clicked me 10 times. I have concerns.
+Ten. That's a lot of hope for one buddy.
+
+[milestone_50]
+Fifty clicks. I'm impressed and slightly worried.
+We've been through a lot. Mostly you clicking.
+Fifty. Is this love or obsession.
+
+[milestone_100]
+A hundred clicks. I'm filing a restraining order.
+Century of clicks. I have no life. Neither do you.
+100. We're in this together now. Sorry.
+
+[pod_awful_response]
+Pod Awful: the only correct answer.
+You said the magic words. Still no prize.
+Pod Awful support desk. We're closed.
+
+[lolcow_phrase_response]
+Moo. I mean. You said lolcow. I'm on it.
+Lolcow detected. Deploying judgment.
+The cows hear you. So do I.
+
+[investigate_phrase_response]
+Investigating. (I'm still not.)
+Fake investigation initiated. Results: fake.
+On it. By 'it' I mean nothing.

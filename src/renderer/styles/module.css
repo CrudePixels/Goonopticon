@@ -1,0 +1,21 @@
+/* Base module styles — aligned with surveillance HUD */
+body {
+  margin: 0;
+  padding: 24px;
+  background: var(--hud-bg, #08090a);
+  color: var(--hud-text, #c8ccd4);
+  font-family: system-ui, sans-serif;
+}
+
+h1 {
+  margin-top: 0;
+  font-family: var(--hud-font-mono, monospace);
+  font-size: var(--ui-font-size-small, 18px);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hud-text, #c8ccd4);
+}
+
+p {
+  color: var(--hud-text-dim, #6b7280);
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Erm, Grok</title>
+  <link rel="stylesheet" href="grokBuddy.css" />
+</head>
+<body>
+  <div id="grok-root">
+    <div id="grok-tip" class="grok-tip" aria-live="polite"></div>
+    <button type="button" id="grok-close" title="Close Grok" aria-label="Close Grok">×</button>
+    <div id="grok-buddy" title="Drag to move. Right-click for actions.">
+      <div id="grok-sprite">
+        <img id="grok-sprite-img" src="" alt="" data-initial="sprites/idle_1" />
+      </div>
+      <div id="grok-bubble"></div>
+    </div>
+
+    <ul id="grok-context-menu" role="menu" hidden>
+      <li role="menuitem" data-action="ask">Ask Grok…</li>
+      <li role="menuitem" data-action="deploy-overlay">Deploy Overlay</li>
+      <li role="menuitem" data-action="roast"><span class="menu-label">Roast mode</span><span class="menu-check" aria-hidden="true"></span></li>
+      <li role="menuitem" data-action="troll"><span class="menu-label">Troll mode</span><span class="menu-check" aria-hidden="true"></span></li>
+      <li role="separator"></li>
+      <li role="menuitem" data-action="settings">Settings…</li>
+      <li role="menuitem" data-action="reload">Reload lines</li>
+      <li role="separator"></li>
+      <li role="menuitem" data-action="close">Close</li>
+    </ul>
+
+    <div id="grok-settings-panel" class="grok-panel" hidden>
+      <div class="grok-panel-title">Settings</div>
+      <label class="grok-opt"><span>Pin window on top</span><input type="checkbox" id="grok-always-on-top" /></label>
+      <label class="grok-opt"><span>Volume</span><input type="range" id="grok-volume" min="0" max="100" value="40" /></label>
+      <label class="grok-opt"><span>Theme</span><select id="grok-theme"><option value="default">HUD</option><option value="amber">Amber</option></select></label>
+      <label class="grok-opt"><span>Roast mode</span><input type="checkbox" id="grok-settings-roast" /></label>
+      <label class="grok-opt"><span>Troll mode</span><input type="checkbox" id="grok-settings-troll" /></label>
+      <button type="button" class="grok-panel-close" id="grok-settings-close">Done</button>
+    </div>
+
+    <div id="grok-ask-panel" class="grok-panel" hidden>
+      <div class="grok-panel-title">Ask Grok</div>
+      <textarea id="grok-input" placeholder="Ask Grok something…" rows="2"></textarea>
+      <div class="grok-ask-actions">
+        <button type="button" id="grok-btn">Ask</button>
+        <button type="button" class="grok-panel-close" id="grok-ask-close">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <script src="grokBuddy.js"></script>
+</body>
+</html>

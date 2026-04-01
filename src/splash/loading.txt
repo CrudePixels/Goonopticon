@@ -1,0 +1,19 @@
+# Loading messages shown on the splash screen (one per line, # = comment)
+# These cycle while the app boots.
+
+booting up CRTS
+scanning for threats
+warming Goo
+fixing robotron
+initializing surveillance suite
+calibrating timecode arsenal
+connecting bridge
+loading henchmen
+acquiring video intel
+spinning up Podawful beats
+deploying overlay
+running diagnostics
+syncing notes
+warming phosphors
+establishing link
+readying evidence log

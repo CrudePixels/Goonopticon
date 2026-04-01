@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-src https://www.youtube.com https://www.youtube-nocookie.com; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;" />
+  <title>BROADCAST INTERRUPT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #0c0c0e; color: #c8ffb8; font-family: "Share Tech Mono", monospace; overflow: hidden; }
+    .crt-root {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      background:
+        radial-gradient(ellipse at center, rgba(40, 80, 40, 0.12) 0%, transparent 65%),
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.18) 2px, rgba(0, 0, 0, 0.18) 4px);
+      filter: contrast(1.08) saturate(1.15);
+    }
+    .crt-bezel {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      border: 14px solid #1a1814;
+      border-radius: 20px;
+      box-shadow:
+        inset 0 0 60px rgba(0, 0, 0, 0.85),
+        0 0 0 3px #3d3a36,
+        0 0 40px rgba(196, 30, 58, 0.35);
+      background: #050805;
+      position: relative;
+    }
+    .crt-bezel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      pointer-events: none;
+      box-shadow: inset 0 0 120px rgba(0, 30, 0, 0.25);
+      z-index: 3;
+    }
+    .crt-header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, #142018 0%, #0a120c 100%);
+      border-bottom: 2px solid #c41e3a;
+      font-family: "Press Start 2P", monospace;
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      text-shadow: 0 0 8px rgba(200, 255, 120, 0.5);
+      z-index: 4;
+    }
+    .crt-badge {
+      color: #ff6b6b;
+      animation: blink 1.1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0.35; } }
+    .crt-title {
+      flex: 1;
+      min-width: 0;
+      font-size: 8px;
+      line-height: 1.5;
+      color: #9fe870;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .crt-close {
+      font-family: "Share Tech Mono", monospace;
+      font-size: 12px;
+      padding: 6px 12px;
+      border: 1px solid #c41e3a;
+      background: rgba(196, 30, 58, 0.2);
+      color: #ffb3c0;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .crt-close:hover {
+      background: rgba(196, 30, 58, 0.45);
+    }
+    .screen-wrap {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      margin: 10px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.9);
+    }
+    .screen-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 1px,
+        rgba(0, 0, 0, 0.22) 1px,
+        rgba(0, 0, 0, 0.22) 2px
+      );
+      mix-blend-mode: multiply;
+    }
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.65);
+      border-radius: 8px;
+    }
+    .flicker {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      animation: flick 0.09s infinite;
+      opacity: 0.04;
+      background: rgba(180, 255, 180, 0.15);
+    }
+    @keyframes flick {
+      0% { opacity: 0.02; }
+      50% { opacity: 0.07; }
+      100% { opacity: 0.03; }
+    }
+  </style>
+</head>
+<body>
+  <div class="crt-root">
+    <div class="crt-bezel">
+      <header class="crt-header">
+        <span class="crt-badge" id="crt-kind">ALERT</span>
+        <span class="crt-title" id="crt-title">Incoming transmission</span>
+        <button type="button" class="crt-close" id="crt-close">DISMISS</button>
+      </header>
+      <div class="screen-wrap">
+        <iframe id="crt-frame" title="YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        <div class="scanlines"></div>
+        <div class="vignette"></div>
+        <div class="flicker"></div>
+      </div>
+    </div>
+  </div>
+  <script src="./podawfulCrt.js"></script>
+</body>
+</html>

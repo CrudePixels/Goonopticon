@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Timestamp Videos</title>
+  <link rel="stylesheet" href="./styles/module.css" />
+  <link rel="stylesheet" href="./styles/theme.css" />
+  <link rel="stylesheet" href="./styles/surveillance.css" />
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; background: var(--hud-bg); color: var(--hud-text); }
+    .timestamp-body { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 16px; }
+    .timestamp-body h1 { margin: 0 0 12px 0; font-family: var(--hud-font-mono); font-size: 12px; letter-spacing: 0.15em; color: var(--hud-text); }
+    .timestamp-layout { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
+    .url-bar { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+    .url-bar input { flex: 1; font-family: var(--hud-font-mono); font-size: 12px; padding: 8px 12px; background: var(--hud-bg-elevated); border: 1px solid var(--hud-border); color: var(--hud-text); }
+    .url-bar input:focus { outline: none; border-color: var(--hud-accent); box-shadow: 0 0 6px var(--hud-glow); }
+    .url-bar .hud-btn { flex-shrink: 0; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; align-items: center; }
+    .toolbar input, .toolbar select, .toolbar .hud-btn { padding: 6px 10px; font-size: 11px; }
+    .toolbar input { min-width: 100px; font-family: var(--hud-font-mono); background: var(--hud-bg-elevated); border: 1px solid var(--hud-border); color: var(--hud-text); }
+    .toolbar select { background: var(--hud-surface); border: 1px solid var(--hud-border); color: var(--hud-text); cursor: pointer; font-family: var(--hud-font-mono); }
+    .collapsible-panel { margin-bottom: 12px; padding: 10px 12px; border: 1px solid var(--hud-border); background: var(--hud-surface); border-radius: 6px; }
+    /* Match Saved videos: chevron left of title */
+    #groups-add-details > .collapsible-summary,
+    #add-note-details > .collapsible-summary {
+      cursor: pointer;
+      user-select: none;
+      font-family: var(--hud-font-mono);
+      font-size: 11px;
+      color: var(--hud-text-dim);
+      list-style: none;
+      letter-spacing: 0.06em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #groups-add-details > .collapsible-summary::-webkit-details-marker,
+    #add-note-details > .collapsible-summary::-webkit-details-marker { display: none; }
+    #groups-add-details > .collapsible-summary::before,
+    #add-note-details > .collapsible-summary::before {
+      content: "▾";
+      display: inline-block;
+      flex-shrink: 0;
+      font-size: 10px;
+      opacity: 0.9;
+      transition: transform 120ms ease;
+    }
+    #groups-add-details:not([open]) > .collapsible-summary::before,
+    #add-note-details:not([open]) > .collapsible-summary::before { transform: rotate(-90deg); }
+    .add-note-body, .groups-add-body { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+    .add-note-body input, .add-note-body select { padding: 6px 10px; background: var(--hud-bg-elevated); border: 1px solid var(--hud-border); color: var(--hud-text); font-family: var(--hud-font-mono); font-size: 12px; }
+
+    /* Font-size unification for this view (override scattered inline styles) */
+    .hud-btn, .hud-input, .hud-panel input, .hud-panel select, #search, #note-time, #note-text, #note-tags, #tag-filter, #new-group, #video-url, #video-save-nickname, #note-group {
+      font-family: var(--hud-font-mono);
+      font-size: 12px !important;
+    }
+    .note-meta, .note-text, .status { font-size: 12px !important; }
+    .add-note-body input[type="text"] { min-width: 120px; }
+    .add-note-body input[type="text"].time { width: 72px; }
+    .groups-add-body input[type="text"].group { width: 100px; }
+    .timestamp-bottom { display: flex; flex: 1; min-height: 0; gap: 12px; }
+    .notes-list { flex: 1; min-width: 0; min-height: 0; width: 100%; overflow: auto; border: 1px solid var(--hud-border); background: var(--hud-bg-elevated); }
+    .group-container { margin-bottom: 16px; border: 1px solid var(--hud-border); background: var(--hud-surface); border-radius: 6px; overflow: hidden; }
+    .group-container-header { padding: 10px 12px; font-family: var(--hud-font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; background: var(--hud-bg-elevated); border-bottom: 1px solid var(--hud-border); display: flex; align-items: center; gap: 8px; }
+    .group-header-label { flex: 1; min-width: 0; }
+    .group-header-label.group-header-draggable { cursor: grab; }
+    .group-header-label.group-header-draggable:active { cursor: grabbing; }
+    .group-header-actions { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: auto; }
+    .group-container-header.drag-over { background: var(--hud-accent); color: var(--hud-bg); }
+    .group-container-header.dragging { opacity: 0.6; }
+    .group-container-header.group-header-pinned { border-bottom-color: var(--hud-accent); background: color-mix(in srgb, var(--hud-accent) 12%, var(--hud-bg-elevated)); }
+    .group-container-notes { min-height: 24px; }
+    .group-container-notes.drag-over { background: color-mix(in srgb, var(--hud-accent) 12%, transparent); }
+    .note-item { padding: 8px 12px; border-bottom: 1px solid var(--hud-border); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .note-item:last-child { border-bottom: none; }
+    .note-item:nth-child(even) { background: color-mix(in srgb, var(--hud-text) 3%, transparent); }
+    .note-item:hover { background: var(--hud-surface); }
+    .note-item.draggable { cursor: grab; }
+    .note-item.draggable:active { cursor: grabbing; }
+    .note-item.dragging { opacity: 0.5; }
+    .note-time { font-variant-numeric: tabular-nums; font-family: var(--hud-font-mono); font-size: 12px; color: var(--hud-accent); min-width: 64px; }
+.note-actions .btn-copy-url { font-size: 12px; }
+    .note-text { flex: 1; font-size: 12px; }
+    .note-meta { font-size: 11px; color: var(--hud-text-dim); }
+    .note-actions { display: flex; gap: 2px; align-items: center; }
+    .note-action-btn { padding: 4px; min-width: 28px; font-size: 12px; line-height: 1; background: transparent; border: 1px solid transparent; color: var(--hud-text-dim); cursor: pointer; border-radius: 4px; }
+    .note-action-btn:hover { color: var(--hud-text); background: var(--hud-surface); }
+    .note-action-btn.btn-copy-url:hover { color: var(--hud-text); }
+    .empty { padding: 24px; text-align: center; color: var(--hud-text-dim); font-size: 13px; }
+    .status { font-size: 11px; color: var(--hud-text-dim); margin-top: 4px; font-family: var(--hud-font-mono); }
+    #importFile { display: none; }
+    .note-item-highlight { background: color-mix(in srgb, var(--hud-accent) 18%, transparent) !important; border-left: 3px solid var(--hud-accent); }
+    .note-item-pinned { background: color-mix(in srgb, var(--hud-accent) 26%, transparent) !important; border-left: 3px solid color-mix(in srgb, var(--hud-accent) 70%, #ffffff 0%); }
+    .note-tags-pinned { background: color-mix(in srgb, var(--hud-accent) 18%, transparent); border: 1px solid var(--hud-border); padding: 2px 6px; border-radius: 6px; color: var(--hud-accent); }
+    .toolbar .btn-active { border-color: var(--hud-accent); color: var(--hud-accent); }
+    .pinned-group { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; font-size: 11px; background: var(--hud-surface); border: 1px solid var(--hud-border); border-radius: 4px; }
+    .pinned-group.pinned { border-color: var(--hud-accent); color: var(--hud-accent); }
+    .pinned-group button { padding: 0 4px; background: none; border: none; color: inherit; cursor: pointer; font-size: 12px; }
+    #bulk-actions-bar { display: none; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+    #bulk-actions-bar.visible { display: flex; }
+    #tag-manager-modal { display: none; position: fixed; inset: 0; background: color-mix(in srgb, var(--hud-bg) 70%, transparent); z-index: 100; align-items: center; justify-content: center; padding: 24px; }
+    #tag-manager-modal.visible { display: flex; }
+    #tag-manager-modal .modal-inner { background: var(--hud-surface); border: 1px solid var(--hud-border); border-radius: 8px; padding: 20px; max-width: 400px; width: 100%; max-height: 80vh; overflow: auto; }
+    #tag-manager-modal .tag-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--hud-border); }
+    #tag-manager-modal .tag-row button { padding: 4px 8px; font-size: 11px; }
+
+    /* Saved videos list (Timecode Arsenal) */
+    #saved-videos-details { border: 1px solid var(--hud-border); background: var(--hud-surface); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; }
+    #saved-videos-summary { cursor: pointer; user-select: none; font-family: var(--hud-font-mono); font-size: 11px; color: var(--hud-text-dim); }
+    #saved-videos-list { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow: auto; }
+    .saved-video-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--hud-border); border-radius: 6px; background: color-mix(in srgb, var(--hud-bg-elevated) 82%, transparent); }
+    .saved-video-row .saved-video-title { flex: 1; min-width: 0; font-family: var(--hud-font-mono); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--hud-text); }
+    .saved-video-row .saved-video-nickname { width: 140px; padding: 6px 8px; font-size: 11px; background: var(--hud-bg-elevated); border: 1px solid var(--hud-border); color: var(--hud-text); border-radius: 4px; }
+    .saved-video-row .btn-open-video { padding: 6px 10px; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="timestamp-layout">
+    <div class="view-title-bar">
+      <span>[ TIMECODE ARSENAL ]</span>
+      <div class="title-bar-actions">
+        <button type="button" class="hud-btn view-pop-out-btn" id="btn-pop-out" title="Open in separate window">Pop out</button>
+        <button type="button" class="btn-close" id="timestamp-close" title="Close">×</button>
+      </div>
+    </div>
+    <div class="timestamp-body">
+    <div class="url-bar">
+      <input type="text" id="video-url" class="hud-input" placeholder="Video URL" list="recent-urls" style="flex:1;" />
+      <datalist id="recent-urls"></datalist>
+      <button type="button" class="hud-btn" id="btn-load" title="Load video URL and fetch notes">Load</button>
+      <input
+        type="text"
+        id="video-save-nickname"
+        class="hud-input"
+        placeholder="Nickname"
+        style="width:160px;max-width:35vw;"
+      />
+      <button type="button" class="hud-btn" id="btn-save-video" title="Save this video to your saved list">Save video</button>
+    </div>
+    <div class="toolbar">
+      <button type="button" class="hud-btn" id="btn-lock" title="Lock — read-only, click note to jump">Lock</button>
+      <button type="button" class="hud-btn" id="btn-yt-external" title="Open YouTube jumps in your system browser (bypass embed issues)">YT External</button>
+      <button type="button" class="hud-btn" id="btn-bulk" title="Bulk actions — select notes">Bulk</button>
+      <button type="button" class="hud-btn" id="btn-tag-manager" title="Manage tags — rename or delete">Manage tags</button>
+      <button type="button" class="hud-btn" id="btn-manage-pins" title="Manage pins for Groups / Notes / Tags">Manage Pin</button>
+      <details id="export-dropdown" style="display:inline-flex;align-items:center;gap:0;position:relative;">
+        <summary class="hud-btn" id="btn-export-dropdown" style="list-style:none;cursor:pointer;">Export</summary>
+        <div
+          id="export-dropdown-menu"
+          style="display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--hud-border);border-radius:6px;background:var(--hud-surface);position:absolute;z-index:50;min-width:190px;"
+        >
+          <div style="font-size:11px;opacity:0.85;font-family:var(--hud-font-mono);">Current video</div>
+          <button type="button" class="hud-btn" id="btn-export-current-json" style="width:100%;">JSON</button>
+          <button type="button" class="hud-btn" id="btn-export-current-csv" style="width:100%;">CSV</button>
+          <button type="button" class="hud-btn" id="btn-export-current-md" style="width:100%;">Markdown</button>
+          <div style="height:1px;background:var(--hud-border);margin:2px 0;"></div>
+          <div style="font-size:11px;opacity:0.85;font-family:var(--hud-font-mono);">All notes</div>
+          <button type="button" class="hud-btn" id="btn-export-all-json" style="width:100%;">All → JSON</button>
+        </div>
+      </details>
+      <button type="button" class="hud-btn" id="btn-import" title="Import from JSON/CSV/Markdown file">Import</button>
+      <button type="button" class="hud-btn" id="btn-import-paste" title="Paste notes from clipboard (extension format)">Paste</button>
+      <input type="file" id="importFile" accept=".json,.csv,.md" />
+      <div class="status" id="status"></div>
+    </div>
+    <details id="saved-videos-details" open>
+      <summary id="saved-videos-summary">Saved videos (0)</summary>
+      <div id="saved-videos-list"></div>
+    </details>
+    <div id="bulk-actions-bar">
+      <span id="bulk-count">0 selected</span>
+      <button type="button" class="hud-btn" id="bulk-delete">Delete selected</button>
+      <button type="button" class="hud-btn" id="bulk-move">Move to group</button>
+      <button type="button" class="hud-btn" id="bulk-add-tag">Add tag</button>
+      <button type="button" class="hud-btn" id="bulk-cancel">Cancel</button>
+    </div>
+    <details id="groups-add-details" class="collapsible-panel" open>
+      <summary class="collapsible-summary">Add group</summary>
+      <div class="groups-add-body">
+        <input type="text" id="new-group" class="group" placeholder="New group name" style="min-width:200px;" />
+        <button type="button" class="hud-btn" id="btn-add-group" title="Create a new group for notes">Add Group</button>
+      </div>
+    </details>
+    <details id="add-note-details" class="collapsible-panel" open>
+      <summary class="collapsible-summary">Add note</summary>
+      <div id="add-note-panel" class="add-note-body">
+        <input type="text" id="note-time" class="time" placeholder="e.g., 1:23 or 1:23:45" title="Timecode (e.g., 1:23 or 1:23:45)" />
+        <input type="text" id="note-text" placeholder="Note text" />
+        <input type="text" id="note-tags" placeholder="Tags (comma-separated)" title="Tags" />
+        <select id="note-group">
+          <option value="">-- No group --</option>
+        </select>
+        <button type="button" class="hud-btn" id="btn-add-note" title="Add timestamped note">Add note</button>
+      </div>
+    </details>
+
+    <div
+      id="notes-search-row"
+      style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 12px 0;"
+    >
+      <input type="text" id="search" placeholder="Search notes..." />
+      <select id="tag-filter">
+        <option value="">All tags</option>
+      </select>
+    </div>
+
+    <div class="timestamp-bottom">
+      <div class="notes-list" id="notes-list"></div>
+    </div>
+    </div>
+  </div>
+  <div id="tag-manager-modal">
+    <div class="modal-inner">
+      <h3 style="margin:0 0 12px 0;font-size:14px;">Manage tags</h3>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+        <input
+          type="text"
+          id="tag-manager-add-input"
+          placeholder="Add tag to available tags (not notes)"
+          style="flex:1;min-width:160px;padding:8px 10px;background:var(--hud-bg-elevated);border:1px solid var(--hud-border);color:var(--hud-text);border-radius:4px;font-size:12px;font-family:var(--hud-font-mono);"
+        />
+        <button type="button" class="hud-btn" id="tag-manager-add-btn">Add</button>
+      </div>
+      <div id="tag-manager-list"></div>
+      <button type="button" class="hud-btn" id="tag-manager-close" style="margin-top:12px;">Close</button>
+    </div>
+  </div>
+
+  <div id="pin-modal" style="display:none; position:fixed; inset:0; background: color-mix(in srgb, var(--hud-bg) 70%, transparent); z-index:1200; align-items:center; justify-content:center; padding:24px;">
+    <div class="hud-panel" style="width:100%; max-width:520px; max-height:80vh; overflow:auto; padding:16px;">
+      <h3 style="margin:0 0 12px 0;font-size:14px;">Manage Pin</h3>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+        <button type="button" class="hud-btn" id="pin-type-groups" style="font-size:12px;">Groups</button>
+        <button type="button" class="hud-btn" id="pin-type-notes" style="font-size:12px;">Notes</button>
+        <button type="button" class="hud-btn" id="pin-type-tags" style="font-size:12px;">Tags</button>
+      </div>
+
+      <div id="pin-panel-groups" class="pin-panel" style="display:none;">
+        <div id="pin-groups-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+      <div id="pin-panel-notes" class="pin-panel" style="display:none;">
+        <div id="pin-notes-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+      <div id="pin-panel-tags" class="pin-panel" style="display:none;">
+        <div id="pin-tags-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+        <button type="button" class="hud-btn" id="pin-modal-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="group-edit-modal" style="display:none; position:fixed; inset:0; background: color-mix(in srgb, var(--hud-bg) 70%, transparent); z-index:1250; align-items:center; justify-content:center; padding:24px;">
+    <div class="hud-panel" style="width:100%; max-width:520px; max-height:80vh; overflow:auto; padding:16px;">
+      <h3 style="margin:0 0 12px 0;font-size:14px;">Edit group</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="font-family:var(--hud-font-mono);font-size:11px;opacity:0.85;">Group name</div>
+          <input type="text" id="group-edit-name" class="hud-input" placeholder="Group name" />
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+          <button type="button" class="hud-btn" id="group-edit-cancel">Cancel</button>
+          <button type="button" class="hud-btn" id="group-edit-save">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="note-edit-modal" style="display:none; position:fixed; inset:0; background: color-mix(in srgb, var(--hud-bg) 70%, transparent); z-index:1250; align-items:center; justify-content:center; padding:24px;">
+    <div class="hud-panel" style="width:100%; max-width:720px; max-height:80vh; overflow:auto; padding:16px;">
+      <h3 style="margin:0 0 12px 0;font-size:14px;">Edit note</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="flex:0 0 140px;min-width:140px;display:flex;flex-direction:column;gap:6px;">
+            <div style="font-family:var(--hud-font-mono);font-size:11px;opacity:0.85;">Time</div>
+            <input type="text" id="note-edit-time" class="hud-input" placeholder="1:23 or 1:23:45" />
+          </div>
+          <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:6px;">
+            <div style="font-family:var(--hud-font-mono);font-size:11px;opacity:0.85;">Group</div>
+            <select id="note-edit-group" class="hud-input"></select>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="font-family:var(--hud-font-mono);font-size:11px;opacity:0.85;">Text</div>
+          <textarea id="note-edit-text" class="hud-input" style="min-height:110px;resize:vertical;padding:8px 10px;border-radius:6px;border:1px solid var(--hud-border);background:var(--hud-bg-elevated);color:var(--hud-text);"></textarea>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="font-family:var(--hud-font-mono);font-size:11px;opacity:0.85;">Tags (comma-separated)</div>
+          <input type="text" id="note-edit-tags" class="hud-input" placeholder="tag1, tag2" />
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+          <button type="button" class="hud-btn" id="note-edit-cancel">Cancel</button>
+          <button type="button" class="hud-btn" id="note-edit-save">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module">
+    if (window.parent !== window && window.parent.goonAPI && !window.goonAPI) window.goonAPI = window.parent.goonAPI;
+    import { applyTheme } from './theme.js';
+    applyTheme();
+  </script>
+  <script type="module" src="./timestamp.js"></script>
+</body>
+</html>

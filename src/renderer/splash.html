@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Goonopticon Splash</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #0a0e0a;
+      color: #00ff41;
+      font-family: "VT323", "Courier New", Consolas, monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    .splash-inner {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 24px;
+    }
+    .logo {
+      font-size: 36px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      animation: logo-glow 2s ease-in-out infinite;
+    }
+    .loading-wrap {
+      min-height: 28px;
+      margin-top: 8px;
+    }
+    .loading-bar-wrap {
+      width: 240px;
+      height: 8px;
+      margin-top: 20px;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid #00ff41;
+      background: rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+    .loading-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #00ff41;
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.6);
+      transition: width 0.2s linear;
+    }
+    .loading-text {
+      font-size: 18px;
+      letter-spacing: 0.1em;
+      color: #b8d42a;
+      animation: text-flicker 0.15s ease-in-out infinite;
+    }
+    .loading-text::after {
+      content: '_';
+      animation: cursor-blink 0.8s step-end infinite;
+    }
+    @keyframes logo-glow {
+      0%, 100% { text-shadow: 0 0 8px rgba(0, 255, 65, 0.4), 0 0 20px rgba(0, 255, 65, 0.2); }
+      50% { text-shadow: 0 0 16px rgba(0, 255, 65, 0.6), 0 0 32px rgba(0, 255, 65, 0.3); }
+    }
+    @keyframes text-flicker {
+      0%, 100% { opacity: 1; }
+      92% { opacity: 1; }
+      93% { opacity: 0.85; }
+      94% { opacity: 1; }
+      96% { opacity: 0.9; }
+      97% { opacity: 1; }
+    }
+    @keyframes cursor-blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    /* CRT scanline overlay */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+      );
+      opacity: 0.7;
+    }
+    /* Subtle sweep */
+    .sweep {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.25), transparent);
+      animation: sweep 2.5s linear infinite;
+      pointer-events: none;
+      z-index: 2;
+    }
+    @keyframes sweep {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(100vh); }
+    }
+  </style>
+</head>
+<body>
+  <div class="sweep"></div>
+  <div class="scanlines"></div>
+  <div class="splash-inner">
+    <div class="logo">Goonopticon</div>
+    <div class="loading-wrap">
+      <div class="loading-text" id="loading-text">booting up CRTS</div>
+    </div>
+    <div class="loading-bar-wrap">
+      <div class="loading-bar-fill" id="loading-bar-fill"></div>
+    </div>
+  </div>
+  <script>
+    (async function playBootSound() {
+      try {
+        const on = await window.goonAPI?.getSoundBootEnabled?.();
+        if (on === false) return;
+      } catch (_) {}
+      function fallbackBeep() {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const freq = 520;
+          const duration = 0.1;
+          const gap = 0.08;
+          function beep(at) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = freq;
+            osc.type = 'square';
+            gain.gain.setValueAtTime(0.15, at);
+            gain.gain.exponentialRampToValueAtTime(0.01, at + duration);
+            osc.start(at);
+            osc.stop(at + duration);
+          }
+          beep(0);
+          beep(duration + gap);
+        } catch (_) {}
+      }
+      const audio = new Audio('sounds/boot.wav');
+      audio.volume = 0.5;
+      audio.play().catch(fallbackBeep);
+      audio.addEventListener('error', fallbackBeep);
+    })();
+
+    (async () => {
+      const el = document.getElementById('loading-text');
+      const barEl = document.getElementById('loading-bar-fill');
+      let SPLASH_DURATION_MS = 5500;
+      try {
+        SPLASH_DURATION_MS = await window.goonAPI?.getSplashDurationMs?.() || 5500;
+      } catch (_) {}
+      const BAR_UPDATE_MS = 80;
+
+      let lines = [];
+      try {
+        lines = await window.goonAPI?.getLoadingLines?.() || [];
+      } catch {}
+      if (!lines.length) lines = ['booting up CRTS', 'warming Goo', 'fixing robotron'];
+      const shuffled = [...lines].sort(() => Math.random() - 0.5);
+      const pickThree = shuffled.slice(0, 3);
+      let lineIdx = 0;
+      if (el) el.textContent = pickThree[0];
+      const textInterval = setInterval(() => {
+        lineIdx = (lineIdx + 1) % pickThree.length;
+        if (el) el.textContent = pickThree[lineIdx];
+      }, Math.max(400, SPLASH_DURATION_MS / 3));
+
+      let start = Date.now();
+      const barInterval = setInterval(() => {
+        const elapsed = Date.now() - start;
+        const pct = Math.min(100, (elapsed / SPLASH_DURATION_MS) * 100);
+        if (barEl) barEl.style.width = pct + '%';
+        if (pct >= 100) clearInterval(barInterval);
+      }, BAR_UPDATE_MS);
+
+      window.addEventListener('beforeunload', () => {
+        clearInterval(barInterval);
+        clearInterval(textInterval);
+      });
+    })();
+  </script>
+</body>
+</html>

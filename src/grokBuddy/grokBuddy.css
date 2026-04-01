@@ -1,0 +1,353 @@
+/* Grok Buddy — avatar only; actions on right-click */
+* { box-sizing: border-box; }
+
+:root {
+  --hud-bg: #08090a;
+  --hud-bg-elevated: #0c0e12;
+  --hud-surface: #111318;
+  --hud-border: #1e242d;
+  --hud-text: #c8ccd4;
+  --hud-text-dim: #6b7280;
+  --hud-accent: #00cc66;
+  --hud-glow: rgba(0, 204, 102, 0.25);
+  --hud-font-mono: "JetBrains Mono", "Fira Code", "Consolas", "Monaco", monospace;
+  --space-sm: 6px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --touch-min: 36px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: rgba(8, 9, 10, 0.92);
+  overflow: hidden;
+  font-family: var(--hud-font-mono);
+  border: 1px solid var(--hud-border);
+  font-size: 13px;
+  -webkit-app-region: no-drag;
+}
+
+#grok-root {
+  width: 100%;
+  min-width: 180px;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  position: relative;
+  -webkit-app-region: no-drag;
+}
+
+#grok-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--hud-border);
+  background: rgba(12, 14, 18, 0.85);
+  color: var(--hud-text-dim);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  -webkit-app-region: no-drag;
+}
+
+#grok-close:hover {
+  color: var(--hud-text);
+  border-color: var(--hud-accent);
+}
+
+.grok-tip {
+  display: none;
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--hud-text-dim);
+  max-width: 160px;
+  text-align: center;
+  margin-bottom: 6px;
+  opacity: 0.85;
+}
+
+/* Avatar only */
+#grok-buddy {
+  cursor: move;
+  -webkit-app-region: no-drag;
+  user-select: none;
+  position: relative;
+  margin: 0 auto;
+}
+
+#grok-sprite {
+  width: 120px;
+  height: 136px;
+  background: linear-gradient(160deg, #1e242d 0%, #111318 50%, #0c0e12 100%);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hud-text-dim);
+  font-size: 14px;
+  text-align: center;
+  padding: 12px;
+  border: 1px solid var(--hud-border);
+  box-shadow: 0 0 16px rgba(0, 204, 102, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+#grok-sprite img {
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+#grok-sprite.has-sprite img { display: block; }
+#grok-sprite.has-sprite::after { display: none; }
+#grok-sprite::after {
+  content: "GROK";
+  letter-spacing: 0.12em;
+}
+
+#grok-bubble {
+  position: absolute;
+  bottom: 112%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(17, 19, 24, 0.96);
+  color: var(--hud-text);
+  padding: 10px 14px;
+  border: 1px solid var(--hud-accent);
+  font-size: 13px;
+  font-family: var(--hud-font-mono);
+  max-width: 220px;
+  min-width: 120px;
+  display: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: 0 0 12px var(--hud-glow);
+  pointer-events: none;
+  border-radius: 4px;
+}
+#grok-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: var(--hud-accent);
+}
+#grok-bubble.visible {
+  display: block;
+  animation: bubbleIn 0.2s ease-out;
+}
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+#grok-bubble.redmode {
+  background: rgba(80, 0, 0, 0.95);
+  border-color: #aa0000;
+}
+#grok-bubble.redmode::after { border-top-color: #aa0000; }
+#grok-bubble.typing::after {
+  content: " ▌";
+  animation: blink 0.8s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Context menu */
+#grok-context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 180px;
+  padding: 6px 0;
+  margin: 0;
+  list-style: none;
+  background: var(--hud-surface);
+  border: 1px solid var(--hud-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  font-size: 13px;
+  -webkit-app-region: no-drag;
+}
+#grok-context-menu[hidden] { display: none !important; }
+#grok-context-menu li {
+  padding: 8px 14px;
+  color: var(--hud-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+#grok-context-menu li[role="separator"] {
+  height: 1px;
+  padding: 0;
+  margin: 4px 8px;
+  background: var(--hud-border);
+  cursor: default;
+}
+#grok-context-menu li[role="menuitem"]:hover {
+  background: var(--hud-bg-elevated);
+  color: var(--hud-accent);
+}
+#grok-context-menu .menu-check {
+  width: 14px;
+  text-align: center;
+  color: var(--hud-accent);
+}
+#grok-context-menu .menu-check::before {
+  content: "";
+}
+#grok-context-menu li.active .menu-check::before {
+  content: "✓";
+}
+
+/* Panels (Settings, Ask) */
+.grok-panel {
+  -webkit-app-region: no-drag;
+  width: 100%;
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: var(--hud-bg-elevated);
+  border: 1px solid var(--hud-border);
+  border-radius: 8px;
+}
+.grok-panel[hidden] { display: none !important; }
+.grok-panel-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--hud-text-dim);
+  margin-bottom: var(--space-md);
+}
+.grok-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  font-size: 13px;
+  color: var(--hud-text);
+  min-height: 32px;
+  margin-bottom: var(--space-sm);
+}
+.grok-opt:last-of-type { margin-bottom: var(--space-md); }
+.grok-opt input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--hud-accent);
+  cursor: pointer;
+}
+#grok-volume {
+  flex: 1;
+  min-width: 80px;
+  max-width: 120px;
+  height: 8px;
+  accent-color: var(--hud-accent);
+  cursor: pointer;
+}
+#grok-theme {
+  min-width: 90px;
+  padding: 6px 10px;
+  background: var(--hud-surface);
+  border: 1px solid var(--hud-border);
+  color: var(--hud-text);
+  font-size: 13px;
+  font-family: var(--hud-font-mono);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.grok-panel-close {
+  width: 100%;
+  margin-top: var(--space-sm);
+  padding: 8px 14px;
+  background: var(--hud-surface);
+  border: 1px solid var(--hud-border);
+  color: var(--hud-text);
+  font-family: var(--hud-font-mono);
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.grok-panel-close:hover {
+  border-color: var(--hud-accent);
+  color: var(--hud-accent);
+}
+
+#grok-input {
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 12px;
+  background: var(--hud-surface);
+  border: 1px solid var(--hud-border);
+  color: var(--hud-text);
+  font-family: var(--hud-font-mono);
+  font-size: 13px;
+  line-height: 1.4;
+  resize: none;
+  border-radius: 6px;
+  margin-bottom: var(--space-md);
+}
+#grok-input::placeholder { color: var(--hud-text-dim); }
+#grok-input:focus {
+  outline: none;
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 6px var(--hud-glow);
+}
+.grok-ask-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+.grok-ask-actions #grok-btn {
+  flex: 1;
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--hud-accent);
+  border: 2px solid var(--hud-accent);
+  cursor: pointer;
+  font-family: var(--hud-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+.grok-ask-actions #grok-btn:hover {
+  box-shadow: 0 0 10px var(--hud-glow);
+  background: rgba(0, 204, 102, 0.06);
+}
+
+/* Animations */
+@keyframes grok-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+#grok-sprite.grok-shake {
+  animation: grok-shake 0.08s ease-in-out 4;
+}
+@keyframes grok-jiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-2deg); }
+  75% { transform: rotate(2deg); }
+}
+#grok-sprite.grok-jiggle {
+  animation: grok-jiggle 0.15s ease-in-out 4;
+}
+#grok-sprite.grok-sleep {
+  opacity: 0.6;
+  filter: brightness(0.7);
+}
+
+/* Theme: Amber */
+body[data-grok-theme="amber"] {
+  --hud-accent: #cc8800;
+  --hud-glow: rgba(204, 136, 0, 0.25);
+}
+body[data-grok-theme="amber"] #grok-bubble::after {
+  border-top-color: #cc8800;
+}
+

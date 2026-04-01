@@ -1,0 +1,16 @@
+{
+  "name": "RED MODE",
+  "colors": {
+    "primary": "#dc2626",
+    "background": "#0c0a0a",
+    "surface": "#1c1917",
+    "text": "#fecaca",
+    "textSecondary": "#f87171",
+    "border": "#450a0a",
+    "success": "#22c55e",
+    "warning": "#f59e0b",
+    "error": "#ef4444",
+    "info": "#dc2626",
+    "highlight": "#f87171"
+  }
+}

@@ -1,0 +1,16 @@
+[
+  "Tweet alerts: optional blue pulse + corner popup (Twitter embed + oEmbed text) with a separate three-note chime when @podawful posts (same poll interval as feed alarm).",
+  "Pod Awful feed alarm: optional CRT pop-out, alarm tone, and main-window shake on new video or live (Configure → General). RSS + optional YouTube API key for live.",
+  "Custom window chrome (frameless, theme-matched title bar).",
+  "Settings reorganized into tabs: General, Display, Appearance, Sound, Extension, Virus popup, Chat.",
+  "Default font size increased; font size and font family in Appearance.",
+  "Command Center: changelog from file, configurable YouTube channel, Awful.tube, X, Instagram.",
+  "Join the Cult (Discord) link in footer.",
+  "App/taskbar icon uses same as tray when available.",
+  "Virus popup: optional random video popup from a folder.",
+  "Dev Log: filter by category, more action logging.",
+  "Music: subfolder tabs (Root + one tab per subfolder).",
+  "Tracker: latest YouTube video with thumbnail; social links (X, Facebook).",
+  "Timecode Arsenal: embed hint when video does not play (e.g. Error 153).",
+  "Version and bridge status in footer; offline = extension not connected."
+]
