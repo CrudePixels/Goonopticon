@@ -3,6 +3,10 @@ dist/
 *.log
 .DS_Store
 
+# README files — local only (git rm --cached path/to/README.md if already tracked)
+**/README.md
+**/readme.md
+
 # Extension is in its own repo (Goonopticon-Extension). Filled by: npm run prepare-extension
 src/goonopticon-bridge/
 Goonopticon-Extension/

@@ -1,4 +1,4 @@
-# Builds Windows installer + portable .exe and attaches them to the GitHub Release for the tag.
+# Builds one Windows portable .exe and attaches it to the GitHub Release for the tag.
 # Usage: git tag v0.1.1 && git push origin v0.1.1
 # Or create/publish a release for an existing tag — use workflow_dispatch on that tag if needed.
 
@@ -31,7 +31,7 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Build Windows (NSIS + portable)
+      - name: Build Windows (portable .exe)
         run: npm run build:win
         env:
           # Avoid optional signing prompts
@@ -41,8 +41,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/*.exe
+          # Single portable executable (electron-builder portable target)
+          files: dist/*.exe
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
