@@ -23,6 +23,7 @@ let embedMods = new Set();
 let embedTimeouts = new Map(); // username -> until (ms)
 let embedNicknames = new Map(); // username -> nickname
 let embedPoll = null; // { question, options: [{ text, votes }], endAt, voted: { username: optionIndex } }
+let embedTroll = null; // { description, url } from normalizeEmbedTroll
 
 function loadEmbedStateFromStore() {
   try {
@@ -47,12 +48,14 @@ function loadEmbedStateFromStore() {
       }
     }
     embedPoll = state.poll && typeof state.poll === 'object' ? state.poll : null;
+    embedTroll = storage.normalizeEmbedTroll(state.troll);
   } catch (_) {
     embedBans = new Set();
     embedMods = new Set();
     embedTimeouts = new Map();
     embedNicknames = new Map();
     embedPoll = null;
+    embedTroll = null;
   }
 }
 
@@ -68,7 +71,7 @@ function snapshotEmbedState() {
   for (const [username, nick] of embedNicknames.entries()) {
     nicknames[username] = nick;
   }
-  return { bans, mods, timeouts, nicknames, poll: embedPoll };
+  return { bans, mods, timeouts, nicknames, poll: embedPoll, troll: embedTroll };
 }
 
 function isEmbedTimedOut(username) {
@@ -88,7 +91,8 @@ function buildControlPayload() {
     mods: Array.from(embedMods),
     timeouts: Array.from(embedTimeouts.keys()),
     nicknames: Object.fromEntries(embedNicknames.entries()),
-    poll: embedPoll
+    poll: embedPoll,
+    troll: embedTroll
   };
 }
 
@@ -112,6 +116,26 @@ function setEmbedPoll(question, options, durationSeconds) {
 
 function clearEmbedPoll() {
   embedPoll = null;
+  storage.setEmbedChatState(snapshotEmbedState());
+  if (wss) {
+    const payload = JSON.stringify(buildControlPayload());
+    wss.clients.forEach((client) => { if (client.readyState === 1) client.send(payload); });
+  }
+}
+
+function setEmbedTroll(description, url) {
+  embedTroll = storage.normalizeEmbedTroll({ description, url });
+  if (!embedTroll) return false;
+  storage.setEmbedChatState(snapshotEmbedState());
+  if (wss) {
+    const payload = JSON.stringify(buildControlPayload());
+    wss.clients.forEach((client) => { if (client.readyState === 1) client.send(payload); });
+  }
+  return true;
+}
+
+function clearEmbedTroll() {
+  embedTroll = null;
   storage.setEmbedChatState(snapshotEmbedState());
   if (wss) {
     const payload = JSON.stringify(buildControlPayload());
@@ -144,6 +168,7 @@ const EMBED_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <div class="embed-header">Unified chat — embed</div>
+  <div id="embed-troll-wrap" style="display:none;flex-shrink:0;padding:8px 10px;background:#1a1410;border-bottom:1px solid #3d3020;font-size:12px;"></div>
   <div id="embed-poll-wrap" style="display:none;flex-shrink:0;padding:8px 10px;background:#141414;border-bottom:1px solid #2a2a2a;font-size:12px;"></div>
   <div id="log"></div>
   <div class="embed-input-wrap" style="flex-shrink:0;padding:8px;border-top:1px solid #2a2a2a;display:flex;gap:8px;align-items:center;">
@@ -221,6 +246,23 @@ const EMBED_HTML = `<!DOCTYPE html>
     ws.onclose = function() { setStatus('Disconnected. Refresh to reconnect.'); };
     ws.onerror = function() { setStatus('Connection error.'); };
     var embedPollState = null;
+    var embedTrollState = null;
+    function renderTroll() {
+      var wrap = document.getElementById('embed-troll-wrap');
+      if (!wrap) return;
+      if (!embedTrollState || (!embedTrollState.description && !embedTrollState.url)) {
+        wrap.style.display = 'none';
+        wrap.innerHTML = '';
+        return;
+      }
+      var d = embedTrollState.description || '';
+      var u = (embedTrollState.url || '').trim();
+      var link = u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer" style="color:#fbbf24;font-weight:600;word-break:break-all;">' + esc(u) + '</a>' : '';
+      wrap.innerHTML = '<div style="font-weight:600;margin-bottom:4px;color:#fbbf24;">🎣 Stream</div>' +
+        (d ? '<div style="margin-bottom:6px;word-break:break-word;">' + esc(d) + '</div>' : '') +
+        (link ? '<div>' + link + '</div>' : '');
+      wrap.style.display = 'block';
+    }
     function renderPoll() {
       var wrap = document.getElementById('embed-poll-wrap');
       if (!wrap) return;
@@ -257,6 +299,8 @@ const EMBED_HTML = `<!DOCTYPE html>
         var data = JSON.parse(ev.data);
         if (data.type === 'control') {
           embedPollState = data.poll || null;
+          embedTrollState = data.troll || null;
+          renderTroll();
           renderPoll();
           return;
         }
@@ -473,4 +517,15 @@ function unbanByUsername(username) {
   return { ok: true };
 }
 
-module.exports = { start, stop, broadcast, isRunning, setEmbedPoll, clearEmbedPoll, getClientCount, unbanByUsername };
+module.exports = {
+  start,
+  stop,
+  broadcast,
+  isRunning,
+  setEmbedPoll,
+  clearEmbedPoll,
+  setEmbedTroll,
+  clearEmbedTroll,
+  getClientCount,
+  unbanByUsername
+};

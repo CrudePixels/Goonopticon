@@ -1193,6 +1193,18 @@ ipcMain.handle('chat:createPoll', async (_, platformId, title, choices, duration
     embedServer.clearEmbedPoll();
     return Promise.resolve({ ok: true });
   });
+  ipcMain.handle('chat:setEmbedTroll', (_, description, url) => {
+    const ok = embedServer.setEmbedTroll(description, url);
+    return Promise.resolve({ ok });
+  });
+  ipcMain.handle('chat:getEmbedTroll', () => {
+    const state = storage.getEmbedChatState();
+    return Promise.resolve(state?.troll || null);
+  });
+  ipcMain.handle('chat:clearEmbedTroll', () => {
+    embedServer.clearEmbedTroll();
+    return Promise.resolve({ ok: true });
+  });
   ipcMain.handle('chat:getViewerCounts', async () => {
     const counts = await platformActions.getViewerCounts();
     let chatScraper = null;

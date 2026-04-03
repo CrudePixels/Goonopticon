@@ -2,6 +2,15 @@
 
 Electron desktop app for timestamping videos. **App repo:** [CrudePixels/Goonopticon](https://github.com/CrudePixels/Goonopticon). The browser extension lives in a separate repo: [CrudePixels/Goonopticon-Extension](https://github.com/CrudePixels/Goonopticon-Extension).
 
+## Download (Windows)
+
+**You do not need Node or npm** to run a release build. Open [**Releases**](https://github.com/CrudePixels/Goonopticon/releases) and download either:
+
+- **Portable** `… .exe` — single file; run it directly.
+- **Setup** `… Setup … .exe` — installer (better for shortcuts / auto-update).
+
+Maintainers: push a tag `v*` (e.g. `git tag v0.1.1 && git push origin v0.1.1`) to trigger the workflow that builds and attaches those files.
+
 ## Features
 
 - **Timestamp Videos** — Add notes at timecodes, edit inline, organize with groups and tags, search, recent videos list

@@ -1,0 +1,55 @@
+# Builds Windows installer + portable .exe and attaches them to the GitHub Release for the tag.
+# Usage: git tag v0.1.1 && git push origin v0.1.1
+# Or create/publish a release for an existing tag — use workflow_dispatch on that tag if needed.
+
+name: Release Windows
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone Goonopticon-Extension (sibling path for prepare-extension)
+        run: git clone --depth 1 https://github.com/CrudePixels/Goonopticon-Extension.git "${{ github.workspace }}/../Goonopticon-Extension"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build Windows (NSIS + portable)
+        run: npm run build:win
+        env:
+          # Avoid optional signing prompts
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Upload release assets (tag push)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact (manual / branch test build)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: goonopticon-windows
+          path: dist/*.exe

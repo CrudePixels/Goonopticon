@@ -3025,6 +3025,7 @@ function loadChatView() {
           <li><strong>Right-click a message</strong> — Pin it as an announcement above chat.</li>
           <li><strong>Chat filter</strong> — Show All or one platform. Add stream by URL or from the list; filter by keyword in Settings.</li>
           <li><strong>Polls</strong> — Create poll on Twitch, YouTube, or the website embed. Active poll appears at the top with vote counts.</li>
+          <li><strong>Start troll</strong> — Pin a short note plus link above chat (in-app and website embed) so viewers can open it.</li>
           <li><strong>Viewers</strong> — Total viewers across Twitch, Kick, YouTube, and the embed. Emote picker (😀) inserts :shortcodes: from your emotes folder.</li>
         </ul>
       </details>
@@ -3034,7 +3035,10 @@ function loadChatView() {
       </div>
       <div id="chat-added-streams" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;min-height:24px;"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
         <button type="button" class="hud-btn" id="chat-create-poll-btn" style="font-size:11px;">Create poll</button>
+        <button type="button" class="hud-btn" id="chat-start-troll-btn" style="font-size:11px;">Start troll</button>
+        </div>
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:0.9;">Chat filter <select id="chat-filter-select" style="padding:6px 10px;background:var(--color-surface);border:1px solid var(--color-border);color:var(--color-text);border-radius:4px;font-size:12px;min-width:120px;">
           <option value="all">All</option>
@@ -3049,6 +3053,7 @@ function loadChatView() {
       </div>
       <div id="chat-messages-wrap" style="flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid var(--hud-border);border-radius:4px;background:var(--hud-bg);">
         <div id="chat-pinned-bar" style="display:none;flex-shrink:0;padding:8px 12px;background:var(--hud-surface);border-bottom:1px solid var(--hud-border);font-size:11px;align-items:center;gap:8px;"></div>
+        <div id="chat-troll-bar" style="display:none;flex-shrink:0;padding:8px 12px;background:var(--hud-surface);border-bottom:1px solid var(--hud-border);font-size:11px;align-items:center;gap:8px;"></div>
         <div id="chat-poll-bar" style="display:none;flex-shrink:0;padding:10px 12px;background:var(--hud-surface);border-bottom:1px solid var(--hud-border);font-size:11px;"></div>
         <div id="chat-messages" class="chat-messages-scroll" style="flex:1;overflow-y:auto;padding:8px;font-family:var(--hud-font-mono);font-size:inherit;"></div>
         <div id="chat-input-wrap" class="chat-input-wrap" style="display:${chatMode === 'input' ? 'flex' : 'none'};padding:8px;border-top:1px solid var(--hud-border);gap:8px;align-items:center;position:relative;flex-wrap:wrap;">
@@ -3669,6 +3674,33 @@ function loadChatView() {
       chatPinnedMessage = null;
       await window.goonAPI?.chatSetPinnedMessage?.(null);
       updateChatPinnedBar();
+    });
+  }
+
+  async function updateChatTrollBar() {
+    const bar = document.getElementById('chat-troll-bar');
+    if (!bar) return;
+    const troll = await window.goonAPI?.chatGetEmbedTroll?.();
+    if (!troll || (!troll.description && !troll.url)) {
+      bar.style.display = 'none';
+      bar.innerHTML = '';
+      return;
+    }
+    bar.style.display = 'flex';
+    const desc = troll.description ? escapeHtmlChat(troll.description) : '';
+    const url = (troll.url || '').trim();
+    const linkHtml = url
+      ? `<a href="#" id="chat-troll-link" data-href="${escapeHtmlChat(url)}" style="color:var(--hud-accent);text-decoration:underline;word-break:break-all;">${escapeHtmlChat(url)}</a>`
+      : '';
+    bar.innerHTML = `<span style="flex:1;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;word-break:break-word;"><span aria-hidden="true">🎣</span>${desc ? `<span>${desc}</span>` : ''}${linkHtml}</span><button type="button" class="hud-btn" id="chat-troll-clear" style="font-size:10px;flex-shrink:0;">Clear</button>`;
+    bar.querySelector('#chat-troll-link')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const href = e.currentTarget.getAttribute('data-href');
+      if (href) window.goonAPI?.openExternal?.(href);
+    });
+    bar.querySelector('#chat-troll-clear')?.addEventListener('click', async () => {
+      await window.goonAPI?.chatClearEmbedTroll?.();
+      updateChatTrollBar();
     });
   }
 
@@ -4671,6 +4703,43 @@ function loadChatView() {
 
   document.getElementById('chat-create-poll-btn')?.addEventListener('click', showCreatePollModal);
 
+  function showStartTrollModal() {
+    const overlay = document.createElement('div');
+    overlay.id = 'chat-troll-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML = `
+      <div class="hud-panel" style="max-width:420px;width:100%;">
+        <h3 style="margin:0 0 12px 0;font-size:14px;">Start troll</h3>
+        <p style="margin:0 0 10px 0;font-size:11px;opacity:0.85;line-height:1.45;">Shows above chat in the app and on the website embed. Paste a full link (https://…).</p>
+        <label style="display:block;margin-bottom:4px;opacity:0.8;font-size:11px;">What’s going on</label>
+        <textarea id="chat-troll-desc" rows="3" placeholder="Short description for chat…" style="width:100%;margin-bottom:10px;padding:8px;box-sizing:border-box;background:var(--color-surface);border:1px solid var(--color-border);color:var(--color-text);border-radius:4px;font-family:inherit;font-size:12px;resize:vertical;"></textarea>
+        <label style="display:block;margin-bottom:4px;opacity:0.8;font-size:11px;">Link</label>
+        <input type="url" id="chat-troll-url" placeholder="https://…" style="width:100%;margin-bottom:12px;padding:8px;box-sizing:border-box;background:var(--color-surface);border:1px solid var(--color-border);color:var(--color-text);border-radius:4px;" />
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button type="button" class="hud-btn" id="chat-troll-cancel">Cancel</button>
+          <button type="button" class="hud-btn" id="chat-troll-submit">Show banner</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
+    document.getElementById('chat-troll-cancel')?.addEventListener('click', () => overlay.remove());
+    document.getElementById('chat-troll-submit')?.addEventListener('click', async () => {
+      const description = document.getElementById('chat-troll-desc')?.value?.trim() || '';
+      const url = document.getElementById('chat-troll-url')?.value?.trim() || '';
+      if (!url) {
+        window.goonAPI?.showToast?.('Add a link');
+        return;
+      }
+      const r = await window.goonAPI.chatSetEmbedTroll?.(description, url);
+      overlay.remove();
+      window.goonAPI?.showToast?.(r?.ok ? 'Troll banner is live' : 'Invalid link');
+      updateChatTrollBar();
+    });
+  }
+
+  document.getElementById('chat-start-troll-btn')?.addEventListener('click', showStartTrollModal);
+
   const originalRenderChatMessages = renderChatMessages;
   renderChatMessages = function (options) {
     originalRenderChatMessages(options);
@@ -4790,6 +4859,7 @@ function loadChatView() {
     renderAddedStreams();
     renderChatMessages();
     updateChatPinnedBar();
+    updateChatTrollBar();
     updateChatPollBar();
     refreshViewersButton();
     if (window._chatViewersInterval) clearInterval(window._chatViewersInterval);

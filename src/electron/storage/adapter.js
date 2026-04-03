@@ -573,10 +573,26 @@ function setChatUnifiedEnabled(enabled) {
   set(STORAGE_KEYS.CHAT_UNIFIED_ENABLED, !!enabled);
 }
 
+/** Streamer banner for website embed + in-app chat (description + link). */
+function normalizeEmbedTroll(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const description = String(raw.description || '').trim().slice(0, 500);
+  let url = String(raw.url || '').trim().slice(0, 2048);
+  if (!url) return description ? { description, url: '' } : null;
+  if (!/^https?:\/\//i.test(url)) url = `https://${url.replace(/^[/\s]+/, '')}`;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+  } catch {
+    return null;
+  }
+  return { description, url };
+}
+
 function getEmbedChatState() {
   const v = get(STORAGE_KEYS.EMBED_CHAT_STATE, null);
   if (!v || typeof v !== 'object') {
-    return { bans: [], mods: [], timeouts: [], nicknames: {} };
+    return { bans: [], mods: [], timeouts: [], nicknames: {}, poll: null, troll: null };
   }
   const bans = Array.isArray(v.bans) ? v.bans.filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim()) : [];
   const mods = Array.isArray(v.mods) ? v.mods.filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim()) : [];
@@ -593,12 +609,13 @@ function getEmbedChatState() {
       nicknames[k.trim()] = val.trim();
     }
   }
-  return { bans, mods, timeouts, nicknames, poll };
+  const troll = normalizeEmbedTroll(v.troll);
+  return { bans, mods, timeouts, nicknames, poll, troll };
 }
 
 function setEmbedChatState(state) {
   if (!state || typeof state !== 'object') {
-    set(STORAGE_KEYS.EMBED_CHAT_STATE, { bans: [], mods: [], timeouts: [], nicknames: {}, poll: null });
+    set(STORAGE_KEYS.EMBED_CHAT_STATE, { bans: [], mods: [], timeouts: [], nicknames: {}, poll: null, troll: null });
     return;
   }
   const bans = Array.isArray(state.bans) ? state.bans.filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim()) : [];
@@ -624,7 +641,8 @@ function setEmbedChatState(state) {
       nicknames[k.trim()] = val.trim();
     }
   }
-  set(STORAGE_KEYS.EMBED_CHAT_STATE, { bans, mods, timeouts, nicknames, poll });
+  const troll = normalizeEmbedTroll(state.troll);
+  set(STORAGE_KEYS.EMBED_CHAT_STATE, { bans, mods, timeouts, nicknames, poll, troll });
 }
 
 function getChatAddedStreams() {
@@ -1280,6 +1298,7 @@ module.exports = {
   setChatCinemaYouTubeVideoId,
   getEmbedChatState,
   setEmbedChatState,
+  normalizeEmbedTroll,
   getChatAddedStreams,
   setChatAddedStreams,
   allowedPlatformIdsFromAddedStreams,
