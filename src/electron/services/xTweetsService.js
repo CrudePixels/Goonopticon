@@ -1,4 +1,5 @@
 const { fetchStatusesViaJinaX } = require('./tweetMirrorService');
+const { chromiumFetch } = require('./chromiumFetch');
 
 const PAGE_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -23,7 +24,7 @@ async function fetchHtml(url, { timeoutMs = 12000 } = {}) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url, {
+    const res = await chromiumFetch(url, {
       signal: controller.signal,
       redirect: 'follow',
       headers: {

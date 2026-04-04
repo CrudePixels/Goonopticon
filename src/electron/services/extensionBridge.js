@@ -40,7 +40,18 @@ function startBridge(port = 9245) {
         resolve(listenResult);
         return;
       }
-      server = http.createServer();
+      server = http.createServer((req, res) => {
+        if (req.url === '/goonopticon-bridge-ping' || (req.url && req.url.startsWith('/goonopticon-bridge-ping?'))) {
+          res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(JSON.stringify({ ok: true, port: p }));
+          return;
+        }
+        res.statusCode = 404;
+        res.end();
+      });
       wss = new WebSocketServer({ server });
 
       wss.on('connection', (ws) => {
@@ -86,7 +97,8 @@ function startBridge(port = 9245) {
         }
       });
 
-      server.listen(p, () => {
+      // 0.0.0.0: some setups block 127.0.0.1-only binds; loopback still reaches this from Chrome.
+      server.listen(p, '0.0.0.0', () => {
         currentPort = p;
         listenResult = { ok: true, port: p, error: null };
         bridgeEmitter.emit('listening', listenResult);

@@ -9,6 +9,25 @@ async function refreshSplashText() {
   }
 }
 
+/** Random image from src/splash/images (see splashTextService). */
+async function loadHomeSplashPoster() {
+  const img = document.getElementById('home-splash-poster');
+  if (!img) return;
+  try {
+    const url = await window.goonAPI?.getRandomSplashImageUrl?.();
+    if (!url) return;
+    img.onload = () => {
+      img.style.display = '';
+    };
+    img.onerror = () => {
+      img.style.display = 'none';
+    };
+    img.src = url;
+  } catch (_) {
+    img.style.display = 'none';
+  }
+}
+
 // Toast (single feedback channel)
 const toastEl = document.getElementById('toast-root');
 let toastTimer = null;
@@ -99,6 +118,13 @@ function devLogClear() {
   window.dispatchEvent(new CustomEvent('devLogUpdated', { detail: null }));
 }
 window.devLog = (category, message, data) => devLogPush(category, message, data);
+
+/** Writes to <userData>/freeze-trace.log via main process (sync on disk). */
+function freezeMark(tag, detail) {
+  try {
+    window.goonAPI?.freezeTraceMark?.(tag, detail);
+  } catch (_) {}
+}
 
 (function patchConsoleForDevLog() {
   const origWarn = console.warn;
@@ -213,12 +239,33 @@ function initGrokPopoutIfNeeded() {
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
+    freezeMark('renderer_domcontentloaded');
     initChatPopoutIfNeeded();
     initGrokPopoutIfNeeded();
+    scheduleChatConnectionsBootstrap();
+    loadHomeSplashPoster();
+    setInterval(() => freezeMark('renderer_pulse'), 10000);
   });
 } else {
+  freezeMark('renderer_domcontentloaded');
   initChatPopoutIfNeeded();
   initGrokPopoutIfNeeded();
+  scheduleChatConnectionsBootstrap();
+  loadHomeSplashPoster();
+  setInterval(() => freezeMark('renderer_pulse'), 10000);
+}
+
+/** After removing chatService.init→updateConnections(), main process only syncs when Chat loads. Re-prime in background when Live streams is on so ingest works without opening Chat. */
+function scheduleChatConnectionsBootstrap() {
+  if (isChatPopout()) return;
+  setTimeout(async () => {
+    try {
+      if ((await window.goonAPI.chatGetChatUnifiedEnabled?.()) !== true) return;
+      const saved = await window.goonAPI.chatGetAddedStreams?.();
+      if (!Array.isArray(saved) || saved.length === 0) return;
+      await window.goonAPI.chatSetAddedStreams?.(saved);
+    } catch (_) {}
+  }, 2800);
 }
 
 // Iframe views (timestamp, music) can request close -> back to menu
@@ -264,6 +311,8 @@ function showPoppedOutPlaceholder(view) {
 }
 
 function loadView(view) {
+  freezeMark('loadView', { view });
+  if (currentView === 'chat' && view !== 'chat') clearChatViewIntervals();
   currentPoppedOutView = null;
   const label = VIEW_ACTION_LABELS[view] || view;
   devLogPush('action', `Opened ${label}`);
@@ -320,7 +369,10 @@ function loadDevLogView() {
           <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;"><input type="checkbox" id="devlog-filter-all" ${devLogFilterAll ? 'checked' : ''} />All</label>
           ${filterCheckboxes}
         </div>
-        <button type="button" class="hud-btn" id="devlog-view-clear">Clear</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="hud-btn" id="devlog-open-freeze-trace">Open freeze trace log</button>
+          <button type="button" class="hud-btn" id="devlog-view-clear">Clear</button>
+        </div>
       </div>
       <div id="devlog-view-list" class="devlog-view-list"></div>
     </div>
@@ -341,6 +393,15 @@ function loadDevLogView() {
     cb.addEventListener('change', updateFilter);
   });
   renderDevLogViewList();
+  document.getElementById('devlog-open-freeze-trace')?.addEventListener('click', async () => {
+    const r = await window.goonAPI.openFreezeTrace?.();
+    if (r?.ok) devLogPush('action', 'Opened freeze-trace.log', r.path);
+    else {
+      const p = await window.goonAPI.getFreezeTracePath?.();
+      devLogPush('warn', r?.error || 'Could not open trace', p || '');
+      window.goonAPI.showToast?.(p ? `Trace file: ${p}` : 'No trace path');
+    }
+  });
   document.getElementById('devlog-view-clear')?.addEventListener('click', () => {
     devLogPush('action', 'Dev Log cleared');
     devLogClear();
@@ -390,6 +451,7 @@ document.getElementById('footer-discord')?.addEventListener('click', (e) => {
 });
 
 const COMMAND_CENTER_STATIC_CHANGELOG = [
+  '0.2.0 — Freeze trace log, splash/images posters, Chat live-stream toggle UX.',
   'Custom window chrome (frameless, theme-matched title bar).',
   'Settings reorganized into tabs: General, Display, Appearance, Extension, Virus popup.',
   'Command Center: changelog, Awful.tube, X, Instagram.',
@@ -397,8 +459,20 @@ const COMMAND_CENTER_STATIC_CHANGELOG = [
   'Virus popup: optional random video popup from a folder.'
 ];
 
+function clearChatViewIntervals() {
+  if (window._chatViewersInterval) {
+    clearInterval(window._chatViewersInterval);
+    window._chatViewersInterval = null;
+  }
+  if (window._chatPollBarInterval) {
+    clearInterval(window._chatPollBarInterval);
+    window._chatPollBarInterval = null;
+  }
+}
+
 // Main menu (back to home) — Command Center with changelog and social
 async function showMainMenu() {
+  clearChatViewIntervals();
   const changelogRaw = await window.goonAPI.getChangelog?.().catch(() => null);
   const changelogList = Array.isArray(changelogRaw) && changelogRaw.length ? changelogRaw : COMMAND_CENTER_STATIC_CHANGELOG;
   const changelogHtml = changelogList.map((line) => `<li>${escapeHtml(line)}</li>`).join('');
@@ -407,6 +481,9 @@ async function showMainMenu() {
 
   viewEl.innerHTML = `
     <div class="command-center-content" style="display:flex;flex-direction:column;gap:24px;max-height:100%;overflow:auto;">
+      <div id="command-center-poster-wrap" style="display:none;text-align:center;flex-shrink:0;">
+        <img id="command-center-poster-api" alt="" decoding="async" style="max-width:100%;max-height:min(280px,32vh);object-fit:contain;border:1px solid var(--hud-border);border-radius:4px;" />
+      </div>
       <section class="hud-panel" style="padding:16px;">
         <details id="command-center-changelog" style="margin:0;">
           <summary style="margin:0;font-family:var(--hud-font-mono);font-size:12px;letter-spacing:0.12em;color:var(--hud-accent);cursor:pointer;user-select:none;">CHANGELOG</summary>
@@ -446,6 +523,23 @@ async function showMainMenu() {
     a.addEventListener('click', (e) => { e.preventDefault(); window.goonAPI.openExternal(a.href); });
   });
 
+  (async () => {
+    const wrap = document.getElementById('command-center-poster-wrap');
+    const img = document.getElementById('command-center-poster-api');
+    if (!wrap || !img) return;
+    try {
+      const url = await window.goonAPI?.getRandomSplashImageUrl?.();
+      if (!url) return;
+      img.onload = () => {
+        wrap.style.display = 'block';
+      };
+      img.onerror = () => {
+        wrap.style.display = 'none';
+      };
+      img.src = url;
+    } catch (_) {}
+  })();
+
   if (window.goonAPI.trackerFetchYouTubeFeed) {
     window.goonAPI.trackerFetchYouTubeFeed(channelUrl).then((entries) => {
       const listContainer = document.getElementById('command-center-youtube');
@@ -473,8 +567,13 @@ async function showMainMenu() {
       }
 
       if (first?.videoId && embedContainer) {
-        embedContainer.style.display = 'block';
-        embedContainer.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${first.videoId}" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="border:none;"></iframe>`;
+        const vid = first.videoId;
+        setTimeout(() => {
+          const el = document.getElementById('command-center-youtube-embed');
+          if (!el || el !== embedContainer) return;
+          el.style.display = 'block';
+          el.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${encodeURIComponent(vid)}" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="border:none;"></iframe>`;
+        }, 400);
       }
 
       // Click -> open externally
@@ -861,7 +960,7 @@ async function loadSettingsView() {
           <div style="display:flex;gap:8px;">
             <input type="text" id="settings-extension-path" readonly style="flex:1;${baseStyle}font-size:12px;" />
             <button type="button" id="settings-copy-path" class="hud-btn" title="Copy path">Copy Path</button>
-            <button type="button" id="settings-open-extensions" class="hud-btn" title="Open Chrome extensions">Open Chrome</button>
+            <button type="button" id="settings-open-extensions" class="hud-btn" title="Opens Chrome or Edge extensions page">Open extensions</button>
           </div>
         </div>
       </div>
@@ -1375,7 +1474,7 @@ async function loadSettingsView() {
     } catch {}
   });
   document.getElementById('settings-open-extensions')?.addEventListener('click', () => {
-    window.goonAPI.openChromeExtensions?.();
+    showBridgeBrowserPicker();
   });
 
   // Customize UI: prefill
@@ -2881,7 +2980,7 @@ function loadReportView() {
     devLogPush('action', 'Report: copied to clipboard');
     const text = (notesEl?.value || '').trim() || 'No description provided.';
     const logPath = await window.goonAPI.getLogPath?.();
-    const version = await window.goonAPI.getVersion?.() || '0.1.0';
+    const version = await window.goonAPI.getVersion?.() || '0.2.0';
     const report = `## Bug Report\n\n${text}\n\n---\nGoonopticon Desktop v${version}\nLog: ${logPath || 'N/A'}`;
     try {
       await navigator.clipboard.writeText(report);
@@ -2895,7 +2994,7 @@ function loadReportView() {
   githubEl.addEventListener('click', async () => {
     devLogPush('action', 'Report: opened GitHub');
     const text = (notesEl?.value || '').trim() || 'No description provided.';
-    const version = await window.goonAPI.getVersion?.() || '0.1.0';
+    const version = await window.goonAPI.getVersion?.() || '0.2.0';
     const body = encodeURIComponent(`## Bug Report\n\n${text}\n\n---\nGoonopticon Desktop v${version}`);
     window.goonAPI.openExternal(`https://github.com/CrudePixels/Goonopticon/issues/new?body=${body}`);
     statusEl.textContent = 'Opening GitHub… Let the world know.';
@@ -2993,6 +3092,7 @@ function applyUnifiedChatFontSize(scale) {
 
 function loadChatView() {
   const chatMode = (typeof loadChatView.chatMode === 'string') ? loadChatView.chatMode : 'view';
+  freezeMark('loadChatView_begin', { mode: chatMode });
   viewEl.innerHTML = `
     <div class="chat-view" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
       <div class="view-title-bar">
@@ -3002,7 +3102,12 @@ function loadChatView() {
           <button type="button" class="btn-close" id="chat-close-window-btn" title="Close">×</button>
         </div>
       </div>
-      <div class="chat-toolbar" style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
+      <div class="chat-live-toggle-bar" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:10px;padding:10px 12px;background:var(--hud-surface);border:1px solid var(--hud-border);border-radius:4px;flex-shrink:0;">
+        <span style="font-size:11px;font-family:var(--hud-font-mono);letter-spacing:0.06em;color:var(--hud-accent);">LIVE STREAMS</span>
+        <button type="button" class="hud-btn" id="chat-unified-toggle-btn" style="font-size:11px;padding:6px 12px;" title="When off, no live platform connections or hidden scraper windows. Turn on to start the unified feed.">Live streams: Off</button>
+        <span style="font-size:10px;opacity:0.75;line-height:1.4;max-width:340px;">Turn on to start unified feed,</span>
+      </div>
+      <div class="chat-toolbar" style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;position:relative;z-index:5;flex-shrink:0;background:var(--hud-bg);">
         <div class="chat-mode-toggle-wrap" role="group" aria-label="View or Input mode" style="display:inline-flex;border:1px solid var(--hud-border);border-radius:4px;overflow:hidden;">
           <button type="button" class="chat-mode-option" data-mode="input" style="font-size:11px;padding:6px 10px;border:none;background:${chatMode === 'input' ? 'var(--hud-accent)' : 'rgba(0,0,0,0.35)'};color:${chatMode === 'input' ? 'var(--hud-bg)' : 'var(--hud-text-dim)'};opacity:${chatMode === 'input' ? '1' : '0.7'};cursor:pointer;">Input</button>
           <span class="chat-mode-divider" style="width:1px;background:var(--hud-border);"></span>
@@ -3025,12 +3130,11 @@ function loadChatView() {
           <li><strong>Right-click a message</strong> — Pin it as an announcement above chat.</li>
           <li><strong>Chat filter</strong> — Show All or one platform. Add stream by URL or from the list; filter by keyword in Settings.</li>
           <li><strong>Polls</strong> — Create poll on Twitch, YouTube, or the website embed. Active poll appears at the top with vote counts.</li>
-          <li><strong>Start troll</strong> — Pin a short note plus link above chat (in-app and website embed) so viewers can open it.</li>
+          <li><strong>Start troll</strong> — Pin a short note plus link above chat (in-app and website embed). When done, use <strong>Successful</strong> or <strong>Failed</strong> to log the outcome and clear the banner. Open <strong>Troll log</strong> for history and totals.</li>
           <li><strong>Viewers</strong> — Total viewers across Twitch, Kick, YouTube, and the embed. Emote picker (😀) inserts :shortcodes: from your emotes folder.</li>
         </ul>
       </details>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center;">
-        <button type="button" class="hud-btn" id="chat-unified-toggle-btn" style="font-size:11px;" title="Turn unified chat connections on or off">Unified chat: On</button>
         <button type="button" class="hud-btn" id="chat-add-stream-btn" style="font-size:11px;display:inline-flex;align-items:center;gap:6px;">+ Add stream</button>
       </div>
       <div id="chat-added-streams" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;min-height:24px;"></div>
@@ -3038,6 +3142,7 @@ function loadChatView() {
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
         <button type="button" class="hud-btn" id="chat-create-poll-btn" style="font-size:11px;">Create poll</button>
         <button type="button" class="hud-btn" id="chat-start-troll-btn" style="font-size:11px;">Start troll</button>
+        <button type="button" class="hud-btn" id="chat-troll-log-btn" style="font-size:11px;">Troll log</button>
         </div>
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:0.9;">Chat filter <select id="chat-filter-select" style="padding:6px 10px;background:var(--color-surface);border:1px solid var(--color-border);color:var(--color-text);border-radius:4px;font-size:12px;min-width:120px;">
@@ -3184,7 +3289,9 @@ function loadChatView() {
   let chatPlatformFilter = 'all';
   const CHAT_SCROLLBACK_PAGE = 300;
   /** DOM row cap when following live — avoids innerHTML melt on floods (Kick/Twitch). */
-  const CHAT_RENDER_ROWS_MAX = 100;
+  const CHAT_RENDER_ROWS_MAX = 72;
+  /** When Live is off / reading history, still cap rows or one innerHTML pass can freeze Electron (1000× emote regex). */
+  const CHAT_RENDER_ROWS_HISTORY_MAX = 160;
   const CHAT_MSG_DISPLAY_MAX = 240;
   const CHAT_DATA_MESSAGE_MAX = 320;
   const CHAT_MEMORY_MAX = 1000;
@@ -3197,8 +3304,11 @@ function loadChatView() {
 
   function replaceEmotesInMessage(text, emoteNames) {
     if (!text || !emoteNames.length) return escapeHtmlChat(text);
+    if (emoteNames.length > 100) return escapeHtmlChat(text);
     const escaped = emoteNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    const re = new RegExp(':(' + escaped.join('|') + '):', 'g');
+    const alt = escaped.join('|');
+    if (alt.length > 24000) return escapeHtmlChat(text);
+    const re = new RegExp(':(' + alt + '):', 'g');
     const withPlaceholders = String(text).replace(re, (_, n) => '{{EMOTE:' + n + '}}');
     const escapedHtml = escapeHtmlChat(withPlaceholders);
     return escapedHtml.replace(/\{\{EMOTE:([^}]+)\}\}/g, (_, n) => '<img src="goonopticon-emotes:///' + escapeHtmlChat(n) + '.png" class="chat-emote" alt=":' + escapeHtmlChat(n) + ':" />');
@@ -3220,7 +3330,7 @@ function loadChatView() {
         b.style.opacity = isSelected ? '1' : '0.7';
       });
       const viewersBtn = document.getElementById('chat-viewers-btn');
-      if (viewersBtn) viewersBtn.style.display = isInput ? 'inline-flex' : 'none';
+      if (viewersBtn) viewersBtn.style.display = 'inline-flex';
     });
   });
   function updateChatScrollLiveButton() {
@@ -3535,16 +3645,18 @@ function loadChatView() {
   }
 
   function renderChatMessages(options = {}) {
-    if (!messagesEl) return;
+    if (!messagesEl || !messagesEl.isConnected) return;
     const recentlyLive = Date.now() - chatLastMessageTime < 120000;
     const scrollToBottom = options.scrollToBottom !== false && chatAutoScroll && recentlyLive;
     const visible = chatMessages.slice(chatShowFromIndex);
     let filtered = chatPlatformFilter === 'all' ? visible : visible.filter((m) => (m.platformId || '') === chatPlatformFilter);
     let renderCapNote = '';
-    if (chatAutoScroll && filtered.length > CHAT_RENDER_ROWS_MAX) {
-      const omitted = filtered.length - CHAT_RENDER_ROWS_MAX;
-      filtered = filtered.slice(-CHAT_RENDER_ROWS_MAX);
-      renderCapNote = `<div class="chat-render-cap" style="opacity:0.75;font-size:10px;padding:4px 6px;border-bottom:1px solid var(--hud-border);line-height:1.35;">… ${omitted} older lines hidden for UI performance (still in saved log). Click <b>Live</b> off to scroll history locally.</div>`;
+    const rowCap =
+      chatAutoScroll && recentlyLive ? CHAT_RENDER_ROWS_MAX : CHAT_RENDER_ROWS_HISTORY_MAX;
+    if (filtered.length > rowCap) {
+      const omitted = filtered.length - rowCap;
+      filtered = filtered.slice(-rowCap);
+      renderCapNote = `<div class="chat-render-cap" style="opacity:0.75;font-size:10px;padding:4px 6px;border-bottom:1px solid var(--hud-border);line-height:1.35;">… ${omitted} lines not rendered (keeps the app responsive; full log stays on disk). Use <b>Load older</b> / platform filter / <b>Live</b> to move through history.</div>`;
     }
     const hasOlder = chatShowFromIndex > 0;
     let loadOlderHtml = hasOlder ? `<div class="chat-load-older-wrap" style="padding:8px 0;border-bottom:1px solid var(--hud-border);"><button type="button" class="hud-btn" id="chat-load-older-btn" style="font-size:11px;">Load older (${Math.min(CHAT_SCROLLBACK_PAGE, chatShowFromIndex)} more)</button></div>` : '';
@@ -3600,7 +3712,12 @@ function loadChatView() {
           msgText = filterMessagePlatformEmotes(msgText, blocklist);
         }
         const liteText = chatAutoScroll && recentlyLive;
-        const textHtml = liteText ? escapeHtmlChat(msgText) : replaceEmotesInMessage(msgText, chatEmoteNames);
+        const emoteListOk = chatEmoteNames.length > 0 && chatEmoteNames.length <= 100;
+        const rowCountOk = filtered.length <= 72;
+        const textHtml =
+          liteText || !emoteListOk || !rowCountOk
+            ? escapeHtmlChat(msgText)
+            : replaceEmotesInMessage(msgText, chatEmoteNames);
         const dataMsg =
           rawMessage.length > CHAT_DATA_MESSAGE_MAX ? rawMessage.slice(0, CHAT_DATA_MESSAGE_MAX) : rawMessage;
         const platDisplayName = m.platformName || platMeta?.name || '';
@@ -3618,7 +3735,7 @@ function loadChatView() {
         const avatarHtml = avSrc
           ? `<img class="chat-user-avatar" src="${escapeHtmlAttr(avSrc)}" width="22" height="22" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" />`
           : '';
-        return `<div class="chat-msg${donationClass}${highlightClass}${kwHighlight}" data-platform-id="${escapeHtmlChat(platformId)}" data-username="${escapeHtmlChat(username)}" data-platform-name="${escapeHtmlChat(m.platformName || '')}" data-channel-id="${escapeHtmlChat(m.channelId || '')}" data-message="${escapeHtmlChat(dataMsg)}" style="border-left-color:${borderColor}">
+        return `<div class="chat-msg${donationClass}${highlightClass}${kwHighlight}" data-platform-id="${escapeHtmlChat(platformId)}" data-username="${escapeHtmlChat(username)}" data-platform-name="${escapeHtmlChat(m.platformName || '')}" data-channel-id="${escapeHtmlChat(m.channelId || '')}" data-avatar-url="${avSrc ? escapeHtmlAttr(avSrc) : ''}" data-message="${escapeHtmlChat(dataMsg)}" style="border-left-color:${borderColor}">
             <span class="chat-platform${platLabelClass}"><img class="chat-platform-img" src="${chatPlatformIconSrc(platformId)}" width="14" height="14" alt="" draggable="false" decoding="async"${platImgTitle} />${platNameSpan}</span>
             ${avatarHtml}
             <span class="chat-username" title="Right-click: user menu · elsewhere: pin message"${usernameStyle}>${escapeHtmlChat(username)}</span>${badgeHtml}${tagsHtml ? `<span class="chat-user-tags">${tagsHtml}</span>` : ''}
@@ -3692,16 +3809,26 @@ function loadChatView() {
     const linkHtml = url
       ? `<a href="#" id="chat-troll-link" data-href="${escapeHtmlChat(url)}" style="color:var(--hud-accent);text-decoration:underline;word-break:break-all;">${escapeHtmlChat(url)}</a>`
       : '';
-    bar.innerHTML = `<span style="flex:1;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;word-break:break-word;"><span aria-hidden="true">🎣</span>${desc ? `<span>${desc}</span>` : ''}${linkHtml}</span><button type="button" class="hud-btn" id="chat-troll-clear" style="font-size:10px;flex-shrink:0;">Clear</button>`;
+    bar.innerHTML = `<span style="flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;word-break:break-word;"><span aria-hidden="true">🎣</span>${desc ? `<span>${desc}</span>` : ''}${linkHtml}</span><div style="display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0;align-items:center;"><button type="button" class="hud-btn" id="chat-troll-success" style="font-size:10px;padding:4px 8px;">Successful</button><button type="button" class="hud-btn" id="chat-troll-fail" style="font-size:10px;padding:4px 8px;">Failed</button></div>`;
     bar.querySelector('#chat-troll-link')?.addEventListener('click', (e) => {
       e.preventDefault();
       const href = e.currentTarget.getAttribute('data-href');
       if (href) window.goonAPI?.openExternal?.(href);
     });
-    bar.querySelector('#chat-troll-clear')?.addEventListener('click', async () => {
+    async function finishTrollWithOutcome(outcome) {
+      const t = await window.goonAPI?.chatGetEmbedTroll?.();
+      if (!t || (!t.description && !t.url)) return;
+      await window.goonAPI?.chatAppendTrollHistory?.({
+        description: t.description || '',
+        url: t.url || '',
+        outcome
+      });
       await window.goonAPI?.chatClearEmbedTroll?.();
       updateChatTrollBar();
-    });
+      window.goonAPI?.showToast?.(outcome === 'success' ? 'Logged: successful' : 'Logged: failed');
+    }
+    bar.querySelector('#chat-troll-success')?.addEventListener('click', () => finishTrollWithOutcome('success'));
+    bar.querySelector('#chat-troll-fail')?.addEventListener('click', () => finishTrollWithOutcome('failed'));
   }
 
   function formatPollTimeLeft(ms) {
@@ -4175,7 +4302,28 @@ function loadChatView() {
     });
   }
 
+  function findLatestChatAvatarUrl(forPlatformId, forUsername) {
+    const pid = forPlatformId || '';
+    const un = forUsername || '';
+    for (let i = chatMessages.length - 1; i >= 0; i--) {
+      const m = chatMessages[i];
+      if (!m) continue;
+      const mid = m.platformId || m.platform || '';
+      const mu = m.username || '';
+      if (mid === pid && mu === un) {
+        const u = (m.avatarUrl || '').trim();
+        if (u) return u;
+      }
+    }
+    return '';
+  }
+
   async function showUserInfoModal(platformId, platformName, username, opts) {
+    const modOpts = opts && typeof opts === 'object' ? { ...opts } : {};
+    const avatarFromOpts = (modOpts.avatarUrl || '').trim();
+    delete modOpts.avatarUrl;
+    const moderationOpts = Object.keys(modOpts).length ? modOpts : undefined;
+
     const identityId = await window.goonAPI.chatEnsureIdentity?.(platformId, username);
     const [identity, linked, history, donationData, modHistory] = await Promise.all([
       window.goonAPI.chatGetIdentity?.(identityId),
@@ -4212,7 +4360,7 @@ function loadChatView() {
       <div class="hud-panel" style="max-width:640px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-shrink:0;">
           <div style="display:flex;gap:16px;align-items:flex-start;flex:1;min-width:0;">
-            <div class="chat-user-info-avatar" style="width:64px;height:64px;border-radius:12px;background:var(--hud-surface);border:1px solid var(--hud-border);flex-shrink:0;"></div>
+            <div class="chat-user-info-avatar" style="width:64px;height:64px;border-radius:12px;background:var(--hud-surface);border:1px solid var(--hud-border);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;"></div>
             <div style="flex:1;min-width:0;">
               <div style="margin-bottom:4px;"><span style="opacity:0.8;font-size:11px;">Username:</span> <strong>${escapeHtmlChat(username)}</strong></div>
               <div><span style="opacity:0.8;font-size:11px;">Marked username:</span> ${escapeHtmlChat(markedName)}</div>
@@ -4241,6 +4389,14 @@ function loadChatView() {
       </div>
     `;
     document.body.appendChild(overlay);
+
+    const avatarWrap = overlay.querySelector('.chat-user-info-avatar');
+    const resolvedAvatar = (avatarFromOpts || findLatestChatAvatarUrl(platformId, username) || '').trim();
+    if (avatarWrap) {
+      if (resolvedAvatar) {
+        avatarWrap.innerHTML = `<img src="${escapeHtmlAttr(resolvedAvatar)}" alt="" width="64" height="64" style="width:64px;height:64px;object-fit:cover;display:block;border:0;" loading="eager" decoding="async" referrerpolicy="no-referrer" />`;
+      }
+    }
 
     const historyEl = overlay.querySelector('#chat-user-info-history');
     const sorted = historyDeduped.slice().sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
@@ -4272,11 +4428,11 @@ function loadChatView() {
     addBtn('Send DM', () => { overlay.remove(); showDmModal(platformId, platformName, username); });
     addBtn('Mark user…', () => { overlay.remove(); showMarkUserModal(platformId, platformName, username); });
     addBtn('Timeouts & bans log', () => showModerationHistoryListModal(platformId, platformName, username));
-    addBtn('Timeout…', () => showTimeoutReasonModal(platformId, platformName, username, opts), !supportsModeration || !hasAuth);
-    addBtn('Ban…', () => showBanReasonModal(platformId, platformName, username, opts), !supportsModeration || !hasAuth);
+    addBtn('Timeout…', () => showTimeoutReasonModal(platformId, platformName, username, moderationOpts), !supportsModeration || !hasAuth);
+    addBtn('Ban…', () => showBanReasonModal(platformId, platformName, username, moderationOpts), !supportsModeration || !hasAuth);
     addBtn('Unban', () => {
       if (!confirm(`Unban ${username} on ${platformName}?`)) return;
-      window.goonAPI.chatUnbanUser?.(platformId, username, opts).then((r) => {
+      window.goonAPI.chatUnbanUser?.(platformId, username, moderationOpts).then((r) => {
         window.goonAPI?.showToast?.(r?.ok ? 'User unbanned' : (r?.error || 'Failed'));
       });
     }, !supportsModeration || !hasAuth);
@@ -4285,9 +4441,9 @@ function loadChatView() {
         window.goonAPI?.showToast?.(r?.ok ? 'Mod added' : (r?.error || 'Failed'));
       });
     }, !supportsModeration || !hasAuth);
-    addBtn('Vote to timeout (10m)', () => startVotebanPoll(platformId, platformName, username, 'timeout', 600, opts), !supportsModeration || !hasAuth);
-    addBtn('Vote to ban', () => startVotebanPoll(platformId, platformName, username, 'ban', null, opts), !supportsModeration || !hasAuth);
-    addBtn('Vote to unban', () => startVotebanPoll(platformId, platformName, username, 'unban', null, opts), !supportsModeration || !hasAuth);
+    addBtn('Vote to timeout (10m)', () => startVotebanPoll(platformId, platformName, username, 'timeout', 600, moderationOpts), !supportsModeration || !hasAuth);
+    addBtn('Vote to ban', () => startVotebanPoll(platformId, platformName, username, 'ban', null, moderationOpts), !supportsModeration || !hasAuth);
+    addBtn('Vote to unban', () => startVotebanPoll(platformId, platformName, username, 'unban', null, moderationOpts), !supportsModeration || !hasAuth);
 
     overlay.querySelector('#chat-user-info-close').addEventListener('click', () => overlay.remove());
     // Do not close on overlay click — user can interact with modal and use features until they click Close
@@ -4459,7 +4615,10 @@ function loadChatView() {
     e.preventDefault();
     closeChatContextMenu();
     const row = e.target.closest('.chat-msg');
-    const opts = row?.dataset?.channelId ? { channelId: row.dataset.channelId } : undefined;
+    const opts = {};
+    if (row?.dataset?.channelId) opts.channelId = row.dataset.channelId;
+    if (row?.dataset?.avatarUrl) opts.avatarUrl = row.dataset.avatarUrl;
+    const passOpts = Object.keys(opts).length ? opts : undefined;
     const menu = document.createElement('div');
     menu.className = 'chat-context-menu';
     menu.style.left = e.clientX + 'px';
@@ -4469,7 +4628,7 @@ function loadChatView() {
     b.textContent = 'Show User Info';
     b.addEventListener('click', () => {
       closeChatContextMenu();
-      showUserInfoModal(platformId, platformName, username, opts);
+      showUserInfoModal(platformId, platformName, username, passOpts);
     });
     menu.appendChild(b);
     document.body.appendChild(menu);
@@ -4740,24 +4899,118 @@ function loadChatView() {
 
   document.getElementById('chat-start-troll-btn')?.addEventListener('click', showStartTrollModal);
 
+  function showTrollHistoryModal() {
+    const overlay = document.createElement('div');
+    overlay.id = 'chat-troll-history-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML = `
+      <div class="hud-panel" style="max-width:520px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0;gap:8px;flex-wrap:wrap;">
+          <h3 style="margin:0;font-size:14px;">Troll log</h3>
+          <button type="button" class="hud-btn" id="chat-troll-history-close" style="padding:4px 10px;">Close</button>
+        </div>
+        <p id="chat-troll-history-summary" style="margin:0 0 8px 0;font-size:11px;opacity:0.9;"></p>
+        <div id="chat-troll-history-list" style="flex:1;overflow-y:auto;font-family:var(--hud-font-mono);font-size:11px;padding:8px;background:var(--hud-bg);border:1px solid var(--hud-border);border-radius:4px;min-height:120px;"></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    const listEl = overlay.querySelector('#chat-troll-history-list');
+    const summaryEl = overlay.querySelector('#chat-troll-history-summary');
+    overlay.querySelector('#chat-troll-history-close')?.addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
+    window.goonAPI.chatGetTrollHistory?.().then((history) => {
+      const list = Array.isArray(history) ? history : [];
+      const nOk = list.filter((e) => e.outcome === 'success').length;
+      const nBad = list.filter((e) => e.outcome === 'failed').length;
+      if (summaryEl) summaryEl.textContent = `Total: ${list.length} · Successful: ${nOk} · Failed: ${nBad}`;
+      if (!listEl) return;
+      if (list.length === 0) {
+        listEl.innerHTML = '<div style="opacity:0.6;">No trolls logged yet.</div>';
+        return;
+      }
+      listEl.innerHTML = list
+        .map((e) => {
+          const t = e.timestamp ? new Date(e.timestamp) : null;
+          const timeStr = t ? t.toLocaleString() : '';
+          const badge =
+            e.outcome === 'failed'
+              ? '<span style="color:#f66;font-weight:600;">Failed</span>'
+              : '<span style="color:#8f8;font-weight:600;">Successful</span>';
+          const desc = escapeHtmlChat((e.description || '').trim() || '(no description)');
+          const url = (e.url || '').trim();
+          const urlHtml = url
+            ? `<a href="#" class="chat-troll-history-link" data-href="${escapeHtmlChat(url)}" style="color:var(--hud-accent);word-break:break-all;">${escapeHtmlChat(url)}</a>`
+            : '—';
+          return `<div style="padding:8px 0;border-bottom:1px solid var(--hud-border);line-height:1.45;"><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:4px;"><span style="opacity:0.75;font-size:10px;">${escapeHtmlChat(timeStr)}</span>${badge}</div><div style="margin-bottom:4px;">${desc}</div><div>${urlHtml}</div></div>`;
+        })
+        .join('');
+      listEl.querySelectorAll('.chat-troll-history-link').forEach((a) => {
+        a.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const href = ev.currentTarget.getAttribute('data-href');
+          if (href) window.goonAPI?.openExternal?.(href);
+        });
+      });
+    });
+  }
+
+  document.getElementById('chat-troll-log-btn')?.addEventListener('click', showTrollHistoryModal);
+
   const originalRenderChatMessages = renderChatMessages;
   renderChatMessages = function (options) {
     originalRenderChatMessages(options);
   };
 
   let chatRenderDebounceTimer = null;
+  /** Coalesce rapid chat lines into fewer DOM rebuilds so toolbar (e.g. Viewers) stays clickable. */
   function scheduleChatRender() {
     if (chatRenderDebounceTimer) return;
     chatRenderDebounceTimer = setTimeout(() => {
       chatRenderDebounceTimer = null;
-      renderChatMessages();
-    }, 100);
+      requestAnimationFrame(() => {
+        renderChatMessages();
+      });
+    }, 320);
   }
   _chatRenderMessagesRef = scheduleChatRender;
 
   if (!_chatMessageListenerAdded) {
     _chatMessageListenerAdded = true;
+    let _chatViewerRefreshLast = 0;
+    window.addEventListener('chatMessagesBatch', (e) => {
+      if (!document.getElementById('chat-messages')?.isConnected) return;
+      const arr = e.detail;
+      if (!Array.isArray(arr) || !arr.length) return;
+      const now = Date.now();
+      for (const m of arr) {
+        if (!m || !(m.platformName || m.platformId) || m.message == null) continue;
+        const platform = CHAT_PLATFORMS.find((p) => p.id === (m.platformId || m.platform));
+        const entry = {
+          platformId: m.platformId || m.platform,
+          platformName: m.platformName || platform?.name || '?',
+          username: m.username || '?',
+          message: m.message,
+          timestamp: typeof m.timestamp === 'number' ? m.timestamp : now,
+          channelId: m.channelId || undefined,
+          avatarUrl: m.avatarUrl || undefined,
+          donationAmount: m.donationAmount != null ? m.donationAmount : undefined,
+          donationCurrency: m.donationCurrency || undefined
+        };
+        chatMessages.push(entry);
+        while (chatMessages.length > CHAT_MEMORY_MAX) {
+          chatMessages.shift();
+          if (chatShowFromIndex > 0) chatShowFromIndex -= 1;
+        }
+      }
+      chatLastMessageTime = now;
+      if (_chatRenderMessagesRef) _chatRenderMessagesRef();
+      if (now - _chatViewerRefreshLast > 10000) {
+        _chatViewerRefreshLast = now;
+        refreshViewersButton();
+      }
+    });
     window.addEventListener('chatStreamsChanged', async () => {
+      if (!document.getElementById('chat-messages')?.isConnected) return;
       const log = await window.goonAPI.chatGetChatLog?.();
       if (!Array.isArray(log)) return;
       chatMessages = log;
@@ -4765,8 +5018,8 @@ function loadChatView() {
       renderChatMessages();
       refreshViewersButton();
     });
-    let _chatViewerRefreshLast = 0;
     window.addEventListener('chatMessage', (e) => {
+      if (!document.getElementById('chat-messages')?.isConnected) return;
       const m = e.detail;
       if (m && (m.platformName || m.platformId) && m.message != null) {
         const platform = CHAT_PLATFORMS.find((p) => p.id === (m.platformId || m.platform));
@@ -4802,16 +5055,17 @@ function loadChatView() {
   (async () => {
     const saved = await window.goonAPI.chatGetAddedStreams?.();
     if (Array.isArray(saved)) chatAddedStreams = new Set(saved);
-    const unifiedEnabled = await window.goonAPI.chatGetChatUnifiedEnabled?.();
+    let unifiedEnabled = (await window.goonAPI.chatGetChatUnifiedEnabled?.()) === true;
     try { chatEmbedEnabled = (await window.goonAPI.chatGetEmbedEnabled?.()) !== false; } catch (_) {}
     const unifiedBtn = document.getElementById('chat-unified-toggle-btn');
     if (unifiedBtn) {
-      unifiedBtn.textContent = unifiedEnabled !== false ? 'Unified chat: On' : 'Unified chat: Off';
+      unifiedBtn.textContent = unifiedEnabled ? 'Live streams: On' : 'Live streams: Off';
       unifiedBtn.addEventListener('click', async () => {
-        const next = unifiedBtn.textContent.startsWith('Unified chat: On') ? false : true;
+        const next = !unifiedEnabled;
         await window.goonAPI.chatSetChatUnifiedEnabled?.(next);
-        unifiedBtn.textContent = next ? 'Unified chat: On' : 'Unified chat: Off';
-        window.goonAPI?.showToast?.(next ? 'Unified chat on' : 'Unified chat off');
+        unifiedEnabled = next;
+        unifiedBtn.textContent = next ? 'Live streams: On' : 'Live streams: Off';
+        window.goonAPI?.showToast?.(next ? 'Live stream connections on' : 'Live stream connections off');
       });
     }
     // Sync to main process so chat connections/scrapers start (or restart) when Chat view is shown
@@ -4863,9 +5117,13 @@ function loadChatView() {
     updateChatPollBar();
     refreshViewersButton();
     if (window._chatViewersInterval) clearInterval(window._chatViewersInterval);
-    window._chatViewersInterval = setInterval(refreshViewersButton, 8000);
+    window._chatViewersInterval = setInterval(() => {
+      if (document.getElementById('chat-messages')?.isConnected) refreshViewersButton();
+    }, 8000);
     if (window._chatPollBarInterval) clearInterval(window._chatPollBarInterval);
-    window._chatPollBarInterval = setInterval(updateChatPollBar, 1000);
+    window._chatPollBarInterval = setInterval(() => {
+      if (document.getElementById('chat-messages')?.isConnected) updateChatPollBar();
+    }, 1000);
     refreshChatIdentityMap().then((m) => { chatIdentityMap = m; renderChatMessages(); });
     window.goonAPI?.chatGetEmoteList?.().then((names) => { chatEmoteNames = Array.isArray(names) ? names : []; renderChatMessages(); });
   })();
@@ -4879,7 +5137,18 @@ function updateBridgeStatus(data) {
   const err = data && data.error;
   el.textContent = err ? '[ ERROR ]' : (connected ? '[ LINK ]' : '[ OFFLINE ]');
   el.className = 'hud-status ' + (err ? 'offline' : (connected ? 'online' : 'offline'));
-  el.title = err ? (data.error || 'Bridge port in use — change in Settings') : (connected ? 'Bridge connected — timecodes at the ready' : 'Extension not connected — Henchmen, load the bridge');
+  const portHint = data && data.ok && data.port != null ? ` App bridge port: ${data.port}.` : '';
+  el.title = err
+    ? (data.error || 'Bridge port in use — change in Settings')
+    : connected
+      ? 'Bridge connected — timecodes at the ready'
+      : `Extension not connected — reload the Goonopticon Bridge extension, then open its popup once.${portHint}`;
+
+  const showSetup = !(connected && !err);
+  const hBtn = document.getElementById('btn-bridge-connect');
+  const fBtn = document.getElementById('btn-footer-bridge');
+  if (hBtn) hBtn.style.display = showSetup ? '' : 'none';
+  if (fBtn) fBtn.style.display = showSetup ? '' : 'none';
 }
 window.addEventListener('bridgeStatus', (e) => updateBridgeStatus(e.detail));
 window.addEventListener('bridgeTimeUpdate', (e) => {
@@ -4887,21 +5156,94 @@ window.addEventListener('bridgeTimeUpdate', (e) => {
   if (iframe?.contentWindow && e.detail?.time != null)
     iframe.contentWindow.postMessage({ type: 'goonopticon-timeUpdate', time: e.detail.time }, '*');
 });
-(async () => {
-  const data = await window.goonAPI.bridgeGetStatus?.();
-  if (data) updateBridgeStatus(data);
-})();
+// Defer bridge IPC until after first paint + boot poster decode to avoid main-process pile-up.
+setTimeout(() => {
+  (async () => {
+    const data = await window.goonAPI.bridgeGetStatus?.();
+    if (data) updateBridgeStatus(data);
+  })();
+  if (!window._bridgeStatusPoll && window.goonAPI?.bridgeGetStatus) {
+    window._bridgeStatusPoll = setInterval(() => {
+      window.goonAPI.bridgeGetStatus().then((data) => { if (data) updateBridgeStatus(data); }).catch(() => {});
+    }, 2500);
+  }
+}, 4000);
+
+function hideBridgeBrowserPicker() {
+  document.getElementById('bridge-browser-modal')?.classList.remove('visible');
+}
+
+function showBridgeBrowserPicker() {
+  initBridgeBrowserModal();
+  document.getElementById('bridge-browser-modal')?.classList.add('visible');
+}
+
+function initBridgeBrowserModal() {
+  const modal = document.getElementById('bridge-browser-modal');
+  if (!modal || modal.dataset.inited === '1') return;
+  modal.dataset.inited = '1';
+
+  window.goonAPI
+    .getPlatform?.()
+    .then((p) => {
+      const safariBtn = document.getElementById('bridge-browser-safari');
+      if (safariBtn) safariBtn.style.display = p === 'darwin' ? '' : 'none';
+    })
+    .catch(() => {});
+
+  modal.querySelectorAll('.bridge-browser-choice').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-browser');
+      hideBridgeBrowserPicker();
+      const res = await window.goonAPI.openBrowserExtensions?.(id);
+      if (res?.ok) {
+        await window.goonAPI.showToast?.(`Opened ${btn.textContent.trim()}. Load the bridge folder there.`);
+      } else {
+        await window.goonAPI.showToast?.(res?.error || 'Could not start that browser.');
+      }
+    });
+  });
+
+  document.getElementById('bridge-browser-cancel')?.addEventListener('click', hideBridgeBrowserPicker);
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) hideBridgeBrowserPicker();
+  });
+}
+
+async function runBridgeSetupFromApp() {
+  const extPath = (await window.goonAPI.getExtensionPath?.()) || '';
+  if (extPath) {
+    try {
+      await navigator.clipboard.writeText(extPath);
+    } catch (_) {}
+  }
+  let p = '';
+  try {
+    const port = await window.goonAPI.getBridgePort?.();
+    if (typeof port === 'number') p = String(port);
+  } catch (_) {}
+  await window.goonAPI.showToast?.(
+    extPath
+      ? `Bridge folder path copied.${p ? ` Port ${p} — match in extension Options if you changed it.` : ''} Choose your browser…`
+      : 'Bridge path unavailable. Check Configure Surveillance — still pick a browser to open extensions.'
+  );
+  showBridgeBrowserPicker();
+}
+['btn-bridge-connect', 'btn-footer-bridge'].forEach((id) => {
+  document.getElementById(id)?.addEventListener('click', () => runBridgeSetupFromApp());
+});
 
 function initMatrixRain() {
   const container = document.getElementById('matrix-rain');
   if (!container) return;
   container.innerHTML = '';
-  const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const numColumns = Math.max(40, Math.ceil(window.innerWidth / 18));
+  const chars = '01アイウエオカキクケコ0123456789ABCDEF';
+  const numColumns = Math.min(28, Math.max(14, Math.ceil(window.innerWidth / 36)));
   for (let i = 0; i < numColumns; i++) {
     const col = document.createElement('div');
     col.className = 'matrix-column';
-    const lineCount = Math.ceil(window.innerHeight / 14) + 30;
+    const lineCount = Math.min(32, Math.ceil(window.innerHeight / 24) + 6);
     let text = '';
     for (let j = 0; j < lineCount; j++) {
       text += chars[Math.floor(Math.random() * chars.length)] + '\n';
@@ -4965,7 +5307,7 @@ async function showExtensionOverlayIfNeeded() {
       } catch {}
     });
     document.getElementById('open-extensions-page')?.addEventListener('click', () => {
-      window.goonAPI.openChromeExtensions?.();
+      showBridgeBrowserPicker();
     });
     document.getElementById('first-run-dismiss')?.addEventListener('click', async () => {
       await window.goonAPI.setSeenExtensionSetup?.(true);

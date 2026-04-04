@@ -23,6 +23,22 @@
       text-align: center;
       padding: 24px;
     }
+    .splash-poster-wrap {
+      display: none;
+      margin: 0 auto 20px;
+      max-width: min(92vw, 520px);
+      max-height: 42vh;
+    }
+    .splash-poster-wrap img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 42vh;
+      object-fit: contain;
+      border: 1px solid #00ff41;
+      box-shadow: 0 0 24px rgba(0, 255, 65, 0.2);
+      border-radius: 4px;
+    }
     .logo {
       font-size: 36px;
       letter-spacing: 0.2em;
@@ -114,6 +130,9 @@
   <div class="sweep"></div>
   <div class="scanlines"></div>
   <div class="splash-inner">
+    <div class="splash-poster-wrap" id="splash-poster-wrap">
+      <img id="splash-poster-img" alt="" decoding="async" />
+    </div>
     <div class="logo">Goonopticon</div>
     <div class="loading-wrap">
       <div class="loading-text" id="loading-text">booting up CRTS</div>
@@ -123,9 +142,32 @@
     </div>
   </div>
   <script>
+    function ipcRace(promise, ms, fallback) {
+      return Promise.race([
+        Promise.resolve(promise).catch(() => fallback),
+        new Promise((resolve) => setTimeout(() => resolve(fallback), ms))
+      ]);
+    }
+    (async function loadSplashPoster() {
+      try {
+        const url = await ipcRace(window.goonAPI?.getRandomSplashImageUrl?.(), 1200, null);
+        if (!url || typeof url !== 'string') return;
+        const wrap = document.getElementById('splash-poster-wrap');
+        const img = document.getElementById('splash-poster-img');
+        if (!wrap || !img) return;
+        img.onload = function () {
+          wrap.style.display = 'block';
+        };
+        img.onerror = function () {
+          wrap.style.display = 'none';
+        };
+        img.src = url;
+      } catch (_) {}
+    })();
+
     (async function playBootSound() {
       try {
-        const on = await window.goonAPI?.getSoundBootEnabled?.();
+        const on = await ipcRace(window.goonAPI?.getSoundBootEnabled?.(), 600, true);
         if (on === false) return;
       } catch (_) {}
       function fallbackBeep() {
@@ -161,14 +203,15 @@
       const barEl = document.getElementById('loading-bar-fill');
       let SPLASH_DURATION_MS = 5500;
       try {
-        SPLASH_DURATION_MS = await window.goonAPI?.getSplashDurationMs?.() || 5500;
+        const v = await ipcRace(window.goonAPI?.getSplashDurationMs?.(), 600, 5500);
+        SPLASH_DURATION_MS = typeof v === 'number' && v >= 500 ? v : 5500;
       } catch (_) {}
       const BAR_UPDATE_MS = 80;
 
       let lines = [];
       try {
-        lines = await window.goonAPI?.getLoadingLines?.() || [];
-      } catch {}
+        lines = (await ipcRace(window.goonAPI?.getLoadingLines?.(), 600, [])) || [];
+      } catch (_) {}
       if (!lines.length) lines = ['booting up CRTS', 'warming Goo', 'fixing robotron'];
       const shuffled = [...lines].sort(() => Math.random() - 0.5);
       const pickThree = shuffled.slice(0, 3);

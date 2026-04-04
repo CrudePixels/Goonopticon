@@ -3,6 +3,9 @@ const path = require('path');
 
 const THEMES_DIR = path.join(__dirname, '../../themes');
 
+/** Avoid sync disk + JSON.parse on every theme IPC (startup + Grok + settings). */
+const themeFileCache = new Map();
+
 const DEFAULT_UI = {
   fontSize: 21,
   fontSizeSmall: 18,
@@ -14,8 +17,14 @@ const DEFAULT_UI = {
 function loadTheme(themeName) {
   const file = path.join(THEMES_DIR, `${themeName}.json`);
   try {
+    const st = fs.statSync(file);
+    const mt = st.mtimeMs;
+    const hit = themeFileCache.get(themeName);
+    if (hit && hit.mtimeMs === mt) return hit.data;
     const raw = fs.readFileSync(file, 'utf8');
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    themeFileCache.set(themeName, { mtimeMs: mt, data: parsed });
+    return parsed;
   } catch {
     return null;
   }

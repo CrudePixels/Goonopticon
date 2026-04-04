@@ -6,10 +6,15 @@ const storage = require('../storage/adapter');
 const GROK_TXT = path.join(__dirname, '../../grokBuddy/grok.txt');
 const GROK_BOUNDS_KEY = 'grok';
 
+let grokTxtCache = { mtimeMs: NaN, data: null };
+
 function parseGrokTxt() {
-  const out = {};
   try {
+    const st = fs.statSync(GROK_TXT);
+    const mtimeMs = st.mtimeMs;
+    if (grokTxtCache.data && grokTxtCache.mtimeMs === mtimeMs) return grokTxtCache.data;
     const raw = fs.readFileSync(GROK_TXT, 'utf8');
+    const out = {};
     let section = null;
     for (const line of raw.split(/\r?\n/)) {
       const m = line.match(/^\[(\w+)\]$/);
@@ -21,8 +26,11 @@ function parseGrokTxt() {
       const trimmed = line.trim();
       if (section && trimmed && !trimmed.startsWith('#')) out[section].push(trimmed);
     }
-  } catch (_) {}
-  return out;
+    grokTxtCache = { mtimeMs, data: out };
+    return out;
+  } catch (_) {
+    return grokTxtCache.data || {};
+  }
 }
 
 let grokWindow = null;

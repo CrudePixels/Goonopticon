@@ -1120,7 +1120,14 @@ function init(sendToRendererFn) {
     }
   }
   addedStreams = storage.getChatAddedStreams();
-  updateConnections();
+  // Defer so main window can reach ready-to-show before spawning many hidden BrowserWindows (scrapers).
+  setTimeout(() => {
+    try {
+      updateConnections();
+    } catch (err) {
+      if (typeof console !== 'undefined' && console.warn) console.warn('updateConnections failed:', err && err.message);
+    }
+  }, 1200);
 }
 
 module.exports = {

@@ -3,6 +3,8 @@
  * Supports /channel/UC…, /@handle, /c/custom, /user/legacy (resolves ID from page HTML).
  */
 
+const { chromiumFetch } = require('./chromiumFetch');
+
 const PAGE_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
@@ -105,7 +107,7 @@ async function resolveChannelIdFromYouTubePage(absUrl) {
 
   for (const u of candidates) {
     try {
-      const res = await fetch(u, {
+      const res = await chromiumFetch(u, {
         headers: {
           Accept: 'text/html,application/xhtml+xml',
           'Accept-Language': 'en-US,en;q=0.9',
@@ -132,22 +134,7 @@ function uploadsPlaylistIdFromChannelId(channelId) {
 
 async function fetchTextMaybeNetFetch(url, headers, signal) {
   try {
-    const { net } = require('electron');
-    if (net && typeof net.fetch === 'function') {
-      const res = await net.fetch(url, { headers, signal });
-      if (res.ok) {
-        const xml = await res.text();
-        if (xml && /<entry[\s>]/i.test(xml)) return xml;
-      }
-    }
-  } catch {
-    // fall through
-  }
-  try {
-    const res = await fetch(url, {
-      signal,
-      headers
-    });
+    const res = await chromiumFetch(url, { headers, signal });
     if (!res.ok) return null;
     const xml = await res.text();
     return xml && /<entry[\s>]/i.test(xml) ? xml : null;
@@ -203,7 +190,7 @@ async function fetchChannelFeed(channelId) {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), 22000);
     try {
-      const res = await fetch(url, {
+      const res = await chromiumFetch(url, {
         signal: controller.signal,
         headers: {
           Accept: 'text/plain,text/html,*/*',
@@ -266,7 +253,7 @@ async function fetchVideoIdsDirectVideosPage(videosPageUrl) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), 20000);
   try {
-    const res = await fetch(videosPageUrl.split('#')[0], {
+    const res = await chromiumFetch(videosPageUrl.split('#')[0], {
       signal: controller.signal,
       redirect: 'follow',
       headers: {
@@ -295,7 +282,7 @@ async function fetchVideoIdsFromJinaVideosPage(videosPageUrl) {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), 28000);
     try {
-      const res = await fetch(u, {
+      const res = await chromiumFetch(u, {
         signal: controller.signal,
         redirect: 'follow',
         headers: {
@@ -339,7 +326,7 @@ async function enrichEntriesWithOembed(entries) {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), 9000);
     try {
-      const res = await fetch(oembedUrl, {
+      const res = await chromiumFetch(oembedUrl, {
         signal: controller.signal,
         headers: {
           Accept: 'application/json',
@@ -406,7 +393,7 @@ async function fetchJsonYouTubeApi(url) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), 14000);
   try {
-    const res = await fetch(url, {
+    const res = await chromiumFetch(url, {
       signal: controller.signal,
       headers: { Accept: 'application/json' }
     });

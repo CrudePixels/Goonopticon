@@ -1,7 +1,10 @@
 const fs = require('fs');
 const path = require('path');
+const { pathToFileURL } = require('url');
 
 const SPLASH_DIR = path.join(__dirname, '../../splash');
+const SPLASH_IMAGES_DIR = path.join(SPLASH_DIR, 'images');
+const SPLASH_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif', '.bmp']);
 const QUOTES_FILE = path.join(SPLASH_DIR, 'quotes.txt');
 const LOADING_FILE = path.join(SPLASH_DIR, 'loading.txt');
 
@@ -56,4 +59,31 @@ function getLoadingLines() {
   return loadLoadingLines();
 }
 
-module.exports = { getRandomSplash, getLoadingLines };
+function listSplashImageFiles() {
+  try {
+    if (!fs.existsSync(SPLASH_IMAGES_DIR)) return [];
+    const names = fs.readdirSync(SPLASH_IMAGES_DIR);
+    return names
+      .filter((f) => SPLASH_IMAGE_EXT.has(path.extname(f).toLowerCase()))
+      .map((f) => path.join(SPLASH_IMAGES_DIR, f))
+      .filter((abs) => {
+        try {
+          return fs.statSync(abs).isFile();
+        } catch {
+          return false;
+        }
+      });
+  } catch {
+    return [];
+  }
+}
+
+/** Random image from splash/images as file:// URL for <img src> (Electron). */
+function getRandomSplashImageUrl() {
+  const files = listSplashImageFiles();
+  if (!files.length) return null;
+  const pick = files[Math.floor(Math.random() * files.length)];
+  return pathToFileURL(pick).href;
+}
+
+module.exports = { getRandomSplash, getLoadingLines, getRandomSplashImageUrl };

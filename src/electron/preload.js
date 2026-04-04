@@ -19,6 +19,7 @@ function postToGrokIframes(msg) {
 const goonAPI = {
   getRandomSplash: () => ipcRenderer.invoke('splash:getRandom'),
   getLoadingLines: () => ipcRenderer.invoke('splash:getLoadingLines'),
+  getRandomSplashImageUrl: () => ipcRenderer.invoke('splash:getRandomImageUrl'),
   openTimestampWindow: () => ipcRenderer.invoke('window:openTimestamp'),
   openMusicWindow: () => ipcRenderer.invoke('window:openMusic'),
   openChatPopout: () => ipcRenderer.invoke('window:openChatPopout'),
@@ -41,12 +42,17 @@ const goonAPI = {
   setUICustomization: (obj) => ipcRenderer.invoke('storage:setUICustomization', obj),
   rebootApp: () => ipcRenderer.invoke('app:reboot'),
   getLogPath: () => ipcRenderer.invoke('app:getLogPath'),
+  freezeTraceMark: (tag, detail) => ipcRenderer.send('diag:freezeTrace', tag, detail),
+  getFreezeTracePath: () => ipcRenderer.invoke('diag:getFreezeTracePath'),
+  openFreezeTrace: () => ipcRenderer.invoke('diag:openFreezeTrace'),
   getVersion: () => ipcRenderer.invoke('app:getVersion'),
   getChangelog: () => ipcRenderer.invoke('app:getChangelog'),
   checkForUpdates: () => ipcRenderer.invoke('app:checkForUpdates'),
   downloadUpdate: () => ipcRenderer.invoke('app:downloadUpdate'),
   quitAndInstall: () => ipcRenderer.invoke('app:quitAndInstall'),
   getExtensionPath: () => ipcRenderer.invoke('app:getExtensionPath'),
+  getPlatform: () => ipcRenderer.invoke('app:getPlatform'),
+  openBrowserExtensions: (browserId) => ipcRenderer.invoke('app:openBrowserExtensions', browserId),
   openChromeExtensions: () => ipcRenderer.invoke('app:openChromeExtensions'),
   getSeenExtensionSetup: () => ipcRenderer.invoke('storage:getSeenExtensionSetup'),
   setSeenExtensionSetup: (seen) => ipcRenderer.invoke('storage:setSeenExtensionSetup', seen),
@@ -169,6 +175,7 @@ const goonAPI = {
   chatGetIdentities: () => ipcRenderer.invoke('chat:getIdentities'),
   chatGetChatUnifiedEnabled: () => ipcRenderer.invoke('chat:getChatUnifiedEnabled'),
   chatSetChatUnifiedEnabled: (enabled) => ipcRenderer.invoke('chat:setChatUnifiedEnabled', enabled),
+  chatPrimeConnections: () => ipcRenderer.invoke('chat:primeConnections'),
   chatGetEmbedEnabled: () => ipcRenderer.invoke('chat:getEmbedEnabled'),
   chatSetEmbedEnabled: (enabled) => ipcRenderer.invoke('chat:setEmbedEnabled', enabled),
   chatGetEmbedPort: () => ipcRenderer.invoke('chat:getEmbedPort'),
@@ -213,6 +220,8 @@ const goonAPI = {
   chatSetEmbedTroll: (description, url) => ipcRenderer.invoke('chat:setEmbedTroll', description, url),
   chatGetEmbedTroll: () => ipcRenderer.invoke('chat:getEmbedTroll'),
   chatClearEmbedTroll: () => ipcRenderer.invoke('chat:clearEmbedTroll'),
+  chatGetTrollHistory: () => ipcRenderer.invoke('chat:getTrollHistory'),
+  chatAppendTrollHistory: (entry) => ipcRenderer.invoke('chat:appendTrollHistory', entry),
   chatGetViewerCounts: () => ipcRenderer.invoke('chat:getViewerCounts'),
   chatHasPlatformAuth: (platformId) => ipcRenderer.invoke('chat:hasPlatformAuth', platformId),
   chatStartOAuth: (platformId) => ipcRenderer.invoke('chat:startOAuth', platformId),
@@ -264,6 +273,10 @@ ipcRenderer.on('app:toast', (_, message) => {
 });
 ipcRenderer.on('chat:message', (_, message) => {
   window.dispatchEvent(new CustomEvent('chatMessage', { detail: message }));
+});
+ipcRenderer.on('chat:messagesBatch', (_, messages) => {
+  if (!Array.isArray(messages) || messages.length === 0) return;
+  window.dispatchEvent(new CustomEvent('chatMessagesBatch', { detail: messages }));
 });
 ipcRenderer.on('chat:streamsChanged', () => {
   window.dispatchEvent(new CustomEvent('chatStreamsChanged'));

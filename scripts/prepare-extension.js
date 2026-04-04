@@ -10,6 +10,11 @@ const path = require('path');
 const appRoot = path.join(__dirname, '..');
 const outDir = path.join(appRoot, 'src', 'goonopticon-bridge');
 
+if (process.env.SKIP_EXTENSION_COPY === '1') {
+  console.log('prepare-extension: SKIP_EXTENSION_COPY=1 — leaving src/goonopticon-bridge unchanged');
+  process.exit(0);
+}
+
 const candidates = [
   path.join(appRoot, 'Goonopticon-Extension'),
   path.join(path.dirname(appRoot), 'Goonopticon-Extension')
@@ -36,7 +41,20 @@ if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
 
-const files = ['manifest.json', 'popup.js', 'popup.html', 'background.js', 'options.js', 'options.html', 'README.md', 'icon16.png', 'icon48.png', 'icon128.png'];
+const files = [
+  'manifest.json',
+  'popup.js',
+  'popup.html',
+  'background.js',
+  'offscreen.html',
+  'offscreen.js',
+  'options.js',
+  'options.html',
+  'README.md',
+  'icon16.png',
+  'icon48.png',
+  'icon128.png'
+];
 for (const f of files) {
   const src = path.join(sourceDir, f);
   if (fs.existsSync(src)) {

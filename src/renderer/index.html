@@ -14,7 +14,46 @@
     .main-header { padding: 0; background: var(--hud-bg-elevated); border-bottom: 1px solid var(--hud-border); display: flex; justify-content: space-between; align-items: stretch; -webkit-app-region: no-drag; }
     .main-header-drag { -webkit-app-region: drag; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex: 1; min-width: 0; }
     .main-header .hud-title { margin: 0; }
-    .main-header-meta { display: flex; align-items: center; gap: 12px; }
+    .main-header-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+      min-width: min-content;
+    }
+    .bridge-header-cluster {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .hud-bridge-btn {
+      -webkit-app-region: no-drag;
+      padding: 4px 10px;
+      margin: 0;
+      font-size: 11px;
+      font-family: var(--hud-font-mono, ui-monospace, monospace);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: transparent;
+      border: 1px solid var(--hud-accent, #00ff41);
+      color: var(--hud-accent, #00ff41);
+      cursor: pointer;
+      border-radius: 2px;
+      line-height: 1.2;
+      flex-shrink: 0;
+      white-space: nowrap;
+      min-height: 26px;
+    }
+    .hud-bridge-btn:hover { opacity: 0.95; box-shadow: 0 0 10px rgba(0, 255, 65, 0.35); }
+    .hud-bridge-btn:focus-visible { outline: 1px solid var(--hud-accent); outline-offset: 2px; }
+    .footer-bridge-btn {
+      margin-right: 10px;
+      padding: 4px 10px !important;
+      font-size: 11px !important;
+      flex-shrink: 0;
+    }
     .main-header-meta .version { font-family: var(--hud-font-mono); font-size: var(--ui-font-size-small, 18px); color: var(--hud-text-dim); }
     .window-controls { display: flex; -webkit-app-region: no-drag; }
     .window-btn { width: 46px; height: 36px; border: none; background: transparent; color: var(--hud-text-dim); font-size: var(--ui-font-size, 21px); cursor: pointer; font-family: inherit; line-height: 1; }
@@ -121,6 +160,55 @@
     body.podawful-tweet-screen-fx .main-header {
       box-shadow: 0 0 20px rgba(56, 139, 253, 0.4);
     }
+    #bridge-browser-modal.bridge-browser-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1999;
+      background: rgba(8, 9, 10, 0.88);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      -webkit-app-region: no-drag;
+    }
+    #bridge-browser-modal.bridge-browser-overlay.visible {
+      display: flex;
+    }
+    .bridge-browser-panel {
+      max-width: 420px;
+      width: 100%;
+      padding: 22px;
+      border: 1px solid var(--hud-border);
+      background: var(--hud-bg-elevated);
+    }
+    .bridge-browser-panel h2 {
+      margin: 0 0 10px 0;
+      font-family: var(--hud-font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--hud-accent);
+    }
+    .bridge-browser-hint {
+      margin: 0 0 16px 0;
+      font-size: 12px;
+      color: var(--hud-text-dim);
+      line-height: 1.45;
+    }
+    .bridge-browser-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .bridge-browser-grid .hud-btn {
+      text-align: center;
+      width: 100%;
+      padding: 10px 14px;
+    }
+    .bridge-browser-cancel {
+      width: 100%;
+      opacity: 0.85;
+    }
   </style>
 </head>
 <body>
@@ -128,8 +216,11 @@
     <div class="main-header-drag">
       <div class="hud-title">[ GOONOPTICON DESKTOP ]</div>
       <div class="main-header-meta">
-        <span id="bridge-status" class="hud-status offline" title="Extension bridge: connect the Goonopticon extension to enable jump-to-time in browser. OFFLINE = not connected; LINK = connected.">[ OFFLINE ]</span>
-        <span id="app-version" class="version">v0.1.0</span>
+        <div class="bridge-header-cluster">
+          <span id="bridge-status" class="hud-status offline" title="Extension bridge: connect the Goonopticon extension to enable jump-to-time in browser. OFFLINE = not connected; LINK = connected.">[ OFFLINE ]</span>
+          <button type="button" id="btn-bridge-connect" class="hud-bridge-btn" title="Copy bridge folder path, pick a browser, open its extensions page to load unpacked (or Firefox temporary add-on). Port in Configure Surveillance.">Bridge</button>
+        </div>
+        <span id="app-version" class="version">v0.2.0</span>
       </div>
     </div>
     <div class="window-controls">
@@ -185,12 +276,11 @@
       </div>
     </div>
     <div class="view-wrap hud-panel" id="view">
-      <div class="view-placeholder">
-        <img
-          id="boot-random-image"
-          alt="Goonopticon"
-          style="max-width:100%;max-height:100%;object-fit:contain;display:block;"
-        />
+      <div class="view-placeholder" id="home-view-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:0;padding:16px;text-align:center;">
+        <img id="home-splash-poster" alt="" style="display:none;max-width:min(420px,90%);max-height:220px;object-fit:contain;border:1px solid var(--hud-border);border-radius:4px;" decoding="async" />
+        <p style="margin:0;opacity:0.85;font-family:var(--hud-font-mono,monospace);font-size:var(--ui-font-size-small,18px);letter-spacing:0.06em;line-height:1.5;color:var(--hud-text-dim);max-width:400px;">
+          Surveillance nominal — pick a mission from the sidebar. Live stream connections spin up when you open Chat or enable the website embed.
+        </p>
       </div>
     </div>
   </div>
@@ -209,7 +299,7 @@
       <h2>SYSTEM BRIEFING — CONNECT BRIDGE</h2>
       <p style="margin-bottom:16px;">To wield timecodes across the web — YouTube, Vimeo, Twitch — install the companion extension. Boom — instant seek.</p>
       <ol style="text-align:left;margin-bottom:16px;padding-left:20px;">
-        <li>Open Chrome → <code>chrome://extensions</code></li>
+        <li><strong>Chrome / Edge:</strong> Developer mode → Load unpacked. <strong>Firefox:</strong> This Firefox → Load Temporary Add-on (same folder). <strong>Safari:</strong> This app targets Chromium/Firefox; Safari extensions are built differently.</li>
         <li>Enable <strong>Developer mode</strong></li>
         <li>Click <strong>Load unpacked</strong></li>
         <li>Select the extension folder (copy path below)</li>
@@ -217,9 +307,23 @@
       <div class="first-run-actions">
         <input type="text" id="extension-path-display" readonly class="hud-input" />
         <button type="button" class="hud-btn" id="copy-extension-path" title="Copy extension folder path">Copy Path</button>
-        <button type="button" class="hud-btn" id="open-extensions-page" title="Open Chrome extensions page">Open Chrome</button>
+        <button type="button" class="hud-btn" id="open-extensions-page" title="Opens Chrome, Edge, or Firefox extensions page (Safari: System Settings → Extensions — MV3 bridge targets Chromium/Firefox)">Open extensions</button>
       </div>
       <button type="button" class="first-run-dismiss" id="first-run-dismiss">Henchmen, to your stations</button>
+    </div>
+  </div>
+
+  <div id="bridge-browser-modal" class="bridge-browser-overlay" role="dialog" aria-modal="true" aria-labelledby="bridge-browser-title">
+    <div class="hud-panel bridge-browser-panel" id="bridge-browser-panel">
+      <h2 id="bridge-browser-title">Open extensions in…</h2>
+      <p class="bridge-browser-hint">Path to the bridge folder is on the clipboard. Chrome / Edge: Load unpacked → pick that folder. Firefox: Load Temporary Add-on → select <strong>firefox/manifest.json</strong> inside it (root MV3 manifest errors on temp install). Safari: Settings; use Chromium or Firefox for this bridge.</p>
+      <div class="bridge-browser-grid">
+        <button type="button" class="hud-btn bridge-browser-choice" data-browser="chrome">Google Chrome</button>
+        <button type="button" class="hud-btn bridge-browser-choice" data-browser="edge">Microsoft Edge</button>
+        <button type="button" class="hud-btn bridge-browser-choice" data-browser="firefox">Mozilla Firefox</button>
+        <button type="button" class="hud-btn bridge-browser-choice" data-browser="safari" id="bridge-browser-safari">Safari (macOS only)</button>
+      </div>
+      <button type="button" class="hud-btn bridge-browser-cancel" id="bridge-browser-cancel">Cancel</button>
     </div>
   </div>
 
@@ -231,6 +335,7 @@
       <button type="button" class="hud-btn" id="btn-reboot" title="Restart app and show splash again">Reboot system</button>
     </div>
     <div class="links">
+      <button type="button" class="hud-btn footer-bridge-btn" id="btn-footer-bridge" title="Copy bridge path, then choose Chrome, Edge, Firefox, or Safari (macOS) to open extensions">Bridge setup</button>
       <a href="#" id="footer-podawful">Pizza fund</a>
       <a href="#" id="footer-awfultech">Buy some merch</a>
       <a href="#" id="footer-discord">Join the Cult</a>
@@ -241,19 +346,6 @@
     import { applyTheme } from './theme.js';
     window.__applyTheme = applyTheme;
     applyTheme();
-  </script>
-  <script>
-    (function () {
-      try {
-        var imgs = [
-          '../images/Awful_World_Pamphlet_1_Front_Color.png',
-          '../images/Awful_World_Pamphlet_1_Back_Color.png'
-        ];
-        var i = Math.floor(Math.random() * imgs.length);
-        var el = document.getElementById('boot-random-image');
-        if (el && imgs[i]) el.src = imgs[i];
-      } catch (e) {}
-    })();
   </script>
   <script src="./mainMenu.js"></script>
   <script type="module" src="./grokSidebar.js"></script>

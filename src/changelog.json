@@ -1,4 +1,7 @@
 [
+  "0.2.0 — Freeze trace: freeze-trace.log in app userData; Dev Log → Open freeze trace log; main event-loop lag + renderer checkpoints; webContents unresponsive / render-process-gone. Set GOONOPTICON_FREEZE_TRACE=0 to disable.",
+  "0.2.0 — Splash, home screen, and Command Center pick a random image from splash/images (png, jpg, webp, gif, avif, bmp).",
+  "0.2.0 — Chat: Live streams On/Off on the Chat screen only; hint copy updated; background chat reconnect when live mode is on.",
   "Tweet alerts: optional blue pulse + corner popup (Twitter embed + oEmbed text) with a separate three-note chime when @podawful posts (same poll interval as feed alarm).",
   "Pod Awful feed alarm: optional CRT pop-out, alarm tone, and main-window shake on new video or live (Configure → General). RSS + optional YouTube API key for live.",
   "Custom window chrome (frameless, theme-matched title bar).",

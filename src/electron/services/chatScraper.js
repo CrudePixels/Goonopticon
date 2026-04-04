@@ -18,7 +18,8 @@ const WINDOW_OPTS = {
     contextIsolation: true,
     // Kick/YouTube live UIs often fail to render chat under sandbox; we only load remote URLs (no node).
     sandbox: false,
-    backgroundThrottling: false
+    // Many scraper windows at once with throttling off pegs the GPU and triggers "Electron is not responding".
+    backgroundThrottling: true
   }
 };
 

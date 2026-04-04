@@ -60,6 +60,7 @@ const STORAGE_KEYS = {
   CHAT_CINEMA_PLATFORM: 'PodAwful::ChatCinemaPlatform',
   CHAT_HIGHLIGHT_KEYWORDS: 'PodAwful::ChatHighlightKeywords',
   CHAT_PINNED_MESSAGE: 'PodAwful::ChatPinnedMessage',
+  CHAT_TROLL_HISTORY: 'PodAwful::ChatTrollHistory',
   CHAT_WHISPERS: 'PodAwful::ChatWhispers',
   EMBED_CHAT_STATE: 'PodAwful::EmbedChatState',
   PLATFORM_AUTH: 'PodAwful::PlatformAuth',
@@ -566,7 +567,7 @@ function setChatCinemaYouTubeVideoId(id) {
 }
 
 function getChatUnifiedEnabled() {
-  return get(STORAGE_KEYS.CHAT_UNIFIED_ENABLED, true);
+  return get(STORAGE_KEYS.CHAT_UNIFIED_ENABLED, false);
 }
 
 function setChatUnifiedEnabled(enabled) {
@@ -687,7 +688,10 @@ function isIncomingChatPlatformAllowed(platformId, addedStreamIds) {
 
 // ---- Chat log persistence (unlimited save, but chunked + tail reads) ----
 const CHAT_LOG_CHUNK_SIZE = 500;
-const CHAT_LOG_TAIL_MAX = 1000; // UI + embed should never load unbounded history at once.
+/** Keep IPC + renderer work bounded; full history stays in chunked store. */
+const CHAT_LOG_TAIL_MAX = 500;
+/** Migrating a huge legacy single-array log synchronously freezes the main process (Electron "not responding"). */
+const LEGACY_CHAT_LOG_MAX_MIGRATE = 3500;
 const CHAT_LOG_META_KEY = 'PodAwful::ChatLogMeta';
 
 function chatLogChunkKey(chunkIndex) {
@@ -701,11 +705,13 @@ function initChatLogChunkedIfNeeded() {
   // Lazy migration from old single-key array storage.
   const legacy = get(STORAGE_KEYS.CHAT_LOG, []);
   if (Array.isArray(legacy) && legacy.length > 0) {
-    const total = legacy.length;
-    const lastChunkIndex = Math.floor((legacy.length - 1) / CHAT_LOG_CHUNK_SIZE);
-    for (let i = 0; i < legacy.length; i += CHAT_LOG_CHUNK_SIZE) {
+    const source =
+      legacy.length > LEGACY_CHAT_LOG_MAX_MIGRATE ? legacy.slice(-LEGACY_CHAT_LOG_MAX_MIGRATE) : legacy;
+    const total = source.length;
+    const lastChunkIndex = Math.max(0, Math.floor((total - 1) / CHAT_LOG_CHUNK_SIZE));
+    for (let i = 0; i < source.length; i += CHAT_LOG_CHUNK_SIZE) {
       const chunkIndex = Math.floor(i / CHAT_LOG_CHUNK_SIZE);
-      const chunk = legacy.slice(i, i + CHAT_LOG_CHUNK_SIZE);
+      const chunk = source.slice(i, i + CHAT_LOG_CHUNK_SIZE);
       set(chatLogChunkKey(chunkIndex), chunk);
     }
     set(CHAT_LOG_META_KEY, { total, lastChunkIndex });
@@ -780,6 +786,43 @@ function appendChatLogMessage(entry) {
   set(CHAT_LOG_META_KEY, { total: (Number(meta.total) || 0) + 1, lastChunkIndex });
 }
 
+function appendChatLogMessagesBatch(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) return;
+  initChatLogChunkedIfNeeded();
+  const meta = get(CHAT_LOG_META_KEY, { total: 0, lastChunkIndex: 0 }) || { total: 0, lastChunkIndex: 0 };
+  let lastChunkIndex = Number.isFinite(meta.lastChunkIndex) ? meta.lastChunkIndex : 0;
+  if (lastChunkIndex < 0) lastChunkIndex = 0;
+  let chunk = get(chatLogChunkKey(lastChunkIndex), []);
+  if (!Array.isArray(chunk)) chunk = [];
+  let totalAdded = 0;
+
+  for (const entry of entries) {
+    const ts = typeof entry.timestamp === 'number' ? entry.timestamp : Date.now();
+    const av = entry.avatarUrl != null && String(entry.avatarUrl).trim() ? String(entry.avatarUrl).trim() : undefined;
+    const toPush = {
+      platformId: entry.platformId || '',
+      platformName: entry.platformName || '?',
+      platformIcon: entry.platformIcon || '',
+      username: entry.username || '?',
+      message: entry.message || '',
+      timestamp: ts,
+      channelId: entry.channelId || undefined,
+      avatarUrl: av,
+      donationAmount: entry.donationAmount != null ? entry.donationAmount : undefined,
+      donationCurrency: entry.donationCurrency || undefined
+    };
+    if (chunk.length >= CHAT_LOG_CHUNK_SIZE) {
+      set(chatLogChunkKey(lastChunkIndex), chunk);
+      lastChunkIndex += 1;
+      chunk = [];
+    }
+    chunk.push(toPush);
+    totalAdded += 1;
+  }
+  set(chatLogChunkKey(lastChunkIndex), chunk);
+  set(CHAT_LOG_META_KEY, { total: (Number(meta.total) || 0) + totalAdded, lastChunkIndex });
+}
+
 function chatUserKey(platformId, username) {
   return (platformId || '') + '::' + (username || '?');
 }
@@ -805,12 +848,43 @@ function getChatUserHistory(platformId, username) {
   return [...legacyArr, ...normalizedPerUserArr];
 }
 
+/** Per-user history is read+written on every chat line; unbounded arrays freeze the main process during live floods. */
+const CHAT_USER_HISTORY_PER_KEY_MAX = 280;
+
 function appendChatUserMessage(platformId, username, message) {
   const perUserKey = chatUserHistoryChunkKey(platformId, username);
   const arr = get(perUserKey, []);
   const safeArr = Array.isArray(arr) ? arr : [];
   safeArr.push({ message: message || '', timestamp: Date.now() });
+  if (safeArr.length > CHAT_USER_HISTORY_PER_KEY_MAX) {
+    safeArr.splice(0, safeArr.length - CHAT_USER_HISTORY_PER_KEY_MAX);
+  }
   set(perUserKey, safeArr);
+}
+
+function appendChatUserMessagesFromBatch(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) return;
+  const groups = new Map();
+  for (const e of entries) {
+    const platformId = e.platformId || '';
+    const username = e.username || '?';
+    const k = chatUserKey(platformId, username);
+    if (!groups.has(k)) groups.set(k, { platformId, username, lines: [] });
+    groups.get(k).lines.push({
+      message: e.message || '',
+      timestamp: typeof e.timestamp === 'number' ? e.timestamp : Date.now()
+    });
+  }
+  for (const { platformId, username, lines } of groups.values()) {
+    const perUserKey = chatUserHistoryChunkKey(platformId, username);
+    const arr = get(perUserKey, []);
+    const safeArr = Array.isArray(arr) ? arr : [];
+    for (const line of lines) safeArr.push(line);
+    if (safeArr.length > CHAT_USER_HISTORY_PER_KEY_MAX) {
+      safeArr.splice(0, safeArr.length - CHAT_USER_HISTORY_PER_KEY_MAX);
+    }
+    set(perUserKey, safeArr);
+  }
 }
 
 const CHAT_MODERATION_HISTORY_MAX = 8000;
@@ -1005,6 +1079,27 @@ function getChatPinnedMessage() {
 
 function setChatPinnedMessage(pinned) {
   set(STORAGE_KEYS.CHAT_PINNED_MESSAGE, pinned && typeof pinned === 'object' ? pinned : null);
+}
+
+const CHAT_TROLL_HISTORY_CAP = 300;
+
+function getChatTrollHistory() {
+  const v = get(STORAGE_KEYS.CHAT_TROLL_HISTORY, []);
+  if (!Array.isArray(v)) return [];
+  return v.filter((e) => e && typeof e === 'object' && (e.outcome === 'success' || e.outcome === 'failed'));
+}
+
+function appendChatTrollHistoryEntry(entry) {
+  const description = String(entry?.description || '').slice(0, 500);
+  const url = String(entry?.url || '').slice(0, 2048);
+  const outcome = entry?.outcome === 'failed' ? 'failed' : 'success';
+  const timestamp = typeof entry?.timestamp === 'number' && Number.isFinite(entry.timestamp) ? entry.timestamp : Date.now();
+  const row = { description, url, outcome, timestamp };
+  const list = getChatTrollHistory();
+  list.unshift(row);
+  if (list.length > CHAT_TROLL_HISTORY_CAP) list.length = CHAT_TROLL_HISTORY_CAP;
+  set(STORAGE_KEYS.CHAT_TROLL_HISTORY, list);
+  return row;
 }
 
 function getWhisperConversation(peerKey) {
@@ -1306,10 +1401,12 @@ module.exports = {
   isIncomingChatPlatformAllowed,
   getChatLog,
   appendChatLogMessage,
+  appendChatLogMessagesBatch,
   getChatUserHistory,
   appendChatModerationEvent,
   getChatModerationHistory,
   appendChatUserMessage,
+  appendChatUserMessagesFromBatch,
   appendDonation,
   getDonations,
   getDonationsForUserOrIdentity,
@@ -1327,6 +1424,8 @@ module.exports = {
   setChatHighlightKeywords,
   getChatPinnedMessage,
   setChatPinnedMessage,
+  getChatTrollHistory,
+  appendChatTrollHistoryEntry,
   getWhisperConversation,
   appendWhisper,
   getWhisperPeerKeys,

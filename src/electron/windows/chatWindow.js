@@ -2,6 +2,7 @@ const { BrowserWindow } = require('electron');
 const path = require('path');
 const storage = require('../storage/adapter');
 const { getAppIconPath } = require('../utils/iconPath');
+const freezeTrace = require('../services/freezeTrace');
 
 const BOUNDS_KEY = 'chatPopout';
 let chatWindow = null;
@@ -36,6 +37,7 @@ function openChatWindow() {
 
   const indexPath = path.join(__dirname, '../../renderer/index.html');
   chatWindow.loadFile(indexPath, { query: { popout: 'chat' } });
+  freezeTrace.attachWebContentsDiagnostics(chatWindow.webContents, 'chat_popout');
   try { delete process.__GOON_CHAT_POPOUT_NEXT; } catch (_) {}
 
   chatWindow.once('ready-to-show', () => chatWindow.show());

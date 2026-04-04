@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, shell, Tray, Menu, globalShortcut, dialog, screen, protocol, Notification } = require('electron');
+const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
@@ -12,7 +13,7 @@ protocol.registerSchemesAsPrivileged([
     privileges: { standard: true, secure: true, supportFetchAPI: true, bypassCSP: true, corsEnabled: true }
   }
 ]);
-const { getRandomSplash, getLoadingLines } = require('./services/splashTextService');
+const { getRandomSplash, getLoadingLines, getRandomSplashImageUrl } = require('./services/splashTextService');
 const { openTimestampWindow } = require('./windows/timestampWindow');
 const { openMusicWindow } = require('./windows/musicWindow');
 const { openChatWindow } = require('./windows/chatWindow');
@@ -133,7 +134,18 @@ function createMainWindow() {
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 
+  const splashStuckTimer = setTimeout(() => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    if (mainWindow.isVisible()) return;
+    logger.warn('Main window did not reach ready-to-show in time; forcing show (splash may have looked frozen)');
+    try {
+      mainWindow.show();
+    } catch (_) {}
+    if (splashWindow && !splashWindow.isDestroyed()) splashWindow.close();
+  }, 60000);
+
   mainWindow.once('ready-to-show', () => {
+    clearTimeout(splashStuckTimer);
     sendBridgeStatus();
     const splashMinMs = storage.getSplashDurationMs();
     const elapsed = Date.now() - splashShownAt;
@@ -296,18 +308,7 @@ app.whenReady().then(async () => {
   });
   logger.info('App started', { bridgePort: bridgeResult.port ?? port, bridgeOk: bridgeResult.ok });
 
-  try {
-    const tracked = storage.getTrackedPeople();
-    let needSave = false;
-    for (const p of tracked) {
-      const before = p.avatarPath;
-      goonipediaFolder.syncTrackedPersonToFolder(p);
-      if (p.avatarPath !== before) needSave = true;
-    }
-    if (needSave) storage.setTrackedPeople(tracked);
-  } catch (e) {
-    logger.warn('Goonipedia folder sync on startup failed', { message: e.message });
-  }
+  createSplashWindow();
 
   // Custom protocol for music playback (secure: only under stored music folder)
   // Stream file directly so <audio> works reliably (paths with spaces, Windows)
@@ -395,83 +396,110 @@ app.whenReady().then(async () => {
     }
   });
 
-  createSplashWindow();
-
   setTimeout(() => {
     createMainWindow();
-    try {
-      chatService = require('./services/chatService');
-      chatService.init((payload) => {
-        applyIncomingChatMessage(payload);
+
+    function startHeavyBackgroundServices() {
+      try {
+        chatService = require('./services/chatService');
+        chatService.init((payload) => {
+          applyIncomingChatMessage(payload);
+        });
+      } catch (e) {
+        logger.warn('Chat service failed', e.message);
+      }
+      try {
+        if (storage.getChatEmbedEnabled()) {
+          const emotesPath = path.join(__dirname, '..', 'emotes');
+          embedServer.start(
+            storage.getChatEmbedPort(),
+            () => storage.getChatLog(),
+            (text, username) => injectEmbedChatMessage(text, username),
+            emotesPath
+          );
+        }
+      } catch (e) {
+        logger.warn('Chat embed server failed', e.message);
+      }
+      try {
+        setupTray();
+      } catch (e) {
+        logger.warn('Tray setup failed', e.message);
+      }
+      globalShortcut.register('CommandOrControl+Shift+T', () => openTimestampWindow());
+      globalShortcut.register('CommandOrControl+Shift+M', () => openMusicWindow());
+      globalShortcut.register('CommandOrControl+Shift+G', () => openGrokPopoutWindow());
+      globalShortcut.register('CommandOrControl+Shift+V', () => {
+        const folder = getEffectiveVirusVideoFolder();
+        if (folder && fs.existsSync(folder) && getVideoFiles(folder).length > 0)
+          openVirusPopupWindow(folder, () => {});
+        else if (mainWindow && !mainWindow.isDestroyed())
+          mainWindow.webContents.send('app:toast', 'Virus popup: set a video folder in Settings first.');
       });
-    } catch (e) {
-      logger.warn('Chat service failed', e.message);
-    }
-    try {
-      if (storage.getChatEmbedEnabled()) {
-        const emotesPath = path.join(__dirname, '..', 'emotes');
-        embedServer.start(
-          storage.getChatEmbedPort(),
-          () => storage.getChatLog(),
-          (text, username) => injectEmbedChatMessage(text, username),
-          emotesPath
-        );
-      }
-    } catch (e) {
-      logger.warn('Chat embed server failed', e.message);
-    }
-    try {
-      setupTray();
-    } catch (e) {
-      logger.warn('Tray setup failed', e.message);
-    }
-    globalShortcut.register('CommandOrControl+Shift+T', () => openTimestampWindow());
-    globalShortcut.register('CommandOrControl+Shift+M', () => openMusicWindow());
-    globalShortcut.register('CommandOrControl+Shift+G', () => openGrokPopoutWindow());
-    globalShortcut.register('CommandOrControl+Shift+V', () => {
-      const folder = getEffectiveVirusVideoFolder();
-      if (folder && fs.existsSync(folder) && getVideoFiles(folder).length > 0)
-        openVirusPopupWindow(folder, () => {});
-      else if (mainWindow && !mainWindow.isDestroyed())
-        mainWindow.webContents.send('app:toast', 'Virus popup: set a video folder in Settings first.');
-    });
-    scheduleVirusPopup();
+      scheduleVirusPopup();
 
-    function onPodawfulFeedAlert(payload) {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('podawfulFeed:screenEffects');
+      function onPodawfulFeedAlert(payload) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('podawfulFeed:screenEffects');
+        }
+        try {
+          const n = new Notification({
+            title: 'Pod Awful channel',
+            body:
+              payload.kind === 'live'
+                ? `Live now — ${payload.title || ''}`.trim()
+                : `New video — ${payload.title || ''}`.trim()
+          });
+          n.show();
+        } catch (_) {}
+        openPodawfulCrtWindow(payload);
       }
-      try {
-        const n = new Notification({
-          title: 'Pod Awful channel',
-          body:
-            payload.kind === 'live'
-              ? `Live now — ${payload.title || ''}`.trim()
-              : `New video — ${payload.title || ''}`.trim()
-        });
-        n.show();
-      } catch (_) {}
-      openPodawfulCrtWindow(payload);
-    }
-    podawfulFeedAlert.setPodawfulFeedAlertHandler(onPodawfulFeedAlert);
-    podawfulFeedAlert.startPodawfulFeedAlertPolling();
+      podawfulFeedAlert.setPodawfulFeedAlertHandler(onPodawfulFeedAlert);
+      podawfulFeedAlert.startPodawfulFeedAlertPolling();
 
-    function onPodawfulTweetAlert(payload) {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('podawfulTweet:screenEffects');
+      function onPodawfulTweetAlert(payload) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('podawfulTweet:screenEffects');
+        }
+        try {
+          const body = (payload.text || '').trim() || 'New post from @podawful';
+          const n = new Notification({
+            title: '@podawful',
+            body: body.slice(0, 180)
+          });
+          n.show();
+        } catch (_) {}
+        openPodawfulTweetPopupWindow(payload);
       }
-      try {
-        const body = (payload.text || '').trim() || 'New post from @podawful';
-        const n = new Notification({
-          title: '@podawful',
-          body: body.slice(0, 180)
-        });
-        n.show();
-      } catch (_) {}
-      openPodawfulTweetPopupWindow(payload);
+      podawfulTweetAlert.setPodawfulTweetAlertHandler(onPodawfulTweetAlert);
+      podawfulTweetAlert.startPodawfulTweetAlertPolling();
+
+      setTimeout(() => {
+        try {
+          const tracked = storage.getTrackedPeople();
+          let needSave = false;
+          for (const p of tracked) {
+            const before = p.avatarPath;
+            goonipediaFolder.syncTrackedPersonToFolder(p);
+            if (p.avatarPath !== before) needSave = true;
+          }
+          if (needSave) storage.setTrackedPeople(tracked);
+        } catch (e) {
+          logger.warn('Goonipedia folder sync on startup failed', { message: e.message });
+        }
+      }, 4000);
     }
-    podawfulTweetAlert.setPodawfulTweetAlertHandler(onPodawfulTweetAlert);
-    podawfulTweetAlert.startPodawfulTweetAlertPolling();
+
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      const scheduleHeavy = () => setTimeout(startHeavyBackgroundServices, 800);
+      if (mainWindow.webContents.isLoading()) {
+        mainWindow.webContents.once('did-finish-load', scheduleHeavy);
+      } else {
+        scheduleHeavy();
+      }
+    } else {
+      setTimeout(startHeavyBackgroundServices, 0);
+    }
   }, 2000);
 
   app.on('activate', () => {
@@ -495,6 +523,7 @@ app.on('window-all-closed', () => {
 // IPC
 ipcMain.handle('splash:getRandom', async () => getRandomSplash());
 ipcMain.handle('splash:getLoadingLines', async () => getLoadingLines());
+ipcMain.handle('splash:getRandomImageUrl', async () => getRandomSplashImageUrl());
 
 ipcMain.handle('window:openTimestamp', () => {
   openTimestampWindow();
@@ -634,9 +663,157 @@ ipcMain.handle('app:quitAndInstall', () => {
     app.quit();
   }
 });
-ipcMain.handle('app:openChromeExtensions', () => {
-  shell.openExternal('chrome://extensions');
-});
+/** Internal extension-management URLs (Firefox: debugging / temporary add-on). */
+const EXT_URL = {
+  CHROMIUM: 'chrome://extensions',
+  EDGE: 'edge://extensions',
+  FIREFOX: 'about:debugging#/runtime/this-firefox'
+};
+
+function trySpawnDetached(exe, args, opts = {}) {
+  const { skipExistsCheck = false, ...spawnOpts } = opts;
+  try {
+    if (exe && !skipExistsCheck && !fs.existsSync(exe)) return false;
+    const child = spawn(exe, args, { detached: true, stdio: 'ignore', ...spawnOpts });
+    child.unref();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function winProgramDirs() {
+  const localAppData = process.env.LOCALAPPDATA || '';
+  const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
+  const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+  return { localAppData, programFiles, programFilesX86 };
+}
+
+function launchChromeExtensions() {
+  if (process.platform === 'win32') {
+    const { localAppData, programFiles, programFilesX86 } = winProgramDirs();
+    const exes = [
+      path.join(localAppData, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+      path.join(programFiles, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+      path.join(programFilesX86, 'Google', 'Chrome', 'Application', 'chrome.exe')
+    ];
+    for (const exe of exes) {
+      if (trySpawnDetached(exe, [EXT_URL.CHROMIUM])) return true;
+    }
+    if (trySpawnDetached('chrome', [EXT_URL.CHROMIUM], { shell: true, skipExistsCheck: true })) return true;
+  }
+  if (process.platform === 'darwin') {
+    if (trySpawnDetached('open', ['-a', 'Google Chrome', EXT_URL.CHROMIUM], { skipExistsCheck: true })) return true;
+  }
+  if (process.platform === 'linux') {
+    for (const cmd of ['google-chrome-stable', 'google-chrome', 'chromium-browser', 'chromium']) {
+      if (trySpawnDetached(cmd, [EXT_URL.CHROMIUM], { shell: true, skipExistsCheck: true })) return true;
+    }
+  }
+  try {
+    shell.openExternal(EXT_URL.CHROMIUM);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function launchEdgeExtensions() {
+  if (process.platform === 'win32') {
+    const { localAppData, programFiles, programFilesX86 } = winProgramDirs();
+    const exes = [
+      path.join(localAppData, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+      path.join(programFiles, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+      path.join(programFilesX86, 'Microsoft', 'Edge', 'Application', 'msedge.exe')
+    ];
+    for (const exe of exes) {
+      if (trySpawnDetached(exe, [EXT_URL.EDGE])) return true;
+    }
+    if (trySpawnDetached('msedge', [EXT_URL.EDGE], { shell: true, skipExistsCheck: true })) return true;
+  }
+  if (process.platform === 'darwin') {
+    if (trySpawnDetached('open', ['-a', 'Microsoft Edge', EXT_URL.EDGE], { skipExistsCheck: true })) return true;
+  }
+  if (process.platform === 'linux') {
+    for (const cmd of ['microsoft-edge-stable', 'microsoft-edge']) {
+      if (trySpawnDetached(cmd, [EXT_URL.EDGE], { shell: true, skipExistsCheck: true })) return true;
+    }
+  }
+  try {
+    shell.openExternal(EXT_URL.EDGE);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function launchFirefoxExtensions() {
+  if (process.platform === 'win32') {
+    const { programFiles, programFilesX86 } = winProgramDirs();
+    const exes = [
+      path.join(programFiles, 'Mozilla Firefox', 'firefox.exe'),
+      path.join(programFilesX86, 'Mozilla Firefox', 'firefox.exe')
+    ];
+    for (const exe of exes) {
+      if (trySpawnDetached(exe, [EXT_URL.FIREFOX])) return true;
+    }
+    if (trySpawnDetached('firefox', [EXT_URL.FIREFOX], { shell: true, skipExistsCheck: true })) return true;
+  }
+  if (process.platform === 'darwin') {
+    const ffMac = '/Applications/Firefox.app/Contents/MacOS/firefox';
+    if (trySpawnDetached('open', ['-a', 'Firefox', EXT_URL.FIREFOX], { skipExistsCheck: true })) return true;
+    if (fs.existsSync(ffMac) && trySpawnDetached(ffMac, [EXT_URL.FIREFOX], { skipExistsCheck: true })) return true;
+  }
+  if (process.platform === 'linux') {
+    if (trySpawnDetached('firefox', [EXT_URL.FIREFOX], { shell: true, skipExistsCheck: true })) return true;
+  }
+  return false;
+}
+
+function launchSafariExtensions() {
+  if (process.platform !== 'darwin') return false;
+  if (
+    trySpawnDetached('open', ['x-apple.systempreferences:com.apple.ExtensionsPreferences'], {
+      skipExistsCheck: true
+    })
+  ) {
+    return true;
+  }
+  return trySpawnDetached('open', ['-a', 'Safari'], { skipExistsCheck: true });
+}
+
+/** Try Chrome → Edge → Firefox → Safari prefs (macOS); fallbacks for generic handler. */
+function openBrowserExtensionsAuto() {
+  if (launchChromeExtensions()) return { ok: true };
+  if (launchEdgeExtensions()) return { ok: true };
+  if (launchFirefoxExtensions()) return { ok: true };
+  if (process.platform === 'darwin' && launchSafariExtensions()) return { ok: true };
+  return { ok: false };
+}
+
+function openBrowserExtensionsFor(browserId) {
+  const id = String(browserId || 'auto').toLowerCase();
+  if (id === 'auto') return openBrowserExtensionsAuto();
+
+  if (id === 'safari' && process.platform !== 'darwin') {
+    return { ok: false, error: 'Safari is only available on macOS.' };
+  }
+
+  const label = { chrome: 'Chrome', edge: 'Edge', firefox: 'Firefox', safari: 'Safari' }[id] || id;
+  let ok = false;
+  if (id === 'chrome') ok = launchChromeExtensions();
+  else if (id === 'edge') ok = launchEdgeExtensions();
+  else if (id === 'firefox') ok = launchFirefoxExtensions();
+  else if (id === 'safari') ok = launchSafariExtensions();
+  else return { ok: false, error: 'Unknown browser.' };
+
+  if (!ok) return { ok: false, error: `Could not start ${label}. Install it or try another browser.` };
+  return { ok: true };
+}
+
+ipcMain.handle('app:getPlatform', () => process.platform);
+ipcMain.handle('app:openBrowserExtensions', (_, browserId) => openBrowserExtensionsFor(browserId));
+ipcMain.handle('app:openChromeExtensions', () => openBrowserExtensionsFor('auto'));
 ipcMain.handle('app:getDisplays', () => {
   const primary = screen.getPrimaryDisplay();
   return screen.getAllDisplays().map((d, i) => ({
@@ -1203,6 +1380,11 @@ ipcMain.handle('chat:createPoll', async (_, platformId, title, choices, duration
   });
   ipcMain.handle('chat:clearEmbedTroll', () => {
     embedServer.clearEmbedTroll();
+    return Promise.resolve({ ok: true });
+  });
+  ipcMain.handle('chat:getTrollHistory', () => Promise.resolve(storage.getChatTrollHistory()));
+  ipcMain.handle('chat:appendTrollHistory', (_, entry) => {
+    storage.appendChatTrollHistoryEntry(entry);
     return Promise.resolve({ ok: true });
   });
   ipcMain.handle('chat:getViewerCounts', async () => {

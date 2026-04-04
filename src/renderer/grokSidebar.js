@@ -20,6 +20,21 @@ if (!widget || !gb) {
   const trollToggle = document.getElementById('grok-sb-troll');
   const grokTipEl = document.getElementById('grok-sb-tip');
 
+  function schedulePostPaintWork(fn) {
+    const runIdle = () => {
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(() => fn(), { timeout: 900 });
+      } else {
+        setTimeout(fn, 1);
+      }
+    };
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => requestAnimationFrame(runIdle));
+    } else {
+      setTimeout(runIdle, 0);
+    }
+  }
+
   const SPRITE_EXT = '.webp';
   const SPRITES = {
     idle: [`../grokBuddy/sprites/idle_1${SPRITE_EXT}`, `../grokBuddy/sprites/idle_2${SPRITE_EXT}`],
@@ -384,20 +399,6 @@ if (!widget || !gb) {
     }
   });
 
-  const TIP_ROTATE_MS = 28000;
-  if (grokTipEl && gb.getChangelog) {
-    async function showNextTip() {
-      try {
-        const arr = await gb.getChangelog();
-        if (Array.isArray(arr) && arr.length) {
-          grokTipEl.textContent = arr[Math.floor(Math.random() * arr.length)];
-        }
-      } catch (_) {}
-    }
-    showNextTip();
-    setInterval(showNextTip, TIP_ROTATE_MS);
-  }
-
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       if (randomEventTimer) {
@@ -427,33 +428,49 @@ if (!widget || !gb) {
     } else if (on && typeof document !== 'undefined' && !document.hidden) scheduleRandomEvent();
   };
 
-  (async function init() {
-    await syncEnabledVisibility();
-    await applyTheme();
-    await reloadLines();
-    await refreshVolume();
-    await loadModes();
-    try {
-      const theme = await gb.getGrokTheme();
-      widget.dataset.grokTheme = theme === 'amber' ? 'amber' : 'default';
-    } catch (_) {
-      widget.dataset.grokTheme = 'default';
-    }
-    const seenBefore = await gb.getGrokFirstOpenDone?.().catch(() => true);
-    if (seenBefore) {
-      setTimeout(() => {
-        initialSpoken = true;
-        showBubble(GL.getGreeting(), false, { duration: 4500 });
-      }, 350);
-    } else {
-      setTimeout(() => {
-        initialSpoken = true;
-        showBubble(GL.getGreetingFirstTime(), false, { duration: 5000 });
-      }, 350);
-      await gb.setGrokFirstOpenDone?.(true);
-    }
-    scheduleRandomEvent();
-  })();
+  schedulePostPaintWork(() => {
+    (async function init() {
+      await syncEnabledVisibility();
+      await reloadLines();
+      await refreshVolume();
+      await loadModes();
+      try {
+        const theme = await gb.getGrokTheme();
+        widget.dataset.grokTheme = theme === 'amber' ? 'amber' : 'default';
+      } catch (_) {
+        widget.dataset.grokTheme = 'default';
+      }
+      const TIP_ROTATE_MS = 28000;
+      if (grokTipEl && gb.getChangelog) {
+        async function showNextTip() {
+          try {
+            const arr = await gb.getChangelog();
+            if (Array.isArray(arr) && arr.length) {
+              grokTipEl.textContent = arr[Math.floor(Math.random() * arr.length)];
+            }
+          } catch (_) {}
+        }
+        setTimeout(() => {
+          void showNextTip();
+          setInterval(showNextTip, TIP_ROTATE_MS);
+        }, 400);
+      }
+      const seenBefore = await gb.getGrokFirstOpenDone?.().catch(() => true);
+      if (seenBefore) {
+        setTimeout(() => {
+          initialSpoken = true;
+          showBubble(GL.getGreeting(), false, { duration: 4500 });
+        }, 350);
+      } else {
+        setTimeout(() => {
+          initialSpoken = true;
+          showBubble(GL.getGreetingFirstTime(), false, { duration: 5000 });
+        }, 350);
+        await gb.setGrokFirstOpenDone?.(true);
+      }
+      scheduleRandomEvent();
+    })();
+  });
 
   setTimeout(() => {
     if (!initialSpoken && bubble) showBubble('Tip: Random or type below.', false, { sound: false, duration: 4500 });

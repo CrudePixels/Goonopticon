@@ -1,3 +1,5 @@
+const { chromiumFetch } = require('./chromiumFetch');
+
 const PAGE_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
@@ -30,7 +32,7 @@ async function fetchHtml(url, { timeoutMs = 8000 } = {}) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url, {
+    const res = await chromiumFetch(url, {
       signal: controller.signal,
       redirect: 'follow',
       headers: {
@@ -64,7 +66,7 @@ async function fetchOEmbedPlainText(statusId, screenName = PODAWFUL_X_HANDLE) {
     'https://publish.twitter.com/oembed?omit_script=1&hide_thread=1&dnt=true&url=' +
     encodeURIComponent(tweetUrl);
   try {
-    const res = await fetch(oembedUrl, {
+    const res = await chromiumFetch(oembedUrl, {
       headers: {
         Accept: 'application/json',
         'User-Agent': PAGE_UA
